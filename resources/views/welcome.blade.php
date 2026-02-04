@@ -9,7 +9,7 @@
         <div class="campaign-modal">
             <button class="campaign-close" aria-label="Cerrar">×</button>
             <a href="#contacto" class="campaign-link">
-                <img src="https://deeppink-pheasant-693696.hostingersite.com/recursos/img-CAMPA%C3%91A%20NUEVO%20LOOK%20PARA%20CADA%20MOMENTO.png"
+                <img src="{{ asset('images/img-CAMPAÑA NUEVO LOOK PARA CADA MOMENTO.png') }}"
                     alt="Campaña Nuevo Look Para Cada Momento - Cristina Spa" class="campaign-image">
             </a>
         </div>
@@ -177,7 +177,7 @@
                 </div>
                 <div class="package-card featured">
                     <div class="package-image">
-                        <img src="https://images.unsplash.com/photo-1595981234058-a9302fb97229?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                        <img src="https://images.unsplash.com/photo-1609357605129-26f69add5d6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
                             alt="Quinceañeras">
                     </div>
                     <h3>Quinceañeras</h3>
@@ -362,8 +362,63 @@
                     </div>
                     <a href="https://maps.google.com/?q=Calacoto+Calle+13+La+Paz+Bolivia" target="_blank"
                         class="branch-map-link">
-                        📍 Ver en Google Maps
                     </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="services-intro">
+                <span class="section-label">Lo Que Dicen Nuestros Clientes</span>
+                <h2 class="section-title section-title-center">Testimonios</h2>
+                <p>La satisfacción de nuestros clientes es nuestra mayor recompensa.</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Increíble experiencia. El equipo de Cristina Spa me hizo sentir como una reina
+                        en mi día de boda. El peinado y maquillaje quedaron perfectos, ¡exactamente
+                        como lo soñé!"
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MR</div>
+                        <div class="author-info">
+                            <strong>María Rodríguez</strong>
+                            <span>Novia - Paquete Premium</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Llevo más de 5 años siendo cliente fiel. La calidad del servicio y los
+                        productos que usan son de primera. Siempre salgo feliz con mi nuevo look."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">CP</div>
+                        <div class="author-info">
+                            <strong>Carolina Pérez</strong>
+                            <span>Cliente frecuente - Colorimetría</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">★★★★★</div>
+                    <p class="testimonial-text">
+                        "Mi hija tuvo sus XV años y el resultado fue espectacular. Todo el equipo
+                        fue muy profesional y atento. ¡Gracias por hacer de ese día algo inolvidable!"
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">LM</div>
+                        <div class="author-info">
+                            <strong>Laura Mendoza</strong>
+                            <span>Mamá de quinceañera</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
