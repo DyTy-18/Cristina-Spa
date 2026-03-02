@@ -616,6 +616,72 @@
         </div>
     </section>
 
+    @php
+    $categorias = [
+        [
+            'id'      => 'colorimetria',
+            'nombre'  => 'Colorimetría',
+            'overlay' => 'Balayage Premium',
+            'fotos'   => [
+                'CRISTINA SPA FOTOS_23.jpg',
+                'CRISTINA SPA FOTOS_24.jpg',
+                'CRISTINA SPA FOTOS_25.jpg',
+                'CRISTINA SPA FOTOS_26.jpg',
+                'CRISTINA SPA FOTOS_27.jpg',
+                'CRISTINA SPA FOTOS_28.jpg',
+            ],
+        ],
+        [
+            'id'      => 'novia',
+            'nombre'  => 'Novia',
+            'overlay' => 'Peinado Nupcial',
+            'fotos'   => ['novia_1.jpg', 'novia_2.jpg', 'novia_3.jpg'],
+        ],
+        [
+            'id'      => 'spa',
+            'nombre'  => 'Spa',
+            'overlay' => 'Masaje Relajante',
+            'fotos'   => ['spa_1.jpg', 'spa_2.jpg', 'spa_3.jpg'],
+        ],
+        [
+            'id'      => 'corte',
+            'nombre'  => 'Corte',
+            'overlay' => 'Corte Moderno',
+            'fotos'   => [
+                'CRISTINA SPA FOTOS_2.jpg',
+                'CRISTINA SPA FOTOS_29.jpg',
+                'CRISTINA SPA FOTOS_3.jpg',
+                'CRISTINA SPA FOTOS_30.jpg',
+                'CRISTINA SPA FOTOS_31.jpg',
+                'CRISTINA SPA FOTOS_4.jpg',
+            ],
+        ],
+        [
+            'id'      => 'manicura',
+            'nombre'  => 'Manicura',
+            'overlay' => 'Nail Art Premium',
+            'fotos'   => ['manicura_1.jpg', 'manicura_2.jpg', 'manicura_3.jpg'],
+        ],
+        [
+            'id'      => 'quinceañera',
+            'nombre'  => 'Quinceañera',
+            'overlay' => 'Look de Gala',
+            'fotos'   => [
+                'CRISTINA SPA FOTOS_22.jpg',
+                'CRISTINA SPA FOTOS_32.jpg',
+                'CRISTINA SPA FOTOS_33.jpg',
+                'CRISTINA SPA FOTOS_34.jpg',
+                'CRISTINA SPA FOTOS_35.jpg',
+                'CRISTINA SPA FOTOS_36.jpg',
+                'CRISTINA SPA FOTOS_37.jpg',
+                'CRISTINA SPA FOTOS_38.jpg',
+                'CRISTINA SPA FOTOS_39.jpg',
+                'CRISTINA SPA FOTOS_40.jpg',
+            ],
+        ],
+    ];
+    @endphp
+
     <!-- Gallery Section -->
     <section id="galeria" class="gallery">
         <div class="container">
@@ -625,57 +691,36 @@
                 <p>Una muestra de las transformaciones y momentos especiales que creamos cada día.</p>
             </div>
             <div class="gallery-grid">
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Colorimetría</span>
-                    </div>
+                @foreach($categorias as $cat)
+                @php
+                    $urls = array_map(
+                        fn($f) => asset('images/galeria/' . $cat['id'] . '/' . rawurlencode($f)),
+                        $cat['fotos']
+                    );
+                @endphp
+                <div class="gallery-item"
+                     data-title="{{ $cat['nombre'] }}"
+                     data-images="{{ json_encode(array_values($urls), JSON_UNESCAPED_SLASHES) }}">
+                    <img src="{{ $urls[0] }}" alt="{{ $cat['nombre'] }}" loading="lazy">
                     <div class="gallery-overlay">
-                        <span>Balayage Premium</span>
+                        <span>{{ $cat['overlay'] }}</span>
+                        <span class="gallery-count">{{ count($cat['fotos']) }} foto{{ count($cat['fotos']) > 1 ? 's' : '' }}</span>
                     </div>
                 </div>
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Novia</span>
-                    </div>
-                    <div class="gallery-overlay">
-                        <span>Peinado Nupcial</span>
-                    </div>
-                </div>
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Spa</span>
-                    </div>
-                    <div class="gallery-overlay">
-                        <span>Masaje Relajante</span>
-                    </div>
-                </div>
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Corte</span>
-                    </div>
-                    <div class="gallery-overlay">
-                        <span>Corte Moderno</span>
-                    </div>
-                </div>
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Manicura</span>
-                    </div>
-                    <div class="gallery-overlay">
-                        <span>Nail Art Premium</span>
-                    </div>
-                </div>
-                <div class="gallery-item">
-                    <div class="gallery-placeholder">
-                        <span>Quinceañera</span>
-                    </div>
-                    <div class="gallery-overlay">
-                        <span>Look de Gala</span>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
+
+    <!-- Gallery Panel Mosaico -->
+    <div id="gallery-panel" class="gallery-panel" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="gallery-panel-header">
+            <span class="gallery-panel-label">Nuestro Trabajo</span>
+            <h3 id="gp-title"></h3>
+            <button class="gallery-panel-close" id="gp-close" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="gallery-panel-mosaic" id="gp-mosaic"></div>
+    </div>
 
     <!-- Contact Section -->
     <section id="contacto" class="contact">
@@ -773,6 +818,48 @@
     </section>
 
     <!-- WhatsApp Floating Button -->
+    <script>
+    (function () {
+        var panel   = document.getElementById('gallery-panel');
+        var gpTitle = document.getElementById('gp-title');
+        var gpMosaic = document.getElementById('gp-mosaic');
+
+        function openPanel(images, title) {
+            gpTitle.textContent = title;
+            gpMosaic.innerHTML = '';
+            images.forEach(function (src) {
+                var img = document.createElement('img');
+                img.src = src;
+                img.alt = title;
+                img.loading = 'lazy';
+                gpMosaic.appendChild(img);
+            });
+            panel.classList.add('active');
+            panel.setAttribute('aria-hidden', 'false');
+            panel.scrollTop = 0;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePanel() {
+            panel.classList.remove('active');
+            panel.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('gp-close').addEventListener('click', closePanel);
+        panel.addEventListener('click', function (e) { if (e.target === panel) closePanel(); });
+        document.addEventListener('keydown', function (e) {
+            if (panel.classList.contains('active') && e.key === 'Escape') closePanel();
+        });
+
+        document.querySelectorAll('.gallery-item[data-images]').forEach(function (item) {
+            item.addEventListener('click', function () {
+                openPanel(JSON.parse(this.dataset.images), this.dataset.title);
+            });
+        });
+    })();
+    </script>
+
     <a href="https://wa.me/59122906962?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa"
         class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat en WhatsApp">
         <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">

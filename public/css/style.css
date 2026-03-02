@@ -1011,8 +1011,10 @@ h3, h4 {
     bottom: 0;
     background: linear-gradient(180deg, transparent 0%, rgba(26, 26, 26, 0.8) 100%);
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
     padding: 2rem;
     opacity: 0;
     transition: var(--transition);
@@ -1032,6 +1034,12 @@ h3, h4 {
     font-size: 0.9rem;
     letter-spacing: 2px;
     text-transform: uppercase;
+}
+
+.gallery-count {
+    font-size: 0.7rem !important;
+    letter-spacing: 1.5px !important;
+    opacity: 0.75;
 }
 
 /* ===== Contact Section ===== */
@@ -1910,5 +1918,107 @@ h3, h4 {
     .price-list-item {
         font-size: 0.88rem;
     }
+}
+
+/* ===== Gallery Panel Mosaico ===== */
+.gallery-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.97);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow-y: auto;
+}
+
+.gallery-panel.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gallery-panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2.5rem;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gallery-panel-label {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold, #c9a96e);
+    white-space: nowrap;
+}
+
+.gallery-panel-header h3 {
+    flex: 1;
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--white);
+}
+
+.gallery-panel-close {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.6rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    line-height: 1;
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.gallery-panel-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--white);
+}
+
+.gallery-panel-mosaic {
+    columns: 3;
+    column-gap: 0.6rem;
+    padding: 1.5rem 2.5rem 3rem;
+}
+
+.gallery-panel-mosaic img {
+    width: 100%;
+    display: block;
+    margin-bottom: 0.6rem;
+    break-inside: avoid;
+    border-radius: 2px;
+    cursor: zoom-in;
+    transition: opacity 0.25s, transform 0.25s;
+}
+
+.gallery-panel-mosaic img:hover {
+    opacity: 0.88;
+    transform: scale(0.985);
+}
+
+@media (max-width: 900px) {
+    .gallery-panel-mosaic { columns: 2; }
+}
+
+@media (max-width: 540px) {
+    .gallery-panel-mosaic { columns: 1; padding: 1rem; }
+    .gallery-panel-header { padding: 1rem 1.25rem; }
+    .gallery-panel-header h3 { font-size: 1.1rem; letter-spacing: 2px; }
 }
 
