@@ -29,6 +29,27 @@
             <div class="stat-value">${{ number_format($ingresosMes ?? 0, 0) }}</div>
             <div class="stat-label">Ingresos del Mes</div>
         </div>
+
+        @auth
+            @if(auth()->user()->hasRole('admin'))
+                <a href="{{ route('admin.inventario.index') }}" class="stat-card" style="text-decoration:none; color:inherit;">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value">{{ $totalProductos ?? 0 }}</div>
+                    <div class="stat-label">Productos en Inventario</div>
+                </a>
+
+                <a href="{{ route('admin.inventario.index') }}" class="stat-card" style="text-decoration:none; color:inherit;">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value">
+                        {{ $productosStockBajo ?? 0 }}
+                        @if (($productosStockBajo ?? 0) > 0)
+                            <span class="badge badge-danger" style="font-size:0.7rem; vertical-align:middle;">BAJO</span>
+                        @endif
+                    </div>
+                    <div class="stat-label">Stock Bajo</div>
+                </a>
+            @endif
+        @endauth
     </div>
 
     <!-- Recent Appointments -->

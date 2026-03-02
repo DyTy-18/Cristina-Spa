@@ -69,6 +69,14 @@
                         <span>Usuarios</span>
                     </a>
                 @endif
+
+                @if (auth()->user()->hasRole('admin'))
+                    <a href="{{ route('admin.inventario.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📦</span>
+                        <span>Inventario</span>
+                    </a>
+                @endif
             </nav>
 
             <div class="sidebar-footer">

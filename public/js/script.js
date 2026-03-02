@@ -257,3 +257,21 @@ document.addEventListener('DOMContentLoaded', function() {
         statsObserver.observe(aboutStats);
     }
 });
+
+/* ===== Accordion — Servicios ===== */
+document.querySelectorAll('.accordion-header').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var item = btn.closest('.accordion-item');
+        var isActive = item.classList.contains('active');
+
+        // Cerrar todos los items abiertos
+        document.querySelectorAll('.accordion-item.active').forEach(function(openItem) {
+            openItem.classList.remove('active');
+        });
+
+        // Abrir el clickeado (si no estaba ya abierto)
+        if (!isActive) {
+            item.classList.add('active');
+        }
+    });
+});

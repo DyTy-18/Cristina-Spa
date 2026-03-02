@@ -40,16 +40,21 @@ html {
 }
 
 body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Nunito', sans-serif;
     color: var(--text-dark);
     background-color: var(--white);
     line-height: 1.6;
     overflow-x: hidden;
 }
 
-h1, h2, h3, h4 {
-    font-family: 'Cormorant Garamond', serif;
+h1, h2 {
+    font-family: 'Great Vibes', cursive;
     font-weight: 400;
+}
+
+h3, h4 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
 }
 
 .container {
@@ -95,6 +100,19 @@ h1, h2, h3, h4 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.logo a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 52px;
+    width: auto;
+    display: block;
+    object-fit: contain;
 }
 
 .nav-menu {
@@ -180,7 +198,7 @@ h1, h2, h3, h4 {
     text-transform: uppercase;
     padding: 0.5rem 1rem;
     cursor: pointer;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Nunito', sans-serif;
     transition: var(--transition);
 }
 
@@ -266,9 +284,9 @@ h1, h2, h3, h4 {
 }
 
 .hero-title {
-    font-size: 5.5rem;
-    font-weight: 300;
-    letter-spacing: 12px;
+    font-size: 6.5rem;
+    font-weight: 400;
+    letter-spacing: 2px;
     margin-bottom: 1.5rem;
     color: var(--white);
     text-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
@@ -408,9 +426,9 @@ h1, h2, h3, h4 {
 }
 
 .section-title {
-    font-size: 3rem;
-    font-weight: 300;
-    letter-spacing: 5px;
+    font-size: 3.5rem;
+    font-weight: 400;
+    letter-spacing: 1px;
     margin-bottom: 2rem;
     color: var(--dark-luxury);
     position: relative;
@@ -452,7 +470,7 @@ h1, h2, h3, h4 {
 }
 
 .stat-number {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Great Vibes', cursive;
     font-size: 3.5rem;
     font-weight: 300;
     color: var(--gold-primary);
@@ -718,7 +736,7 @@ h1, h2, h3, h4 {
 }
 
 .package-price {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Great Vibes', cursive;
     font-size: 2.5rem;
     color: var(--gold-primary);
     margin-bottom: 1.5rem;
@@ -735,7 +753,7 @@ h1, h2, h3, h4 {
     text-transform: uppercase;
     cursor: pointer;
     transition: var(--transition);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Nunito', sans-serif;
 }
 
 .package-cta:hover {
@@ -878,7 +896,7 @@ h1, h2, h3, h4 {
     font-size: 4rem;
     color: var(--gold-primary);
     opacity: 0.3;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Great Vibes', cursive;
     line-height: 1;
 }
 
@@ -1100,7 +1118,7 @@ h1, h2, h3, h4 {
     padding: 1rem 1.2rem;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: var(--white);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Nunito', sans-serif;
     font-size: 0.95rem;
     transition: var(--transition);
     font-weight: 300;
@@ -1134,7 +1152,7 @@ h1, h2, h3, h4 {
     letter-spacing: 2px;
     text-transform: uppercase;
     transition: var(--transition);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Nunito', sans-serif;
     font-weight: 500;
 }
 
@@ -1440,8 +1458,8 @@ h1, h2, h3, h4 {
     }
 
     .hero-title {
-        font-size: 3rem;
-        letter-spacing: 5px;
+        font-size: 3.5rem;
+        letter-spacing: 1px;
     }
     
     .hero-subtitle {
@@ -1459,7 +1477,8 @@ h1, h2, h3, h4 {
     }
 
     .section-title {
-        font-size: 2.2rem;
+        font-size: 2.6rem;
+        letter-spacing: 0;
     }
 
     .services-grid {
@@ -1516,8 +1535,8 @@ h1, h2, h3, h4 {
 
 @media (max-width: 480px) {
     .hero-title {
-        font-size: 2.5rem;
-        letter-spacing: 3px;
+        font-size: 2.8rem;
+        letter-spacing: 1px;
     }
 
     .hero-subtitle {
@@ -1535,8 +1554,8 @@ h1, h2, h3, h4 {
     }
     
     .section-title {
-        font-size: 1.8rem;
-        letter-spacing: 3px;
+        font-size: 2rem;
+        letter-spacing: 0;
     }
     
     .gallery-grid {
@@ -1691,6 +1710,205 @@ h1, h2, h3, h4 {
         width: 35px;
         height: 35px;
         font-size: 1.5rem;
+    }
+}
+
+/* ===== Accordion — Servicios con Precios ===== */
+.accordion {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.accordion-item {
+    border-bottom: 1px solid var(--gold-light);
+    background: var(--white);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark-luxury);
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+    gap: 1rem;
+}
+
+.accordion-header:hover {
+    background: var(--champagne);
+    color: var(--gold-dark);
+}
+
+.accordion-item.active .accordion-header {
+    background: var(--champagne);
+    color: var(--gold-dark);
+}
+
+.accordion-icon {
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--gold-primary);
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+}
+
+.accordion-item.active .accordion-icon {
+    transform: rotate(45deg);
+}
+
+.accordion-content {
+    display: none;
+    padding: 0 2rem 2rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.accordion-item.active .accordion-content {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Price list — servicios de precio fijo */
+.price-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.price-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px dashed var(--gold-light);
+    gap: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.price-list-item:last-child {
+    border-bottom: none;
+}
+
+.price-tag {
+    font-weight: 700;
+    color: var(--gold-dark);
+    white-space: nowrap;
+    font-size: 0.95rem;
+}
+
+/* Price sections inside accordion */
+.price-list-section {
+    margin-bottom: 1.5rem;
+}
+
+.price-list-section:last-child {
+    margin-bottom: 0;
+}
+
+.price-subtitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold-dark);
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--gold-light);
+}
+
+/* Note / disclaimer text */
+.price-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 1rem;
+}
+
+/* Price tables — para precios por largo de cabello */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0.5rem;
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 480px;
+}
+
+.price-table th {
+    background: var(--gold-primary);
+    color: var(--white);
+    padding: 0.65rem 0.9rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.price-table th:first-child {
+    text-align: left;
+}
+
+.price-table td {
+    padding: 0.6rem 0.9rem;
+    text-align: center;
+    border-bottom: 1px solid #f0e8d8;
+    color: var(--text-dark);
+}
+
+.price-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+.price-table tbody tr:nth-child(even) {
+    background: var(--champagne);
+}
+
+.price-table tbody tr:hover {
+    background: #f0e6d0;
+}
+
+.price-table small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+/* Responsive accordion */
+@media (max-width: 768px) {
+    .accordion-header {
+        padding: 1.1rem 1.2rem;
+        font-size: 1rem;
+    }
+
+    .accordion-content {
+        padding: 0 1.2rem 1.5rem;
+    }
+
+    .price-list-item {
+        font-size: 0.88rem;
     }
 }
 

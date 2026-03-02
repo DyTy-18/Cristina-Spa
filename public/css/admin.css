@@ -518,6 +518,64 @@ h1, h2, h3, h4 {
     gap: 0.5rem;
 }
 
+/* ===== Search / Filter Bar ===== */
+.table-filter {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: var(--light-bg);
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.table-filter .search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    transition: var(--transition);
+}
+
+.table-filter .search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.table-filter .filter-date {
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    transition: var(--transition);
+    color: var(--text-dark);
+}
+
+.table-filter .filter-date:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.table-filter label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.table-filter .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 992px) {
     .sidebar {

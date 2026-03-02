@@ -88,64 +88,278 @@
                 <p>Descubre nuestra amplia gama de servicios diseñados para realzar tu belleza natural y proporcionarte
                     momentos de relajación absoluta.</p>
             </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-image">
-                        <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Peluquería">
+
+            <div class="accordion">
+
+                <!-- 1. Peluquería -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>✂️ Peluquería</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="price-list-section">
+                            <h4 class="price-subtitle">Cortes</h4>
+                            <ul class="price-list">
+                                <li class="price-list-item"><span>Corte de Mujer</span><span class="price-tag">250 Bs.</span></li>
+                                <li class="price-list-item"><span>Corte de Varón</span><span class="price-tag">100 Bs.</span></li>
+                                <li class="price-list-item"><span>Corte de Flequillo</span><span class="price-tag">80 Bs.</span></li>
+                            </ul>
+                        </div>
+                        <div class="price-list-section">
+                            <h4 class="price-subtitle">Peinados — por largo de cabello</h4>
+                            <div class="table-responsive">
+                                <table class="price-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Servicio</th>
+                                            <th>Corto</th>
+                                            <th>Mediano<br><small>(Hasta Hombros)</small></th>
+                                            <th>Largo<br><small>(Hasta Media Espalda)</small></th>
+                                            <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Lavado</td><td>80 Bs.</td><td>80 Bs.</td><td>80 Bs.</td><td>80 Bs.</td></tr>
+                                        <tr><td>Planchado o Bucles</td><td>70 Bs.</td><td>80 Bs.</td><td>90 Bs.</td><td>100 Bs.</td></tr>
+                                        <tr><td>Semi-recogido</td><td>100 Bs.</td><td>120 Bs.</td><td>150 Bs.</td><td>160 Bs.</td></tr>
+                                        <tr><td>Recogido</td><td>150 Bs.</td><td>150 Bs.</td><td>200 Bs.</td><td>200 Bs.</td></tr>
+                                        <tr><td>Peinado de Novia</td><td>160 Bs.</td><td>180 Bs.</td><td>200 Bs.</td><td>200 Bs.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <h3>Peluquería</h3>
-                    <p>Cortes de tendencia y colorimetría profesional con productos premium.</p>
-                    <ul class="service-features">
-                        <li>Cortes personalizados</li>
-                        <li>Colorimetría L'Oréal</li>
-                        <li>Balayage & Matizados</li>
-                        <li>Tratamientos capilares</li>
-                    </ul>
                 </div>
-                <div class="service-card">
-                    <div class="service-image">
-                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Spa & Bienestar">
+
+                <!-- 2. Coloración -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>🎨 Coloración</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="table-responsive">
+                            <table class="price-table">
+                                <thead>
+                                    <tr>
+                                        <th>Servicio</th>
+                                        <th>Corto</th>
+                                        <th>Mediano<br><small>(Hasta Hombros)</small></th>
+                                        <th>Largo<br><small>(Hasta Media Espalda)</small></th>
+                                        <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Retoque de Raíz</td><td>310 Bs. <small>(1cm)</small></td><td>350 Bs. <small>(3cm)</small></td><td>—</td><td>—</td></tr>
+                                    <tr><td>Matizado con masque Kérastase</td><td>180 Bs.</td><td>200 Bs.</td><td>250 Bs.</td><td>270 Bs.</td></tr>
+                                    <tr><td>Matizado Tono Sobre Tono</td><td>250 Bs.</td><td>250 Bs.</td><td>300 Bs.</td><td>300 Bs.</td></tr>
+                                    <tr><td>Tiger Eye (Sin Fondo)</td><td>450 Bs.</td><td>650 Bs.</td><td>800 Bs.</td><td>950 Bs.</td></tr>
+                                    <tr><td>Baby Lights (Sin Fondo)</td><td>450 Bs.</td><td>650 Bs.</td><td>850 Bs.</td><td>950 Bs.</td></tr>
+                                    <tr><td>Balayage Platinado</td><td>750 Bs.</td><td>950 Bs.</td><td>1.150 Bs.</td><td>1.800 Bs.</td></tr>
+                                    <tr><td>Color Global</td><td>500 Bs.</td><td>600 Bs.</td><td>700 Bs.</td><td>800 Bs.</td></tr>
+                                    <tr><td>Morena Iluminada (sin decoloración)</td><td>550 Bs.</td><td>750 Bs.</td><td>950 Bs.</td><td>1.050 Bs.</td></tr>
+                                    <tr><td>Mechas Creativas Rubias</td><td>700 Bs.</td><td>900 Bs.</td><td>1.100 Bs.</td><td>1.600 Bs.</td></tr>
+                                    <tr><td>Color de Fondo (cualquier técnica)</td><td>300 Bs.</td><td>300 Bs.</td><td>350 Bs.</td><td>350 Bs.</td></tr>
+                                    <tr><td>Metal-Detox</td><td>180 Bs.</td><td>180 Bs.</td><td>250 Bs.</td><td>250 Bs.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="price-note">* Precios previa evaluación</p>
                     </div>
-                    <h3>Spa & Bienestar</h3>
-                    <p>Experiencias relajantes que renuevan cuerpo y mente.</p>
-                    <ul class="service-features">
-                        <li>Masajes relajantes</li>
-                        <li>Masajes terapéuticos</li>
-                        <li>Tratamientos corporales</li>
-                        <li>Aromaterapia</li>
-                    </ul>
                 </div>
-                <div class="service-card">
-                    <div class="service-image">
-                        <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Estética">
+
+                <!-- 3. Alisado u Ondulación -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>💫 Alisado u Ondulación</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="table-responsive">
+                            <table class="price-table">
+                                <thead>
+                                    <tr>
+                                        <th>Servicio</th>
+                                        <th>Corto</th>
+                                        <th>Mediano<br><small>(Hasta Hombros)</small></th>
+                                        <th>Largo<br><small>(Hasta Media Espalda)</small></th>
+                                        <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Alisado Definitivo</td><td>750 Bs.</td><td>850 Bs.</td><td>1.300 Bs.</td><td>1.600 Bs.</td></tr>
+                                    <tr><td>Ondulación o Permanente</td><td>500 Bs.</td><td>600 Bs.</td><td>700 Bs.</td><td>800 Bs.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <h3>Estética</h3>
-                    <p>Cuidado profesional para manos, pies y rostro.</p>
-                    <ul class="service-features">
-                        <li>Manicura & Pedicura</li>
-                        <li>Extensiones de pestañas</li>
-                        <li>Diseño de cejas</li>
-                        <li>Depilación profesional</li>
-                    </ul>
                 </div>
-                <div class="service-card">
-                    <div class="service-image">
-                        <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Facial">
+
+                <!-- 4. Depilado con Cera -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>🌿 Depilado con Cera</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="table-responsive">
+                            <table class="price-table">
+                                <thead>
+                                    <tr>
+                                        <th>Servicio</th>
+                                        <th>Con Cera</th>
+                                        <th>Con Hilo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Facial</td><td>120 Bs.</td><td>80 Bs.</td></tr>
+                                    <tr><td>Pierna Completa</td><td>150 Bs.</td><td>—</td></tr>
+                                    <tr><td>Cuello</td><td>50 Bs.</td><td>—</td></tr>
+                                    <tr><td>Axilas</td><td>80 Bs.</td><td>—</td></tr>
+                                    <tr><td>Perfilado de Cejas</td><td>60 Bs.</td><td>30 Bs.</td></tr>
+                                    <tr><td>Bozo</td><td>40 Bs.</td><td>30 Bs.</td></tr>
+                                    <tr><td>Espalda</td><td>100 Bs.</td><td>—</td></tr>
+                                    <tr><td>Abdomen</td><td>80 Bs.</td><td>—</td></tr>
+                                    <tr><td>Brasilero</td><td>150 Bs.</td><td>—</td></tr>
+                                    <tr><td>Brazo</td><td>120 Bs.</td><td>—</td></tr>
+                                    <tr><td>Depilación Completa</td><td>500 Bs.</td><td>—</td></tr>
+                                    <tr><td>Biquini</td><td>100 Bs.</td><td>—</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <h3>Facial</h3>
-                    <p>Tratamientos faciales personalizados para una piel radiante.</p>
-                    <ul class="service-features">
-                        <li>Limpieza profunda</li>
-                        <li>Hidratación intensiva</li>
-                        <li>Anti-edad</li>
-                        <li>Revitalización</li>
-                    </ul>
                 </div>
-            </div>
+
+                <!-- 5. Maquillaje -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>💄 Maquillaje</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <ul class="price-list">
+                            <li class="price-list-item"><span>Maquillaje de Fiesta Sin Pestañas</span><span class="price-tag">150 Bs.</span></li>
+                            <li class="price-list-item"><span>Pestañas 3D / 5D / 6D</span><span class="price-tag">80 Bs.</span></li>
+                            <li class="price-list-item"><span>Cejas y Pestañas</span><span class="price-tag">120 Bs.</span></li>
+                            <li class="price-list-item"><span>Rizado de Pestañas</span><span class="price-tag">100 Bs.</span></li>
+                            <li class="price-list-item"><span>Laminado de Cejas</span><span class="price-tag">200 Bs.</span></li>
+                            <li class="price-list-item"><span>Rizado de Pestañas + Laminado de Cejas</span><span class="price-tag">Consultar</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 6. Manicura & Pedicura -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>💅 Manicura & Pedicura</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <ul class="price-list">
+                            <li class="price-list-item"><span>Kit Manicura</span><span class="price-tag">60 Bs.</span></li>
+                            <li class="price-list-item"><span>Pedicura</span><span class="price-tag">60 Bs.</span></li>
+                            <li class="price-list-item"><span>Kit de Pedicura</span><span class="price-tag">80 Bs.</span></li>
+                            <li class="price-list-item"><span>Extensiones de Uñas</span><span class="price-tag">80 Bs.</span></li>
+                            <li class="price-list-item"><span>Esmaltado Normal</span><span class="price-tag">30 Bs.</span></li>
+                            <li class="price-list-item"><span>Esmaltado Normal con Diseños</span><span class="price-tag">50 Bs.</span></li>
+                            <li class="price-list-item"><span>Pintado en Gel</span><span class="price-tag">120 Bs.</span></li>
+                            <li class="price-list-item"><span>Forrado de Uñas — Técnica Dipping</span><span class="price-tag">80 Bs.</span></li>
+                            <li class="price-list-item"><span>Forrado de Acrílico con Tips</span><span class="price-tag">160 Bs.</span></li>
+                            <li class="price-list-item"><span>Uñas Esculpidas con Acrílico</span><span class="price-tag">200 Bs.</span></li>
+                            <li class="price-list-item"><span>Técnica Soft Gel</span><span class="price-tag">200 Bs.</span></li>
+                        </ul>
+                        <p class="price-note">* El precio varía de acuerdo al largo y al diseño</p>
+                    </div>
+                </div>
+
+                <!-- 7. Spa -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>🧖 Spa</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="price-list-section">
+                            <h4 class="price-subtitle">Limpiezas</h4>
+                            <ul class="price-list">
+                                <li class="price-list-item"><span>Limpieza Facial</span><span class="price-tag">150 Bs.</span></li>
+                                <li class="price-list-item"><span>Limpieza con Micro-Dermo Abrasión</span><span class="price-tag">250 Bs.</span></li>
+                            </ul>
+                        </div>
+                        <div class="price-list-section">
+                            <h4 class="price-subtitle">Masajes</h4>
+                            <ul class="price-list">
+                                <li class="price-list-item"><span>Masaje Relajante</span><span class="price-tag">150 Bs.</span></li>
+                                <li class="price-list-item"><span>Exfoliación Corporal</span><span class="price-tag">180 Bs.</span></li>
+                                <li class="price-list-item"><span>Envolvimiento Corporal</span><span class="price-tag">180 Bs.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. Tratamientos Capilares -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>💎 Tratamientos Capilares</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <ul class="price-list">
+                            <li class="price-list-item"><span>Tratamiento de Lujo</span><span class="price-tag">650 Bs.</span></li>
+                            <li class="price-list-item"><span>Thermo Blindaje Capilar</span><span class="price-tag">500 Bs.</span></li>
+                            <li class="price-list-item"><span>Tratamiento Nutrición Ampolla Kérastase</span><span class="price-tag">350 Bs.</span></li>
+                            <li class="price-list-item"><span>Tratamiento 24 Kilates, Aurora Botania</span><span class="price-tag">350 Bs.</span></li>
+                            <li class="price-list-item"><span>Tratamiento Express Intenso (Shampoo + Mascarilla)</span><span class="price-tag">200 Bs.</span></li>
+                            <li class="price-list-item"><span>Tratamiento Essencial (Shampoo + Acondicionador)</span><span class="price-tag">150 Bs.</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 9. Productos Kérastase -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>🛍️ Productos Kérastase</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <ul class="price-list">
+                            <li class="price-list-item"><span>Shampoo Bain</span><span class="price-tag">420 Bs.</span></li>
+                            <li class="price-list-item"><span>Bain Premiere</span><span class="price-tag">455 Bs.</span></li>
+                            <li class="price-list-item"><span>Bain Chronologiste</span><span class="price-tag">495 Bs.</span></li>
+                            <li class="price-list-item"><span>Fondant</span><span class="price-tag">510 Bs.</span></li>
+                            <li class="price-list-item"><span>Fondant Premiere</span><span class="price-tag">560 Bs.</span></li>
+                            <li class="price-list-item"><span>Máscara</span><span class="price-tag">720 Bs.</span></li>
+                            <li class="price-list-item"><span>Máscara Premiere</span><span class="price-tag">790 Bs.</span></li>
+                            <li class="price-list-item"><span>Máscara Premiere Chronologiste</span><span class="price-tag">820 Bs.</span></li>
+                            <li class="price-list-item"><span>Elixir Ultimate</span><span class="price-tag">755 Bs.</span></li>
+                            <li class="price-list-item"><span>Texturizantes</span><span class="price-tag">710 Bs.</span></li>
+                            <li class="price-list-item"><span>Light Serum</span><span class="price-tag">1.030 Bs.</span></li>
+                            <li class="price-list-item"><span>Cure</span><span class="price-tag">1.260 Bs.</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 10. Productos L'Oréal -->
+                <div class="accordion-item">
+                    <button class="accordion-header">
+                        <span>🛍️ Productos L'Oréal — Serie Expert</span>
+                        <span class="accordion-icon">+</span>
+                    </button>
+                    <div class="accordion-content">
+                        <ul class="price-list">
+                            <li class="price-list-item"><span>Shampoo 300 ml</span><span class="price-tag">315 Bs.</span></li>
+                            <li class="price-list-item"><span>Shampoo Absolut Repair Molecular 300 ml</span><span class="price-tag">340 Bs.</span></li>
+                            <li class="price-list-item"><span>Acondicionador 200 ml</span><span class="price-tag">345 Bs.</span></li>
+                            <li class="price-list-item"><span>Máscara 250 ml</span><span class="price-tag">389 Bs.</span></li>
+                            <li class="price-list-item"><span>Máscara Absolut Repair Molecular 250 ml</span><span class="price-tag">430 Bs.</span></li>
+                            <li class="price-list-item"><span>Spray 10 en 1 — 190 ml</span><span class="price-tag">350 Bs.</span></li>
+                            <li class="price-list-item"><span>Aceite 10 en 1 — 190 ml</span><span class="price-tag">360 Bs.</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div><!-- /.accordion -->
         </div>
     </section>
 
@@ -227,15 +441,7 @@
                     <ul class="branch-details">
                         <li>
                             <span>🕒</span>
-                            <span>Lun - Vie: 8:00 - 22:00</span>
-                        </li>
-                        <li>
-                            <span>🕒</span>
-                            <span>Sáb: 9:00 - 20:00</span>
-                        </li>
-                        <li>
-                            <span>🕒</span>
-                            <span>Dom: 9:00 - 15:00</span>
+                            <span>Lun - Sáb: 9:00 - 20:00</span>
                         </li>
                     </ul>
                     <div class="branch-phone">
@@ -300,7 +506,7 @@
                     <ul class="branch-details">
                         <li>
                             <span>🕒</span>
-                            <span>Mar - Sáb: 8:30 - 20:30</span>
+                            <span>Mar - Sáb: 9:00 - 20:00</span>
                         </li>
                     </ul>
                     <div class="branch-phone">
@@ -314,19 +520,14 @@
                     </a>
                 </div>
 
-                <!-- Calacoto C.19 -->
+                <!-- Calacoto -->
                 <div class="branch-card">
                     <div class="branch-zone">Zona Sur</div>
                     <h3>Calacoto</h3>
-                    <span class="branch-location">Calle 19</span>
                     <ul class="branch-details">
                         <li>
                             <span>🕒</span>
                             <span>Lun - Sáb: 9:00 - 20:00</span>
-                        </li>
-                        <li>
-                            <span>🕒</span>
-                            <span>Dom: 9:00 - 15:00</span>
                         </li>
                     </ul>
                     <div class="branch-phone">
@@ -334,34 +535,25 @@
                             📞 2770838
                         </a>
                     </div>
-                    <a href="https://maps.google.com/?q=Calacoto+Calle+19+La+Paz+Bolivia" target="_blank"
+                    <a href="https://maps.google.com/?q=Calacoto+La+Paz+Bolivia" target="_blank"
                         class="branch-map-link">
                         📍 Ver en Google Maps
                     </a>
                 </div>
 
-                <!-- Calacoto C.13 -->
+                <!-- Achumani -->
                 <div class="branch-card">
                     <div class="branch-zone">Zona Sur</div>
-                    <h3>Calacoto</h3>
-                    <span class="branch-location">Calle 13</span>
+                    <h3>Achumani</h3>
                     <ul class="branch-details">
                         <li>
                             <span>🕒</span>
-                            <span>Lun: 14:00 - 21:00</span>
-                        </li>
-                        <li>
-                            <span>🕒</span>
-                            <span>Mar - Sáb: 9:00 - 21:00</span>
+                            <span>Mar - Sáb: 9:00 - 20:00</span>
                         </li>
                     </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122799352">
-                            📞 2799352
-                        </a>
-                    </div>
-                    <a href="https://maps.google.com/?q=Calacoto+Calle+13+La+Paz+Bolivia" target="_blank"
+                    <a href="https://maps.google.com/?q=Achumani+La+Paz+Bolivia" target="_blank"
                         class="branch-map-link">
+                        📍 Ver en Google Maps
                     </a>
                 </div>
             </div>

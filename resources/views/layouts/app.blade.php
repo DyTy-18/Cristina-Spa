@@ -17,18 +17,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@200;300;400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
 
-<body>
+<body>public\images\logos\logo-cristina_spa.png
     <header class="header">
         <nav class="nav">
             <div class="logo">
-                <h1>Cristina Spa</h1>
+                <a href="#inicio">
+                    <img src="{{ asset('images/logos/logo-cristina_spa_black.png') }}" alt="Cristina Spa" class="logo-img">
+                </a>
             </div>
             <ul class="nav-menu">
                 <li><a href="#inicio">Inicio</a></li>
