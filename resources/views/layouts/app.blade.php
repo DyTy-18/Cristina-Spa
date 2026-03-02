@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
 
-<body>public\images\logos\logo-cristina_spa.png
+<body>
     <header class="header">
         <nav class="nav">
             <div class="logo">
