@@ -456,7 +456,7 @@
                 </div>
 
                 <!-- Mega Center -->
-                <div class="branch-card">
+                {{-- <div class="branch-card">
                     <div class="branch-zone">Zona Sur</div>
                     <h3>Mega Center</h3>
                     <ul class="branch-details">
@@ -474,7 +474,7 @@
                         class="branch-map-link">
                         📍 Ver en Google Maps
                     </a>
-                </div>
+                </div> --}}
 
                 <!-- Obrajes -->
                 <div class="branch-card">
