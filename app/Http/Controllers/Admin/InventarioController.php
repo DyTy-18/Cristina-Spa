@@ -261,14 +261,18 @@ class InventarioController extends Controller
                 DB::raw('(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras)
                        - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras) AS stock_actual'),
                 DB::raw('(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras) AS ultima_salida'),
-                DB::raw('DATEDIFF(CURDATE(),(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras)) AS dias_sin_salida'),
             ])
             ->orderBy('p.nombre');
 
         if ($marca) $query->where('p.marca', $marca);
         if ($linea)  $query->where('p.linea', $linea);
 
-        $productos = $query->get();
+        $productos = $query->get()->map(function ($p) {
+            $p->dias_sin_salida = $p->ultima_salida
+                ? now()->diffInDays(\Carbon\Carbon::parse($p->ultima_salida))
+                : null;
+            return $p;
+        });
 
         $topEntradas   = $productos->sortByDesc('total_entradas')->where('total_entradas', '>', 0)->take(10)->values();
         $topSalidas    = $productos->sortByDesc('total_salidas')->where('total_salidas', '>', 0)->take(10)->values();
@@ -277,7 +281,8 @@ class InventarioController extends Controller
 
         [$marcas, $lineas] = $this->filterOptions($marca);
 
-        $añoMin = (int) (DB::table('entradas')->selectRaw('YEAR(MIN(fecha)) as y')->value('y') ?? now()->year);
+        $minFecha = DB::table('entradas')->min('fecha');
+        $añoMin = $minFecha ? (int) substr($minFecha, 0, 4) : now()->year;
         $años   = range($añoMin, now()->year + 1);
 
         // ── Sugerencias de compra basadas en histórico de la misma temporada ──
@@ -303,7 +308,7 @@ class InventarioController extends Controller
 
                 // Filtro por marca/linea si aplica
                 $histQuery = DB::table('salidas as s')
-                    ->selectRaw('s.codigo_barras, SUM(s.unidades) as hist_total, COUNT(DISTINCT YEAR(s.fecha)) as hist_años')
+                    ->selectRaw("s.codigo_barras, SUM(s.unidades) as hist_total, COUNT(DISTINCT substr(s.fecha, 1, 4)) as hist_años")
                     ->whereRaw("({$condiciones})")
                     ->groupBy('s.codigo_barras');
 

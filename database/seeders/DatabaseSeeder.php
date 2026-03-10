@@ -22,12 +22,16 @@ class DatabaseSeeder extends Seeder
             ClienteEjemploSeeder::class,
         ]);
 
-        // Crear usuario de prueba con rol admin
-        $user = User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@cristinaspa.com',
-            'password' => bcrypt('password'),
-        ]);
-        $user->assignRole('admin');
+        // Crear usuario admin (o recuperar si ya existe)
+        $user = User::firstOrCreate(
+            ['email' => 'admin@cristinaspa.com'],
+            [
+                'name'     => 'Admin',
+                'password' => bcrypt('password'),
+            ]
+        );
+        if (!$user->hasRole('admin')) {
+            $user->assignRole('admin');
+        }
     }
 }

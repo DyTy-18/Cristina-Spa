@@ -86,7 +86,7 @@ class ServiciosSeeder extends Seeder
         ];
 
         foreach ($servicios as $servicio) {
-            Servicio::create($servicio);
+            Servicio::firstOrCreate(['nombre' => $servicio['nombre']], $servicio);
         }
     }
 }

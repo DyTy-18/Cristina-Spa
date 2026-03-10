@@ -16,16 +16,18 @@ class ClienteEjemploSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear la cliente
-        $cliente = Cliente::create([
-            'nombre'           => 'Valentina',
-            'apellido'         => 'Salinas',
-            'email'            => 'valentina.salinas@gmail.com',
-            'telefono'         => '71234567',
-            'fecha_nacimiento' => '1991-04-12',
-            'direccion'        => 'Zona Sur, La Paz',
-            'notas'            => 'Prefiere productos sin sulfatos. Alérgica al amoniaco. Siempre pide café antes de empezar.',
-        ]);
+        // Crear la cliente (o recuperar si ya existe)
+        $cliente = Cliente::firstOrCreate(
+            ['email' => 'valentina.salinas@gmail.com'],
+            [
+                'nombre'           => 'Valentina',
+                'apellido'         => 'Salinas',
+                'telefono'         => '71234567',
+                'fecha_nacimiento' => '1991-04-12',
+                'direccion'        => 'Zona Sur, La Paz',
+                'notas'            => 'Prefiere productos sin sulfatos. Alérgica al amoniaco. Siempre pide café antes de empezar.',
+            ]
+        );
 
         // Obtener IDs de servicios por nombre
         $servicios = Servicio::pluck('id', 'nombre');
@@ -162,20 +164,23 @@ class ClienteEjemploSeeder extends Seeder
             ],
         ];
 
-        foreach ($visitas as $v) {
-            $servicioId = $servicios[$v['servicio']] ?? null;
-            if (!$servicioId) continue;
+        // Solo insertar citas si la cliente fue recién creada (evitar duplicados)
+        if ($cliente->wasRecentlyCreated) {
+            foreach ($visitas as $v) {
+                $servicioId = $servicios[$v['servicio']] ?? null;
+                if (!$servicioId) continue;
 
-            Cita::create([
-                'cliente_id'   => $cliente->id,
-                'servicio_id'  => $servicioId,
-                'empleado_id'  => null,
-                'fecha'        => $v['fecha'],
-                'hora'         => $v['hora'],
-                'estado'       => $v['estado'],
-                'precio_final' => $v['precio_final'],
-                'notas'        => $v['notas'],
-            ]);
+                Cita::create([
+                    'cliente_id'   => $cliente->id,
+                    'servicio_id'  => $servicioId,
+                    'empleado_id'  => null,
+                    'fecha'        => $v['fecha'],
+                    'hora'         => $v['hora'],
+                    'estado'       => $v['estado'],
+                    'precio_final' => $v['precio_final'],
+                    'notas'        => $v['notas'],
+                ]);
+            }
         }
     }
 }
