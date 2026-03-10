@@ -323,20 +323,41 @@
                         <span class="accordion-icon">+</span>
                     </button>
                     <div class="accordion-content">
-                        <ul class="price-list">
-                            <li class="price-list-item"><span>Shampoo Bain</span><span class="price-tag">420 Bs.</span></li>
-                            <li class="price-list-item"><span>Bain Premiere</span><span class="price-tag">455 Bs.</span></li>
-                            <li class="price-list-item"><span>Bain Chronologiste</span><span class="price-tag">495 Bs.</span></li>
-                            <li class="price-list-item"><span>Fondant</span><span class="price-tag">510 Bs.</span></li>
-                            <li class="price-list-item"><span>Fondant Premiere</span><span class="price-tag">560 Bs.</span></li>
-                            <li class="price-list-item"><span>Máscara</span><span class="price-tag">720 Bs.</span></li>
-                            <li class="price-list-item"><span>Máscara Premiere</span><span class="price-tag">790 Bs.</span></li>
-                            <li class="price-list-item"><span>Máscara Premiere Chronologiste</span><span class="price-tag">820 Bs.</span></li>
-                            <li class="price-list-item"><span>Elixir Ultimate</span><span class="price-tag">755 Bs.</span></li>
-                            <li class="price-list-item"><span>Texturizantes</span><span class="price-tag">710 Bs.</span></li>
-                            <li class="price-list-item"><span>Light Serum</span><span class="price-tag">1.030 Bs.</span></li>
-                            <li class="price-list-item"><span>Cure</span><span class="price-tag">1.260 Bs.</span></li>
-                        </ul>
+                        <div class="prod-brand-bar prod-brand-kerastase">
+                            <span class="prod-brand-name">Kérastase</span>
+                            <span class="prod-brand-sub">París · Línea Profesional</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="price-table prod-table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="prod-cat-row"><td colspan="2">Shampoos — Bains</td></tr>
+                                    <tr><td>Bain</td><td>420 Bs.</td></tr>
+                                    <tr><td>Bain Première</td><td>455 Bs.</td></tr>
+                                    <tr><td>Bain Chronologiste</td><td>495 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Acondicionadores — Fondants</td></tr>
+                                    <tr><td>Fondant</td><td>510 Bs.</td></tr>
+                                    <tr><td>Fondant Première</td><td>560 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Mascarillas</td></tr>
+                                    <tr><td>Máscara</td><td>720 Bs.</td></tr>
+                                    <tr><td>Máscara Première</td><td>790 Bs.</td></tr>
+                                    <tr><td>Máscara Chronologiste</td><td>820 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Tratamientos &amp; Finalizadores</td></tr>
+                                    <tr><td>Elixir Ultimate</td><td>755 Bs.</td></tr>
+                                    <tr><td>Texturizantes</td><td>710 Bs.</td></tr>
+                                    <tr><td>Light Serum</td><td>1.030 Bs.</td></tr>
+                                    <tr><td>Cure</td><td>1.260 Bs.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -347,15 +368,36 @@
                         <span class="accordion-icon">+</span>
                     </button>
                     <div class="accordion-content">
-                        <ul class="price-list">
-                            <li class="price-list-item"><span>Shampoo 300 ml</span><span class="price-tag">315 Bs.</span></li>
-                            <li class="price-list-item"><span>Shampoo Absolut Repair Molecular 300 ml</span><span class="price-tag">340 Bs.</span></li>
-                            <li class="price-list-item"><span>Acondicionador 200 ml</span><span class="price-tag">345 Bs.</span></li>
-                            <li class="price-list-item"><span>Máscara 250 ml</span><span class="price-tag">389 Bs.</span></li>
-                            <li class="price-list-item"><span>Máscara Absolut Repair Molecular 250 ml</span><span class="price-tag">430 Bs.</span></li>
-                            <li class="price-list-item"><span>Spray 10 en 1 — 190 ml</span><span class="price-tag">350 Bs.</span></li>
-                            <li class="price-list-item"><span>Aceite 10 en 1 — 190 ml</span><span class="price-tag">360 Bs.</span></li>
-                        </ul>
+                        <div class="prod-brand-bar prod-brand-loreal">
+                            <span class="prod-brand-name">L'Oréal Professionnel</span>
+                            <span class="prod-brand-sub">París · Serie Expert</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="price-table prod-table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="prod-cat-row"><td colspan="2">Shampoos</td></tr>
+                                    <tr><td>Shampoo — 300 ml</td><td>315 Bs.</td></tr>
+                                    <tr><td>Shampoo Absolut Repair Molecular — 300 ml</td><td>340 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Acondicionadores</td></tr>
+                                    <tr><td>Acondicionador — 200 ml</td><td>345 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Mascarillas</td></tr>
+                                    <tr><td>Máscara — 250 ml</td><td>389 Bs.</td></tr>
+                                    <tr><td>Máscara Absolut Repair Molecular — 250 ml</td><td>430 Bs.</td></tr>
+
+                                    <tr class="prod-cat-row"><td colspan="2">Tratamientos &amp; Finalizadores</td></tr>
+                                    <tr><td>Spray 10 en 1 — 190 ml</td><td>350 Bs.</td></tr>
+                                    <tr><td>Aceite 10 en 1 — 190 ml</td><td>360 Bs.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
