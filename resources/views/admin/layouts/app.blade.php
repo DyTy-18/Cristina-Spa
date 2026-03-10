@@ -32,9 +32,14 @@
 
                 @if (auth()->user()->hasAnyPermission(['ver citas', 'crear citas']))
                     <a href="{{ route('admin.citas.index') }}"
-                        class="nav-item {{ request()->routeIs('admin.citas.*') ? 'active' : '' }}">
+                        class="nav-item {{ request()->routeIs('admin.citas.index', 'admin.citas.create') ? 'active' : '' }}">
                         <span class="nav-icon">📅</span>
                         <span>Citas</span>
+                    </a>
+                    <a href="{{ route('admin.citas.calendario') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.citas.calendario') ? 'active' : '' }}">
+                        <span class="nav-icon">🗓️</span>
+                        <span>Calendario</span>
                     </a>
                 @endif
 

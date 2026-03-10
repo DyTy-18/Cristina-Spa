@@ -599,6 +599,108 @@ h3, h4 {
 }
 
 /* ===== Special Packages Section ===== */
+
+/* Tabs */
+.pkg-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+}
+
+.pkg-tab {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+    padding: 0.6rem 2rem;
+    font-size: 0.75rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.25s;
+}
+
+.pkg-tab:hover {
+    background: rgba(201, 169, 110, 0.12);
+    color: var(--gold-light);
+    border-color: rgba(201, 169, 110, 0.35);
+}
+
+.pkg-tab.active {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-primary) 100%);
+    border-color: var(--gold-primary);
+    color: var(--white);
+}
+
+/* Panels */
+.pkg-panel {
+    display: none;
+}
+
+.pkg-panel.active {
+    display: block;
+}
+
+/* Gem badge */
+.pkg-gem-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.pkg-gem-icon {
+    font-size: 1.6rem;
+    color: var(--gem);
+    line-height: 1;
+    filter: drop-shadow(0 0 6px var(--gem));
+}
+
+.pkg-gem-label {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.pkg-tier-desc {
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-size: 0.82rem !important;
+    font-style: italic;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.4 !important;
+}
+
+.pkg-price {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+    margin: 0.75rem 0 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pkg-price strong {
+    font-size: 1.5rem;
+    color: var(--gold-light);
+    font-weight: 500;
+}
+
+/* Gem-specific border accents */
+.pkg-esmeralda {
+    border-top: 2px solid #50c878 !important;
+}
+
+.pkg-rubi {
+    border-top: 2px solid var(--gold-primary) !important;
+}
+
+.pkg-diamante {
+    border-top: 2px solid #a8d8ea !important;
+}
+
 .packages {
     padding: 10rem 0;
     background: linear-gradient(135deg, var(--dark-luxury) 0%, var(--dark-secondary) 100%);
@@ -653,7 +755,7 @@ h3, h4 {
 }
 
 .package-card.featured::before {
-    content: 'MÁS POPULAR';
+    content: 'MÁS ELEGIDO';
     position: absolute;
     top: 20px;
     right: -35px;
@@ -1018,6 +1120,52 @@ h3, h4 {
     padding: 2rem;
     opacity: 0;
     transition: var(--transition);
+    z-index: 2;
+}
+
+.gallery-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2.5rem 1rem 0.85rem 1rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.58));
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.gallery-caption-label {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.55rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+
+.gallery-caption-desc {
+    color: #fff;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.gallery-watermark {
+    position: absolute;
+    bottom: 0.65rem;
+    right: 0.7rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.gallery-watermark img {
+    width: 54px;
+    height: auto;
+    opacity: 0.28;
+    filter: brightness(0) invert(1);
 }
 
 .gallery-item:hover .gallery-overlay {
@@ -1997,19 +2145,42 @@ h3, h4 {
     padding: 1.5rem 2.5rem 3rem;
 }
 
-.gallery-panel-mosaic img {
-    width: 100%;
-    display: block;
-    margin-bottom: 0.6rem;
+.mosaic-item {
+    position: relative;
+    overflow: hidden;
     break-inside: avoid;
+    margin-bottom: 0.6rem;
     border-radius: 2px;
     cursor: zoom-in;
+}
+
+.mosaic-item img {
+    width: 100%;
+    display: block;
     transition: opacity 0.25s, transform 0.25s;
 }
 
-.gallery-panel-mosaic img:hover {
+.mosaic-item:hover img {
     opacity: 0.88;
     transform: scale(0.985);
+}
+
+.mosaic-item .gallery-caption {
+    padding: 1.8rem 0.75rem 0.6rem 0.75rem;
+}
+
+.mosaic-item .gallery-caption-label {
+    font-size: 0.5rem;
+    letter-spacing: 2px;
+}
+
+.mosaic-item .gallery-caption-desc {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.mosaic-item .gallery-watermark img {
+    width: 42px;
 }
 
 @media (max-width: 900px) {

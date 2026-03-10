@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\Admin\InventarioController;
 
 // Página pública
@@ -30,14 +32,19 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/citas', function () {
         return view('admin.citas.index');
     })->name('citas.index');
-    Route::get('/citas/crear', function () {
-        return view('admin.citas.create');
-    })->name('citas.create');
+    Route::get('/citas/crear', [CitaController::class, 'create'])->name('citas.create');
+    Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');
+    Route::get('/citas/calendario', [CitaController::class, 'calendario'])->name('citas.calendario');
+    Route::get('/citas/calendario/datos', [CitaController::class, 'calendarDatos'])->name('citas.calendarDatos');
     
     // Clientes
-    Route::get('/clientes', function () {
-        return view('admin.clientes.index');
-    })->name('clientes.index');
+    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+    Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
+    Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+    Route::get('/clientes/{cliente}/historial', [ClienteController::class, 'show'])->name('clientes.show');
+    Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
+    Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
+    Route::post('/clientes/{cliente}/visita', [ClienteController::class, 'storeCita'])->name('clientes.storeCita');
     
     // Servicios
     Route::resource('servicios', \App\Http\Controllers\Admin\ServicioController::class);

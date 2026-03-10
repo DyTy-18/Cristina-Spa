@@ -9,7 +9,7 @@
         <div class="campaign-modal">
             <button class="campaign-close" aria-label="Cerrar">×</button>
             <a href="#contacto" class="campaign-link">
-                <img src="{{ asset('images/img-CAMPAÑA NUEVO LOOK PARA CADA MOMENTO.png') }}"
+                <img src="{{ asset('images/campañas/coloracion para el CRM.png') }}"
                     alt="Campaña Nuevo Look Para Cada Momento - Cristina Spa" class="campaign-image">
             </a>
         </div>
@@ -62,7 +62,7 @@
                             <span class="stat-label">Años de Experiencia</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">6</span>
+                            <span class="stat-number">3</span>
                             <span class="stat-label">Sucursales</span>
                         </div>
                         <div class="stat-item">
@@ -366,62 +366,205 @@
     <!-- Special Packages Section -->
     <section class="packages">
         <div class="container">
-            <div class="services-intro" style="margin-bottom: 4rem;">
+            <div class="services-intro" style="margin-bottom: 1.5rem;">
                 <span class="section-label">Paquetes Especiales</span>
-                <h2 class="section-title section-title-center">Momentos Inolvidables</h2>
-                <p style="color: rgba(255,255,255,0.7);">Diseñados para tus eventos más importantes. Cada paquete incluye
-                    atención personalizada y productos de la más alta calidad.</p>
+                <h2 class="section-title section-title-center">Elige tu Experiencia</h2>
+                <p style="color: rgba(255,255,255,0.7);">Diseñados para novias, quinceañeras y eventos especiales.<br>Cada nivel ofrece una experiencia única con los mejores productos L'Oréal y Kérastase.</p>
             </div>
-            <div class="packages-grid">
-                <div class="package-card">
-                    <div class="package-image">
-                        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Novias">
+
+            <!-- Event type tabs -->
+            <div class="pkg-tabs">
+                <button class="pkg-tab active" data-panel="pkg-novias">Novias</button>
+                <button class="pkg-tab" data-panel="pkg-quinceaneras">Quinceañeras</button>
+                <button class="pkg-tab" data-panel="pkg-eventos">Eventos</button>
+            </div>
+
+            <!-- ── NOVIAS ── -->
+            <div class="pkg-panel active" id="pkg-novias">
+                <div class="packages-grid">
+
+                    <!-- Esmeralda -->
+                    <div class="package-card pkg-esmeralda">
+                        <div class="pkg-gem-badge" style="--gem: #50c878;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Esmeralda</span>
+                        </div>
+                        <p class="pkg-tier-desc">Tu transformación esencial para el gran día</p>
+                        <div class="pkg-price">Desde <strong>450 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Lavado y peinado profesional</li>
+                            <li>Maquillaje de novia básico</li>
+                            <li>Manicura simple</li>
+                            <li>Perfilado de cejas</li>
+                            <li>Tratamiento capilar express</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
-                    <h3>Novias</h3>
-                    <p>Tu día perfecto merece una preparación perfecta. Incluye prueba previa.</p>
-                    <ul class="package-services">
-                        <li>Maquillaje profesional</li>
-                        <li>Peinado de novia</li>
-                        <li>Manicura & Pedicura</li>
-                        <li>Tratamiento facial</li>
-                        <li>Sesión de prueba</li>
-                    </ul>
-                    <a href="#contacto" class="package-cta">Consultar</a>
-                </div>
-                <div class="package-card featured">
-                    <div class="package-image">
-                        <img src="https://images.unsplash.com/photo-1609357605129-26f69add5d6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Quinceañeras">
+
+                    <!-- Rubí (destacado) -->
+                    <div class="package-card featured pkg-rubi">
+                        <div class="pkg-gem-badge" style="--gem: #c9a96e;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Rubí</span>
+                        </div>
+                        <p class="pkg-tier-desc">La elección más elegida por nuestras novias</p>
+                        <div class="pkg-price">Desde <strong>850 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Esmeralda</li>
+                            <li>Maquillaje de gala con pestañas</li>
+                            <li>Manicura en gel + pedicura</li>
+                            <li>Tratamiento Kérastase</li>
+                            <li>Rizado de pestañas</li>
+                            <li>Sesión de prueba de look</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
-                    <h3>Quinceañeras</h3>
-                    <p>Celebra tu gran día luciendo espectacular con nuestro paquete completo.</p>
-                    <ul class="package-services">
-                        <li>Maquillaje profesional</li>
-                        <li>Peinado de gala</li>
-                        <li>Manicura temática</li>
-                        <li>Spa facial express</li>
-                        <li>Prueba de look</li>
-                    </ul>
-                    <a href="#contacto" class="package-cta">Consultar</a>
-                </div>
-                <div class="package-card">
-                    <div class="package-image">
-                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt="Eventos">
+
+                    <!-- Diamante -->
+                    <div class="package-card pkg-diamante">
+                        <div class="pkg-gem-badge" style="--gem: #a8d8ea;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Diamante</span>
+                        </div>
+                        <p class="pkg-tier-desc">La experiencia definitiva, sin límites</p>
+                        <div class="pkg-price"><strong>A consultar</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Rubí</li>
+                            <li>Colorimetría o balayage premium</li>
+                            <li>Tratamiento de lujo Kérastase</li>
+                            <li>Spa facial completo</li>
+                            <li>Coordinación de imagen dedicada</li>
+                            <li>Servicio a domicilio disponible</li>
+                            <li>Productos Kérastase incluidos</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Consultar</a>
                     </div>
-                    <h3>Eventos</h3>
-                    <p>Servicios para desfiles, empresas y eventos especiales.</p>
-                    <ul class="package-services">
-                        <li>Equipo de estilistas</li>
-                        <li>Maquillaje grupal</li>
-                        <li>Peinados coordinados</li>
-                        <li>Servicio a domicilio</li>
-                        <li>Asesoría de imagen</li>
-                    </ul>
-                    <a href="#contacto" class="package-cta">Consultar</a>
+
                 </div>
             </div>
+
+            <!-- ── QUINCEAÑERAS ── -->
+            <div class="pkg-panel" id="pkg-quinceaneras">
+                <div class="packages-grid">
+
+                    <div class="package-card pkg-esmeralda">
+                        <div class="pkg-gem-badge" style="--gem: #50c878;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Esmeralda</span>
+                        </div>
+                        <p class="pkg-tier-desc">El inicio de tu noche de gala perfecta</p>
+                        <div class="pkg-price">Desde <strong>380 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Lavado y peinado de gala</li>
+                            <li>Maquillaje básico de fiesta</li>
+                            <li>Manicura temática</li>
+                            <li>Perfilado de cejas</li>
+                            <li>Desmaquillado incluido</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
+                    </div>
+
+                    <div class="package-card featured pkg-rubi">
+                        <div class="pkg-gem-badge" style="--gem: #c9a96e;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Rubí</span>
+                        </div>
+                        <p class="pkg-tier-desc">La elección de las princesas de La Paz</p>
+                        <div class="pkg-price">Desde <strong>720 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Esmeralda</li>
+                            <li>Maquillaje artístico con pestañas</li>
+                            <li>Manicura en gel + pedicura</li>
+                            <li>Tratamiento capilar L'Oréal</li>
+                            <li>Rizado o laminado de pestañas</li>
+                            <li>Prueba de look previa</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
+                    </div>
+
+                    <div class="package-card pkg-diamante">
+                        <div class="pkg-gem-badge" style="--gem: #a8d8ea;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Diamante</span>
+                        </div>
+                        <p class="pkg-tier-desc">Una noche que recordarás toda la vida</p>
+                        <div class="pkg-price"><strong>A consultar</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Rubí</li>
+                            <li>Colorimetría o mechas creativas</li>
+                            <li>Tratamiento Kérastase premium</li>
+                            <li>Spa facial y limpieza express</li>
+                            <li>Manicura soft gel con diseño</li>
+                            <li>Coordinación de imagen completa</li>
+                            <li>Servicio a domicilio disponible</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Consultar</a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ── EVENTOS ── -->
+            <div class="pkg-panel" id="pkg-eventos">
+                <div class="packages-grid">
+
+                    <div class="package-card pkg-esmeralda">
+                        <div class="pkg-gem-badge" style="--gem: #50c878;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Esmeralda</span>
+                        </div>
+                        <p class="pkg-tier-desc">Imagen profesional para tu evento</p>
+                        <div class="pkg-price">Desde <strong>300 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Peinado de fiesta</li>
+                            <li>Maquillaje básico</li>
+                            <li>Manicura simple</li>
+                            <li>Asesoría de imagen express</li>
+                            <li>Atención en sucursal</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
+                    </div>
+
+                    <div class="package-card featured pkg-rubi">
+                        <div class="pkg-gem-badge" style="--gem: #c9a96e;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Rubí</span>
+                        </div>
+                        <p class="pkg-tier-desc">Para grupos y desfiles corporativos</p>
+                        <div class="pkg-price">Desde <strong>580 Bs.</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Esmeralda</li>
+                            <li>Maquillaje artístico de evento</li>
+                            <li>Manicura + pedicura coordinada</li>
+                            <li>Equipo de 2 estilistas</li>
+                            <li>Coordinación de looks grupal</li>
+                            <li>Atención express sin cita previa</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Reservar</a>
+                    </div>
+
+                    <div class="package-card pkg-diamante">
+                        <div class="pkg-gem-badge" style="--gem: #a8d8ea;">
+                            <span class="pkg-gem-icon">◆</span>
+                            <span class="pkg-gem-label">Diamante</span>
+                        </div>
+                        <p class="pkg-tier-desc">Experiencia VIP para desfiles y empresas</p>
+                        <div class="pkg-price"><strong>A consultar</strong></div>
+                        <ul class="package-services">
+                            <li>Todo lo del Rubí</li>
+                            <li>Equipo completo de estilistas</li>
+                            <li>Maquillaje artístico especializado</li>
+                            <li>Asesoría de imagen integral</li>
+                            <li>Servicio a domicilio o locación</li>
+                            <li>Coordinación logística incluida</li>
+                            <li>Productos de marca garantizados</li>
+                        </ul>
+                        <a href="#contacto" class="package-cta">Consultar</a>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -447,6 +590,11 @@
                     <div class="branch-phone">
                         <a href="tel:+59122906962">
                             📞 2906962
+                        </a>
+                    </div>
+                    <div class="branch-phone">
+                        <a href="tel:+59122770838">
+                            📞 2770838
                         </a>
                     </div>
                     <a href="https://maps.google.com/?q=Hotel+Gloria+La+Paz+Bolivia" target="_blank"
@@ -477,7 +625,7 @@
                 </div> --}}
 
                 <!-- Obrajes -->
-                <div class="branch-card">
+                {{-- <div class="branch-card">
                     <div class="branch-zone">Zona Sur</div>
                     <h3>Obrajes</h3>
                     <span class="branch-location">Calle 15 Av. Hernando Siles</span>
@@ -496,13 +644,13 @@
                         target="_blank" class="branch-map-link">
                         📍 Ver en Google Maps
                     </a>
-                </div>
+                </div> --}}
 
                 <!-- San Miguel -->
                 <div class="branch-card">
                     <div class="branch-zone">Zona Sur</div>
                     <h3>San Miguel</h3>
-                    <span class="branch-location">Bloque L</span>
+                    
                     <ul class="branch-details">
                         <li>
                             <span>🕒</span>
@@ -512,6 +660,11 @@
                     <div class="branch-phone">
                         <a href="tel:+59122773147">
                             📞 2773147
+                        </a>
+                    </div>
+                    <div class="branch-phone">
+                        <a href="tel:+59122770838">
+                            📞 2770838
                         </a>
                     </div>
                     <a href="https://maps.google.com/?q=San+Miguel+Bloque+L+La+Paz+Bolivia" target="_blank"
@@ -535,6 +688,11 @@
                             📞 2770838
                         </a>
                     </div>
+                    <div class="branch-phone">
+                        <a href="tel:+59122770838">
+                            📞 2770838
+                        </a>
+                    </div>
                     <a href="https://maps.google.com/?q=Calacoto+La+Paz+Bolivia" target="_blank"
                         class="branch-map-link">
                         📍 Ver en Google Maps
@@ -551,6 +709,16 @@
                             <span>Mar - Sáb: 9:00 - 20:00</span>
                         </li>
                     </ul>
+                    <div class="branch-phone">
+                        <a href="tel:+59122770838">
+                            📞 2770838
+                        </a>
+                    </div>
+                    <div class="branch-phone">
+                        <a href="tel:+59122770838">
+                            📞 2770838
+                        </a>
+                    </div>
                     <a href="https://maps.google.com/?q=Achumani+La+Paz+Bolivia" target="_blank"
                         class="branch-map-link">
                         📍 Ver en Google Maps
@@ -700,11 +868,19 @@
                 @endphp
                 <div class="gallery-item"
                      data-title="{{ $cat['nombre'] }}"
+                     data-overlay="{{ $cat['overlay'] }}"
                      data-images="{{ json_encode(array_values($urls), JSON_UNESCAPED_SLASHES) }}">
                     <img src="{{ $urls[0] }}" alt="{{ $cat['nombre'] }}" loading="lazy">
                     <div class="gallery-overlay">
                         <span>{{ $cat['overlay'] }}</span>
                         <span class="gallery-count">{{ count($cat['fotos']) }} foto{{ count($cat['fotos']) > 1 ? 's' : '' }}</span>
+                    </div>
+                    <div class="gallery-caption">
+                        <span class="gallery-caption-label">{{ $cat['nombre'] }}</span>
+                        <span class="gallery-caption-desc">{{ $cat['overlay'] }}</span>
+                    </div>
+                    <div class="gallery-watermark">
+                        <img src="{{ asset('images/logos/logo-cristina_spa.png') }}" alt="Cristina Spa">
                     </div>
                 </div>
                 @endforeach
@@ -819,20 +995,52 @@
 
     <!-- WhatsApp Floating Button -->
     <script>
+    // Package tabs
+    (function () {
+        var tabs   = document.querySelectorAll('.pkg-tab');
+        var panels = document.querySelectorAll('.pkg-panel');
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                tabs.forEach(function (t) { t.classList.remove('active'); });
+                panels.forEach(function (p) { p.classList.remove('active'); });
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.panel).classList.add('active');
+            });
+        });
+    })();
+
     (function () {
         var panel   = document.getElementById('gallery-panel');
         var gpTitle = document.getElementById('gp-title');
         var gpMosaic = document.getElementById('gp-mosaic');
+        var logoUrl  = "{{ asset('images/logos/logo-cristina_spa.png') }}";
 
-        function openPanel(images, title) {
+        function openPanel(images, title, overlay) {
             gpTitle.textContent = title;
             gpMosaic.innerHTML = '';
             images.forEach(function (src) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'mosaic-item';
+
                 var img = document.createElement('img');
                 img.src = src;
                 img.alt = title;
                 img.loading = 'lazy';
-                gpMosaic.appendChild(img);
+
+                var caption = document.createElement('div');
+                caption.className = 'gallery-caption';
+                caption.innerHTML =
+                    '<span class="gallery-caption-label">' + title + '</span>' +
+                    '<span class="gallery-caption-desc">' + overlay + '</span>';
+
+                var wm = document.createElement('div');
+                wm.className = 'gallery-watermark';
+                wm.innerHTML = '<img src="' + logoUrl + '" alt="Cristina Spa">';
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(caption);
+                wrapper.appendChild(wm);
+                gpMosaic.appendChild(wrapper);
             });
             panel.classList.add('active');
             panel.setAttribute('aria-hidden', 'false');
@@ -854,7 +1062,7 @@
 
         document.querySelectorAll('.gallery-item[data-images]').forEach(function (item) {
             item.addEventListener('click', function () {
-                openPanel(JSON.parse(this.dataset.images), this.dataset.title);
+                openPanel(JSON.parse(this.dataset.images), this.dataset.title, this.dataset.overlay);
             });
         });
     })();
