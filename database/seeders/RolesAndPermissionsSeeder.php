@@ -17,14 +17,12 @@ class RolesAndPermissionsSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Clear existing roles and permissions to avoid duplicates
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('role_has_permissions')->truncate();
-        DB::table('model_has_roles')->truncate();
-        DB::table('model_has_permissions')->truncate();
-        DB::table('roles')->truncate();
-        DB::table('permissions')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Clear existing roles and permissions (orden correcto para respetar FK)
+        DB::table('role_has_permissions')->delete();
+        DB::table('model_has_roles')->delete();
+        DB::table('model_has_permissions')->delete();
+        DB::table('roles')->delete();
+        DB::table('permissions')->delete();
 
         // ============================================
         // PERMISOS
