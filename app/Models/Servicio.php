@@ -31,6 +31,11 @@ class Servicio extends Model
         return $this->hasMany(Cita::class);
     }
 
+    public function comision()
+    {
+        return $this->hasOne(Comision::class);
+    }
+
     /**
      * Scope para servicios activos
      */

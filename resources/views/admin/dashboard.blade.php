@@ -74,7 +74,7 @@
                     @foreach ($proximasCitas as $cita)
                         <tr>
                             <td>{{ $cita->cliente->nombre ?? 'N/A' }}</td>
-                            <td>{{ $cita->servicio->nombre ?? 'N/A' }}</td>
+                            <td>{{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->implode(' + ') ?: 'N/A' }}</td>
                             <td>{{ $cita->fecha->format('d/m/Y') }}</td>
                             <td>{{ $cita->hora }}</td>
                             <td>

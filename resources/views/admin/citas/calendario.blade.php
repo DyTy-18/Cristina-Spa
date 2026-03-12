@@ -353,6 +353,7 @@
         </div>
         <div style="display:flex;gap:0.75rem;">
             <a href="{{ route('admin.citas.index') }}" class="btn btn-sm btn-outline">Ver lista</a>
+            <a href="{{ route('admin.citas.create') }}" class="btn btn-sm btn-accent">+ Nueva cita</a>
         </div>
     </div>
 
@@ -382,6 +383,7 @@
 <script>
     const CALENDAR_DATOS_URL = '{{ route('admin.citas.calendarDatos') }}';
     const HISTORIAL_BASE_URL  = '{{ url('admin/clientes') }}';
+    const CITAS_BASE_URL      = '{{ url('admin/citas') }}';
 
     let selectedEventEl = null;
 
@@ -400,10 +402,12 @@
         }
     }
 
-    function renderDetail(props) {
+    function renderDetail(eventId, props) {
         const badge = estadoBadge[props.estado] ?? estadoBadge.pendiente;
         const precio = props.precio ? 'Bs. ' + parseFloat(props.precio).toFixed(2) : null;
         const historialUrl = props.cliente_id ? `${HISTORIAL_BASE_URL}/${props.cliente_id}/historial` : null;
+        const citaUrl      = `${CITAS_BASE_URL}/${eventId}`;
+        const editUrl      = `${CITAS_BASE_URL}/${eventId}/editar`;
 
         return `
             <div class="detail-estado" style="background:${badge.bg};color:${badge.color};">
@@ -434,11 +438,19 @@
             <div class="detail-divider"></div>
             <div class="detail-notas">${props.notas}</div>` : ''}
 
-            ${historialUrl ? `
             <div class="detail-divider"></div>
-            <a href="${historialUrl}" class="btn btn-sm btn-outline" style="width:100%;text-align:center;display:block;">
-                Ver historial del cliente →
-            </a>` : ''}
+            <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                <a href="${editUrl}" class="btn btn-accent btn-sm" style="text-align:center;display:block;">
+                    Editar cita
+                </a>
+                <a href="${citaUrl}" class="btn btn-sm btn-outline" style="text-align:center;display:block;">
+                    Ver detalle
+                </a>
+                ${historialUrl ? `
+                <a href="${historialUrl}" class="btn btn-sm btn-outline" style="text-align:center;display:block;">
+                    Historial del cliente
+                </a>` : ''}
+            </div>
         `;
     }
 
@@ -499,7 +511,7 @@
                 info.el.style.outlineOffset = '1px';
 
                 // Populate & open panel
-                document.getElementById('detailContent').innerHTML = renderDetail(info.event.extendedProps);
+                document.getElementById('detailContent').innerHTML = renderDetail(info.event.id, info.event.extendedProps);
                 document.getElementById('detailPanel').classList.add('open');
             },
 

@@ -30,7 +30,7 @@ class DashboardController extends Controller
         
         // Próximas citas
         $proximasCitas = Cita::proximas()
-            ->with(['cliente', 'servicio', 'empleado'])
+            ->with(['cliente', 'citaServicios.servicio'])
             ->take(5)
             ->get();
 

@@ -59,6 +59,27 @@
                     </a>
                 @endif
 
+                @if (auth()->user()->hasAnyRole(['admin', 'secretario']))
+                    <a href="{{ route('admin.campanas.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.campanas.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📣</span>
+                        <span>Campañas</span>
+                    </a>
+                @endif
+
+                @if (auth()->user()->hasRole('admin'))
+                    <a href="{{ route('admin.comisiones.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.comisiones.*') ? 'active' : '' }}">
+                        <span class="nav-icon">💲</span>
+                        <span>Comisiones</span>
+                    </a>
+                    <a href="{{ route('admin.reportes.comisiones') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📈</span>
+                        <span>Reporte comisiones</span>
+                    </a>
+                @endif
+
                 @if (auth()->user()->hasPermissionTo('ver empleados'))
                     <a href="{{ route('admin.empleados.index') }}"
                         class="nav-item {{ request()->routeIs('admin.empleados.*') ? 'active' : '' }}">

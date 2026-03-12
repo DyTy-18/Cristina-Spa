@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             ServiciosSeeder::class,
             ClienteEjemploSeeder::class,
+            EmpleadosSeeder::class,
         ]);
 
         // Crear usuario admin (o recuperar si ya existe)

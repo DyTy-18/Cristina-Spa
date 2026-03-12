@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Campana;
 use App\Models\Cita;
+use App\Models\CitaServicio;
 use App\Models\Cliente;
 use App\Models\Empleado;
 use App\Models\Servicio;
@@ -53,7 +55,7 @@ class ClienteController extends Controller
         $periodo = $request->get('periodo', 'todo');
 
         $query = $cliente->citas()
-            ->with(['servicio', 'empleado'])
+            ->with(['citaServicios.servicio', 'citaServicios.empleado'])
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc');
 
@@ -80,8 +82,7 @@ class ClienteController extends Controller
             'ultima_visita'     => $cliente->citas()->where('estado', 'completada')->max('fecha'),
         ];
 
-        $servicioFavorito = $cliente->citas()
-            ->where('estado', 'completada')
+        $servicioFavorito = CitaServicio::whereHas('cita', fn($q) => $q->where('cliente_id', $cliente->id)->where('estado', 'completada'))
             ->select('servicio_id', DB::raw('count(*) as total'))
             ->groupBy('servicio_id')
             ->orderByDesc('total')
@@ -92,10 +93,22 @@ class ClienteController extends Controller
 
         $servicios = Servicio::where('activo', true)->orderBy('nombre')->get();
         $empleados = Empleado::where('activo', true)->orderBy('apellido')->get();
+        $campanas  = Campana::activas()->orderBy('nombre')->get();
+
+        $modalServiciosJson = $servicios->map(fn($s) => [
+            'id'     => $s->id,
+            'nombre' => $s->nombre,
+            'precio' => $s->precio,
+        ])->values();
+
+        $modalEmpleadosJson = $empleados->map(fn($e) => [
+            'id'     => $e->id,
+            'nombre' => trim($e->nombre . ' ' . $e->apellido),
+        ])->values();
 
         return view('admin.clientes.show', compact(
             'cliente', 'citas', 'citasPorMes', 'stats', 'servicioFavorito', 'periodo',
-            'servicios', 'empleados'
+            'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson'
         ));
     }
 
@@ -125,18 +138,50 @@ class ClienteController extends Controller
     public function storeCita(Request $request, Cliente $cliente)
     {
         $data = $request->validate([
-            'servicio_id'  => 'required|exists:servicios,id',
-            'empleado_id'  => 'nullable|exists:empleados,id',
-            'fecha'        => 'required|date',
-            'hora'         => 'required',
-            'estado'       => 'required|in:pendiente,confirmada,completada,cancelada',
-            'precio_final' => 'nullable|numeric|min:0',
-            'notas'        => 'nullable|string',
+            'fecha'                         => 'required|date',
+            'hora'                          => 'required',
+            'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
+            'notas'                         => 'nullable|string',
+            'servicios'                     => 'required|array|min:1',
+            'servicios.*.servicio_id'       => 'required|exists:servicios,id',
+            'servicios.*.precio'            => 'nullable|numeric|min:0',
+            'profesionales'                 => 'nullable|array',
+            'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
+            'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
+            'campana_id'                    => 'nullable|exists:campanas,id',
         ]);
 
-        $data['cliente_id'] = $cliente->id;
+        $serviciosBase = Servicio::whereIn('id', collect($data['servicios'])->pluck('servicio_id'))->pluck('precio', 'id');
 
-        Cita::create($data);
+        $empleadoPorServicio = [];
+        foreach ($data['profesionales'] ?? [] as $prof) {
+            if (!empty($prof['empleado_id']) && !empty($prof['servicio_id'])) {
+                $empleadoPorServicio[$prof['servicio_id']] = $prof['empleado_id'];
+            }
+        }
+
+        $precioTotal = collect($data['servicios'])->sum(
+            fn($s) => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0)
+        );
+
+        $cita = Cita::create([
+            'cliente_id'   => $cliente->id,
+            'campana_id'   => $data['campana_id'] ?? null,
+            'fecha'        => $data['fecha'],
+            'hora'         => $data['hora'],
+            'estado'       => $data['estado'],
+            'precio_final' => $precioTotal ?: null,
+            'notas'        => $data['notas'] ?? null,
+        ]);
+
+        foreach ($data['servicios'] as $s) {
+            CitaServicio::create([
+                'cita_id'         => $cita->id,
+                'servicio_id'     => $s['servicio_id'],
+                'empleado_id'     => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                'precio_unitario' => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+            ]);
+        }
 
         return redirect()->route('admin.clientes.show', $cliente)
             ->with('success', 'Visita registrada exitosamente.');

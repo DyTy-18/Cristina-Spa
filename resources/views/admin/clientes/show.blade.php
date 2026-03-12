@@ -234,6 +234,51 @@
         font-weight: 300;
     }
 
+    /* ===== Líneas de servicio en modal ===== */
+    .linea-modal {
+        display: grid;
+        grid-template-columns: 1fr 90px auto;
+        gap: 0.6rem;
+        align-items: end;
+        padding: 0.6rem;
+        background: var(--light-bg);
+        border: 1px solid rgba(0,0,0,0.06);
+        margin-bottom: 0.5rem;
+    }
+    .linea-prof-modal {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 0.6rem;
+        align-items: end;
+        padding: 0.6rem;
+        background: var(--white);
+        border: 1px solid rgba(0,0,0,0.07);
+        margin-bottom: 0.5rem;
+    }
+    .linea-precio-modal-wrap { position: relative; }
+    .linea-precio-modal-prefix {
+        position: absolute;
+        left: 0.6rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    .linea-precio-modal-input { padding-left: 1.8rem !important; }
+    .btn-remove-linea-modal {
+        background: none;
+        border: 1px solid rgba(0,0,0,0.12);
+        color: var(--text-light);
+        cursor: pointer;
+        padding: 0.4rem 0.55rem;
+        font-size: 0.85rem;
+        line-height: 1;
+        height: 38px;
+        transition: var(--transition);
+    }
+    .btn-remove-linea-modal:hover { color: var(--error-color); border-color: var(--error-color); }
+
     /* ===== Modal ===== */
     .modal-backdrop {
         display: none;
@@ -250,7 +295,7 @@
     .modal-box {
         background: var(--white);
         width: 100%;
-        max-width: 540px;
+        max-width: 720px;
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 20px 60px rgba(0,0,0,0.2);
@@ -314,6 +359,31 @@
         color: var(--text-light);
         text-transform: uppercase;
         letter-spacing: 0.8px;
+    }
+
+    /* ===== Campaign cards in modal ===== */
+    .campana-cards-modal {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.4rem;
+    }
+    .campana-card-modal {
+        border: 1px solid rgba(0,0,0,0.12);
+        padding: 0.45rem 0.85rem;
+        cursor: pointer;
+        font-size: 0.78rem;
+        letter-spacing: 0.5px;
+        color: var(--text-light);
+        background: var(--white);
+        transition: var(--transition);
+        user-select: none;
+    }
+    .campana-card-modal:hover { border-color: var(--accent-color); color: var(--text-dark); }
+    .campana-card-modal.selected {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--white);
     }
 </style>
 @endpush
@@ -455,15 +525,16 @@
                                             {{ \Carbon\Carbon::parse($cita->fecha)->format('l d') }} &nbsp;·&nbsp;
                                             {{ \Carbon\Carbon::parse($cita->hora)->format('H:i') }}
                                         </div>
+                                        @php
+                                            $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
+                                            $nombresEmps  = $cita->citaServicios->filter(fn($cs) => $cs->empleado)->map(fn($cs) => $cs->empleado->nombre . ' ' . $cs->empleado->apellido)->unique();
+                                        @endphp
                                         <div class="timeline-service">
-                                            {{ $cita->servicio?->nombre ?? 'Servicio no encontrado' }}
+                                            {{ $nombresServs->isNotEmpty() ? $nombresServs->implode(' + ') : 'Servicio no encontrado' }}
                                         </div>
-                                        @if($cita->empleado)
+                                        @if($nombresEmps->isNotEmpty())
                                             <div class="timeline-stylist">
-                                                con {{ $cita->empleado->nombre }} {{ $cita->empleado->apellido }}
-                                                @if($cita->empleado->especialidad)
-                                                    · {{ $cita->empleado->especialidad }}
-                                                @endif
+                                                con {{ $nombresEmps->implode(', ') }}
                                             </div>
                                         @endif
                                         @if($cita->notas)
@@ -485,10 +556,6 @@
                                         @if($cita->precio_final)
                                             <div class="timeline-price">
                                                 Bs. {{ number_format($cita->precio_final, 2) }}
-                                            </div>
-                                        @elseif($cita->servicio?->precio)
-                                            <div class="timeline-price" style="opacity:0.5;">
-                                                Bs. {{ number_format($cita->servicio->precio, 2) }}
                                             </div>
                                         @endif
                                     </div>
@@ -512,31 +579,50 @@
                 <form action="{{ route('admin.clientes.storeCita', $cliente) }}" method="POST">
                     @csrf
 
+                    {{-- Servicios --}}
                     <div class="form-group">
-                        <label class="form-label">Servicio <span style="color:var(--error-color)">*</span></label>
-                        <select name="servicio_id" class="form-control" required id="selectServicio">
-                            <option value="">— Seleccionar —</option>
-                            @foreach($servicios as $s)
-                                <option value="{{ $s->id }}" data-precio="{{ $s->precio }}">
-                                    {{ $s->nombre }} — Bs. {{ number_format($s->precio, 2) }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <label class="form-label" style="margin-bottom:0.4rem;">Servicios <span style="color:var(--error-color)">*</span></label>
+                        <div style="display:grid;grid-template-columns:1fr 90px auto;gap:0.4rem;margin-bottom:0.3rem;padding:0 0.1rem;">
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Servicio</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Precio</span>
+                            <span></span>
+                        </div>
+                        <div id="modalServiciosContainer">
+                            <div class="linea-modal" data-index="0">
+                                <select name="servicios[0][servicio_id]" class="form-control modal-select-servicio" required
+                                        onchange="onModalServicioChange(this)">
+                                    <option value="">— Seleccionar —</option>
+                                    @foreach($servicios as $s)
+                                        <option value="{{ $s->id }}" data-precio="{{ $s->precio }}">{{ $s->nombre }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="linea-precio-modal-wrap">
+                                    <span class="linea-precio-modal-prefix">Bs.</span>
+                                    <input type="number" name="servicios[0][precio]" class="form-control linea-precio-modal-input"
+                                           step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <button type="button" class="btn-remove-linea-modal" onclick="removeModalServicio(this)" title="Quitar">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addModalServicio()" style="margin-top:0.25rem;">
+                            + Agregar servicio
+                        </button>
                     </div>
 
-                    @if($empleados->count() > 0)
-                    <div class="form-group">
-                        <label class="form-label">Profesional</label>
-                        <select name="empleado_id" class="form-control">
-                            <option value="">— Sin asignar —</option>
-                            @foreach($empleados as $e)
-                                <option value="{{ $e->id }}">{{ $e->nombre }} {{ $e->apellido }}{{ $e->especialidad ? ' · '.$e->especialidad : '' }}</option>
-                            @endforeach
-                        </select>
+                    {{-- Profesionales --}}
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label class="form-label" style="margin-bottom:0.2rem;">Profesionales</label>
+                        <div style="font-size:0.75rem;color:var(--text-light);font-style:italic;margin-bottom:0.4rem;">Opcional — asigna quién realizó cada servicio</div>
+                        <div id="modalProfHeadersRow" style="display:none;grid-template-columns:1fr 1fr auto;gap:0.4rem;margin-bottom:0.3rem;padding:0 0.1rem;">
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Profesional</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Realizó</span>
+                            <span></span>
+                        </div>
+                        <div id="modalProfesionalesContainer"></div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addModalProfesional()" style="margin-top:0.25rem;">
+                            + Agregar profesional
+                        </button>
                     </div>
-                    @else
-                        <input type="hidden" name="empleado_id" value="">
-                    @endif
 
                     <div class="form-row">
                         <div class="form-group">
@@ -549,21 +635,14 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Estado <span style="color:var(--error-color)">*</span></label>
-                            <select name="estado" class="form-control" required>
-                                <option value="completada" selected>Completada</option>
-                                <option value="confirmada">Confirmada</option>
-                                <option value="pendiente">Pendiente</option>
-                                <option value="cancelada">Cancelada</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Precio final (Bs.)</label>
-                            <input type="number" name="precio_final" id="inputPrecio" class="form-control"
-                                   step="0.01" min="0" placeholder="Se autocompleta con el servicio">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado <span style="color:var(--error-color)">*</span></label>
+                        <select name="estado" class="form-control" required>
+                            <option value="completada" selected>Completada</option>
+                            <option value="confirmada">Confirmada</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -571,6 +650,19 @@
                         <textarea name="notas" class="form-control" rows="2"
                                   placeholder="Observaciones, preferencias del cliente..."></textarea>
                     </div>
+
+                    @if($campanas->isNotEmpty())
+                    <div class="form-group">
+                        <label class="form-label">Campaña <span style="font-size:0.75rem;font-weight:300;color:var(--text-light);">(opcional)</span></label>
+                        <input type="hidden" name="campana_id" id="modalCampanaId" value="">
+                        <div class="campana-cards-modal">
+                            <div class="campana-card-modal selected" data-id="" onclick="selectModalCampana(this)">Sin campaña</div>
+                            @foreach($campanas as $camp)
+                                <div class="campana-card-modal" data-id="{{ $camp->id }}" onclick="selectModalCampana(this)">{{ $camp->nombre }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
 
                     <div style="display:flex;gap:1rem;margin-top:0.5rem;">
                         <button type="submit" class="btn btn-primary">Guardar visita</button>
@@ -586,10 +678,113 @@
 
 @push('scripts')
 <script>
-    document.getElementById('selectServicio')?.addEventListener('change', function () {
-        const opt = this.options[this.selectedIndex];
-        const precio = opt.dataset.precio;
-        if (precio) document.getElementById('inputPrecio').value = parseFloat(precio).toFixed(2);
-    });
+    const MODAL_SERVICIOS = @json($modalServiciosJson);
+    const MODAL_EMPLEADOS = @json($modalEmpleadosJson);
+
+    let modalServicioIdx = 1;
+    let modalProfIdx     = 0;
+    const modalServiciosSeleccionados = new Map();
+
+    // ===== Servicios del modal =====
+    function buildModalServicioOptions() {
+        return '<option value="">— Seleccionar —</option>' +
+            MODAL_SERVICIOS.map(s => `<option value="${s.id}" data-precio="${s.precio}">${s.nombre}</option>`).join('');
+    }
+
+    function onModalServicioChange(sel) {
+        const row   = sel.closest('.linea-modal');
+        const idx   = row.dataset.index;
+        const opt   = sel.options[sel.selectedIndex];
+        const input = row.querySelector('.linea-precio-modal-input');
+
+        if (opt.value) {
+            modalServiciosSeleccionados.set(idx, { servicio_id: opt.value, nombre: opt.text });
+            if (input) input.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+        } else {
+            modalServiciosSeleccionados.delete(idx);
+            if (input) input.value = '';
+        }
+        rebuildModalProfServDropdowns();
+    }
+
+    function addModalServicio() {
+        const idx = String(modalServicioIdx++);
+        const div = document.createElement('div');
+        div.className = 'linea-modal';
+        div.dataset.index = idx;
+        div.innerHTML = `
+            <select name="servicios[${idx}][servicio_id]" class="form-control modal-select-servicio" required
+                    onchange="onModalServicioChange(this)">
+                ${buildModalServicioOptions()}
+            </select>
+            <div class="linea-precio-modal-wrap">
+                <span class="linea-precio-modal-prefix">Bs.</span>
+                <input type="number" name="servicios[${idx}][precio]" class="form-control linea-precio-modal-input"
+                       step="0.01" min="0" placeholder="0.00">
+            </div>
+            <button type="button" class="btn-remove-linea-modal" onclick="removeModalServicio(this)" title="Quitar">✕</button>`;
+        document.getElementById('modalServiciosContainer').appendChild(div);
+    }
+
+    function removeModalServicio(btn) {
+        const container = document.getElementById('modalServiciosContainer');
+        if (container.querySelectorAll('.linea-modal').length <= 1) return;
+        const row = btn.closest('.linea-modal');
+        modalServiciosSeleccionados.delete(row.dataset.index);
+        row.remove();
+        rebuildModalProfServDropdowns();
+    }
+
+    // ===== Profesionales del modal =====
+    function buildModalEmpleadoOptions() {
+        return '<option value="">— Seleccionar —</option>' +
+            MODAL_EMPLEADOS.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+    }
+
+    function buildModalProfServicioOptions() {
+        const items = [...modalServiciosSeleccionados.values()];
+        if (items.length === 0) return '<option value="">— Elige servicios primero —</option>';
+        return '<option value="">— Qué realizó —</option>' +
+            items.map(s => `<option value="${s.servicio_id}">${s.nombre}</option>`).join('');
+    }
+
+    function rebuildModalProfServDropdowns() {
+        document.querySelectorAll('.modal-select-prof-serv').forEach(sel => {
+            const current = sel.value;
+            const items   = [...modalServiciosSeleccionados.values()];
+            sel.innerHTML = '<option value="">— Qué realizó —</option>' +
+                items.map(s => `<option value="${s.servicio_id}"${s.servicio_id == current ? ' selected' : ''}>${s.nombre}</option>`).join('');
+        });
+    }
+
+    function addModalProfesional() {
+        const idx = modalProfIdx++;
+        document.getElementById('modalProfHeadersRow').style.display = 'grid';
+        const div = document.createElement('div');
+        div.className = 'linea-prof-modal';
+        div.dataset.index = idx;
+        div.innerHTML = `
+            <select name="profesionales[${idx}][empleado_id]" class="form-control">
+                ${buildModalEmpleadoOptions()}
+            </select>
+            <select name="profesionales[${idx}][servicio_id]" class="form-control modal-select-prof-serv">
+                ${buildModalProfServicioOptions()}
+            </select>
+            <button type="button" class="btn-remove-linea-modal" onclick="removeModalProfesional(this)" title="Quitar">✕</button>`;
+        document.getElementById('modalProfesionalesContainer').appendChild(div);
+    }
+
+    function removeModalProfesional(btn) {
+        btn.closest('.linea-prof-modal').remove();
+        if (document.querySelectorAll('.linea-prof-modal').length === 0) {
+            document.getElementById('modalProfHeadersRow').style.display = 'none';
+        }
+    }
+
+    function selectModalCampana(card) {
+        document.querySelectorAll('.campana-card-modal').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        document.getElementById('modalCampanaId').value = card.dataset.id;
+    }
 </script>
 @endpush

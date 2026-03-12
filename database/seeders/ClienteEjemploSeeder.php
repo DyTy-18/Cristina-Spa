@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Cita;
+use App\Models\CitaServicio;
 use App\Models\Cliente;
 use App\Models\Servicio;
 use Carbon\Carbon;
@@ -170,15 +171,20 @@ class ClienteEjemploSeeder extends Seeder
                 $servicioId = $servicios[$v['servicio']] ?? null;
                 if (!$servicioId) continue;
 
-                Cita::create([
+                $cita = Cita::create([
                     'cliente_id'   => $cliente->id,
-                    'servicio_id'  => $servicioId,
-                    'empleado_id'  => null,
                     'fecha'        => $v['fecha'],
                     'hora'         => $v['hora'],
                     'estado'       => $v['estado'],
                     'precio_final' => $v['precio_final'],
                     'notas'        => $v['notas'],
+                ]);
+
+                CitaServicio::create([
+                    'cita_id'         => $cita->id,
+                    'servicio_id'     => $servicioId,
+                    'empleado_id'     => null,
+                    'precio_unitario' => $v['precio_final'],
                 ]);
             }
         }

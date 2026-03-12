@@ -1,104 +1,10 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Nueva Cita')
-@section('page-title', 'Nueva Cita')
+@section('title', 'Editar Cita')
+@section('page-title', 'Editar Cita')
 
 @push('styles')
 <style>
-    /* ===== Toggle cliente ===== */
-    .cliente-toggle {
-        display: flex;
-        border: 1px solid rgba(0,0,0,0.1);
-        margin-bottom: 1.5rem;
-        width: fit-content;
-    }
-    .toggle-btn {
-        padding: 0.55rem 1.4rem;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.78rem;
-        font-weight: 300;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        background: var(--white);
-        border: none;
-        cursor: pointer;
-        color: var(--text-light);
-        transition: var(--transition);
-        border-right: 1px solid rgba(0,0,0,0.1);
-    }
-    .toggle-btn:last-child { border-right: none; }
-    .toggle-btn.active {
-        background: var(--primary-color);
-        color: var(--white);
-    }
-    .toggle-btn:not(.active):hover {
-        background: var(--light-bg);
-        color: var(--text-dark);
-    }
-
-    /* ===== Buscador de cliente ===== */
-    .search-cliente-wrapper {
-        position: relative;
-    }
-    .search-dropdown {
-        display: none;
-        position: absolute;
-        top: calc(100% + 2px);
-        left: 0;
-        right: 0;
-        background: var(--white);
-        border: 1px solid rgba(0,0,0,0.12);
-        z-index: 200;
-        max-height: 240px;
-        overflow-y: auto;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    }
-    .search-dropdown.visible { display: block; }
-    .search-option {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        font-size: 0.88rem;
-        font-weight: 300;
-        border-bottom: 1px solid rgba(0,0,0,0.04);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.15s;
-    }
-    .search-option:hover { background: var(--light-bg); }
-    .search-option .opt-name { color: var(--text-dark); font-weight: 400; }
-    .search-option .opt-phone { color: var(--text-light); font-size: 0.78rem; }
-    .search-option-empty {
-        padding: 1rem;
-        font-size: 0.85rem;
-        color: var(--text-light);
-        font-weight: 300;
-        font-style: italic;
-        text-align: center;
-    }
-    .search-selected-badge {
-        display: none;
-        align-items: center;
-        gap: 0.6rem;
-        margin-top: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        background: rgba(201,169,110,0.12);
-        border: 1px solid rgba(201,169,110,0.3);
-        font-size: 0.82rem;
-        font-weight: 300;
-    }
-    .search-selected-badge.visible { display: flex; }
-    .badge-clear {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--text-light);
-        font-size: 0.9rem;
-        margin-left: auto;
-        padding: 0;
-    }
-    .badge-clear:hover { color: var(--error-color); }
-
     /* ===== Líneas de servicio ===== */
     .linea-servicio {
         display: grid;
@@ -229,108 +135,53 @@
 @section('content')
 
     <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
-        <a href="{{ route('admin.citas.calendario') }}" class="btn btn-sm btn-outline">← Calendario</a>
-        <a href="{{ route('admin.citas.index') }}" class="btn btn-sm btn-outline">Ver lista</a>
+        <a href="{{ route('admin.citas.show', $cita) }}" class="btn btn-sm btn-outline">← Ver cita</a>
+        <a href="{{ route('admin.citas.calendario') }}" class="btn btn-sm btn-outline">Calendario</a>
     </div>
 
-    <form action="{{ route('admin.citas.store') }}" method="POST" id="formCita">
+    <form action="{{ route('admin.citas.update', $cita) }}" method="POST" id="formCita">
         @csrf
-        <input type="hidden" name="cliente_tipo" id="clienteTipo" value="{{ old('cliente_tipo', 'existente') }}">
+        @method('PUT')
 
         <div class="create-layout">
 
             {{-- ====== COLUMNA PRINCIPAL ====== --}}
             <div class="create-main">
 
-                {{-- SECCIÓN 1: Cliente --}}
+                {{-- SECCIÓN 1: Cliente (solo lectura) --}}
                 <div class="form-section">
                     <div class="form-section-header">
                         <div class="form-section-num">1</div>
                         <span class="form-section-title">Cliente</span>
                     </div>
                     <div class="form-section-body">
-
-                        <div class="cliente-toggle">
-                            <button type="button" class="toggle-btn {{ old('cliente_tipo','existente') === 'existente' ? 'active' : '' }}"
-                                    id="btnExistente" onclick="switchCliente('existente')">
-                                Cliente registrado
-                            </button>
-                            <button type="button" class="toggle-btn {{ old('cliente_tipo') === 'nuevo' ? 'active' : '' }}"
-                                    id="btnNuevo" onclick="switchCliente('nuevo')">
-                                + Nuevo cliente
-                            </button>
-                        </div>
-
-                        {{-- Buscador --}}
-                        <div id="sectionExistente" style="{{ old('cliente_tipo') === 'nuevo' ? 'display:none' : '' }}">
-                            <div class="form-group">
-                                <label class="form-label">Buscar cliente <span style="color:var(--error-color)">*</span></label>
-                                <div class="search-cliente-wrapper">
-                                    <input type="text" id="searchInput" class="form-control"
-                                           placeholder="Nombre, apellido o teléfono..."
-                                           autocomplete="off" value="{{ old('_cliente_display', '') }}">
-                                    <input type="hidden" name="cliente_id" id="clienteIdInput"
-                                           value="{{ old('cliente_id') }}">
-                                    <div id="searchDropdown" class="search-dropdown"></div>
+                        @if($cita->cliente)
+                            <div style="display:flex;align-items:center;gap:1rem;">
+                                <div style="width:42px;height:42px;background:var(--accent-color);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--white);flex-shrink:0;">
+                                    {{ mb_substr($cita->cliente->nombre, 0, 1) }}
                                 </div>
-                                <div class="search-selected-badge {{ old('cliente_id') ? 'visible' : '' }}" id="selectedBadge">
-                                    <span id="selectedName">{{ old('_cliente_display') }}</span>
-                                    <button type="button" class="badge-clear" onclick="clearCliente()" title="Cambiar">✕</button>
+                                <div>
+                                    <div style="font-size:1rem;color:var(--text-dark);font-weight:400;">{{ $cita->cliente->nombre_completo }}</div>
+                                    @if($cita->cliente->telefono)
+                                        <div style="font-size:0.82rem;color:var(--text-light);font-weight:300;">{{ $cita->cliente->telefono }}</div>
+                                    @endif
                                 </div>
-                                @error('cliente_id')
-                                    <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
-                                @enderror
+                                <a href="{{ route('admin.clientes.show', $cita->cliente) }}" class="btn btn-outline btn-sm" style="margin-left:auto;">Ver perfil</a>
                             </div>
-                        </div>
-
-                        {{-- Nuevo cliente --}}
-                        <div id="sectionNuevo" style="{{ old('cliente_tipo') !== 'nuevo' ? 'display:none' : '' }}">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Nombre <span style="color:var(--error-color)">*</span></label>
-                                    <input type="text" name="nuevo_nombre" class="form-control"
-                                           value="{{ old('nuevo_nombre') }}" placeholder="Nombre">
-                                    @error('nuevo_nombre')
-                                        <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Apellido</label>
-                                    <input type="text" name="nuevo_apellido" class="form-control"
-                                           value="{{ old('nuevo_apellido') }}" placeholder="Apellido">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Teléfono <span style="color:var(--error-color)">*</span></label>
-                                    <input type="text" name="nuevo_telefono" class="form-control"
-                                           value="{{ old('nuevo_telefono') }}" placeholder="70000000">
-                                    @error('nuevo_telefono')
-                                        <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="nuevo_email" class="form-control"
-                                           value="{{ old('nuevo_email') }}" placeholder="correo@ejemplo.com">
-                                    @error('nuevo_email')
-                                        <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
+                        @else
+                            <p style="color:var(--text-light);font-style:italic;font-size:0.88rem;margin:0;">Sin cliente asociado</p>
+                        @endif
                     </div>
                 </div>
 
-                {{-- SECCIÓN 2: Servicios (múltiples) --}}
+                {{-- SECCIÓN 2: Servicios --}}
                 <div class="form-section">
                     <div class="form-section-header">
                         <div class="form-section-num">2</div>
                         <span class="form-section-title">Servicios y profesionales</span>
                     </div>
                     <div class="form-section-body">
-                        @error('lineas')
+                        @error('servicios')
                             <span style="color:var(--error-color);font-size:0.78rem;display:block;margin-bottom:0.5rem;">{{ $message }}</span>
                         @enderror
 
@@ -341,26 +192,32 @@
                         </div>
 
                         <div id="serviciosContainer">
-                            <div class="linea-servicio" data-index="0">
-                                <div class="form-group" style="margin:0;">
-                                    <select name="servicios[0][servicio_id]" class="form-control select-servicio" required
-                                            onchange="onServicioChange(this)">
-                                        <option value="">— Seleccionar —</option>
-                                        @foreach($servicios as $s)
-                                            <option value="{{ $s->id }}" data-precio="{{ $s->precio }}" data-duracion="{{ $s->duracion_minutos }}">
-                                                {{ $s->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                            @foreach($cita->citaServicios as $i => $cs)
+                                <div class="linea-servicio" data-index="{{ $i }}">
+                                    <div class="form-group" style="margin:0;">
+                                        <select name="servicios[{{ $i }}][servicio_id]" class="form-control select-servicio" required
+                                                onchange="onServicioChange(this)">
+                                            <option value="">— Seleccionar —</option>
+                                            @foreach($servicios as $s)
+                                                <option value="{{ $s->id }}"
+                                                        data-precio="{{ $s->precio }}"
+                                                        data-duracion="{{ $s->duracion_minutos }}"
+                                                        {{ $cs->servicio_id == $s->id ? 'selected' : '' }}>
+                                                    {{ $s->nombre }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group linea-precio-wrap" style="margin:0;">
+                                        <span class="linea-precio-prefix">Bs.</span>
+                                        <input type="number" name="servicios[{{ $i }}][precio]" class="form-control linea-precio-input"
+                                               step="0.01" min="0" placeholder="0.00"
+                                               value="{{ $cs->precio_unitario !== null ? number_format($cs->precio_unitario, 2, '.', '') : '' }}"
+                                               oninput="updateResume()">
+                                    </div>
+                                    <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>
                                 </div>
-                                <div class="form-group linea-precio-wrap" style="margin:0;">
-                                    <span class="linea-precio-prefix">Bs.</span>
-                                    <input type="number" name="servicios[0][precio]" class="form-control linea-precio-input"
-                                           step="0.01" min="0" placeholder="0.00"
-                                           oninput="updateResume()">
-                                </div>
-                                <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>
-                            </div>
+                            @endforeach
                         </div>
 
                         <button type="button" class="btn btn-outline btn-sm" onclick="addServicio()" style="margin-top:0.25rem;">
@@ -384,7 +241,31 @@
                             <span></span>
                         </div>
 
-                        <div id="profesionalesContainer"></div>
+                        <div id="profesionalesContainer">
+                            @php $profIdx = 0; @endphp
+                            @foreach($cita->citaServicios->whereNotNull('empleado_id')->values() as $cs)
+                                <div class="linea-profesional" data-index="{{ $profIdx }}">
+                                    <div class="form-group" style="margin:0;">
+                                        <select name="profesionales[{{ $profIdx }}][empleado_id]" class="form-control">
+                                            <option value="">— Seleccionar —</option>
+                                            @foreach($empleados as $emp)
+                                                <option value="{{ $emp->id }}" {{ $cs->empleado_id == $emp->id ? 'selected' : '' }}>
+                                                    {{ $emp->nombre }} {{ $emp->apellido }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin:0;">
+                                        <select name="profesionales[{{ $profIdx }}][servicio_id]" class="form-control select-prof-servicio"
+                                                data-current="{{ $cs->servicio_id }}">
+                                            {{-- rebuilt by JS on init --}}
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn-remove-linea" onclick="removeProfesional(this)" title="Quitar">✕</button>
+                                </div>
+                                @php $profIdx++; @endphp
+                            @endforeach
+                        </div>
 
                         <button type="button" class="btn btn-outline btn-sm" onclick="addProfesional()" style="margin-top:0.25rem;">
                             + Agregar profesional
@@ -403,7 +284,7 @@
                             <div class="form-group">
                                 <label class="form-label">Fecha <span style="color:var(--error-color)">*</span></label>
                                 <input type="date" name="fecha" class="form-control"
-                                       value="{{ old('fecha', date('Y-m-d')) }}" required>
+                                       value="{{ old('fecha', $cita->fecha->format('Y-m-d')) }}" required>
                                 @error('fecha')
                                     <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
                                 @enderror
@@ -411,7 +292,7 @@
                             <div class="form-group">
                                 <label class="form-label">Hora <span style="color:var(--error-color)">*</span></label>
                                 <input type="time" name="hora" class="form-control"
-                                       value="{{ old('hora', '09:00') }}" required>
+                                       value="{{ old('hora', substr($cita->getRawOriginal('hora'), 0, 5)) }}" required>
                                 @error('hora')
                                     <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
                                 @enderror
@@ -421,7 +302,7 @@
                             <label class="form-label">Estado</label>
                             <select name="estado" class="form-control">
                                 @foreach(['pendiente' => 'Pendiente', 'confirmada' => 'Confirmada', 'completada' => 'Completada', 'cancelada' => 'Cancelada'] as $val => $label)
-                                    <option value="{{ $val }}" {{ old('estado', 'pendiente') === $val ? 'selected' : '' }}>
+                                    <option value="{{ $val }}" {{ old('estado', $cita->estado) === $val ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -430,7 +311,7 @@
                         <div class="form-group">
                             <label class="form-label">Notas</label>
                             <textarea name="notas" class="form-control" rows="2"
-                                      placeholder="Preferencias del cliente, observaciones...">{{ old('notas') }}</textarea>
+                                      placeholder="Preferencias del cliente, observaciones...">{{ old('notas', $cita->notas) }}</textarea>
                         </div>
 
                         @if($campanas->isNotEmpty())
@@ -439,18 +320,20 @@
                             <p style="font-size:0.78rem;color:var(--text-light);font-weight:300;margin-bottom:0.75rem;font-style:italic;">
                                 Opcional — vincula esta visita a una campaña activa.
                             </p>
+                            @php $campanaSeleccionada = old('campana_id', $cita->campana_id ?? ''); @endphp
                             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.5rem;">
-                                <label class="campana-card {{ old('campana_id') === null ? 'selected' : '' }}" for="campana_ninguna">
+                                <label class="campana-card {{ $campanaSeleccionada === '' || $campanaSeleccionada === null ? 'selected' : '' }}"
+                                       for="campana_ninguna">
                                     <input type="radio" name="campana_id" id="campana_ninguna" value=""
-                                           {{ old('campana_id') === null ? 'checked' : '' }}>
+                                           {{ $campanaSeleccionada === '' || $campanaSeleccionada === null ? 'checked' : '' }}>
                                     <span class="campana-card-name" style="color:var(--text-light);font-style:italic;">Sin campaña</span>
                                 </label>
                                 @foreach($campanas as $camp)
-                                    <label class="campana-card {{ old('campana_id') == $camp->id ? 'selected' : '' }}"
+                                    <label class="campana-card {{ $campanaSeleccionada == $camp->id ? 'selected' : '' }}"
                                            for="campana_{{ $camp->id }}">
                                         <input type="radio" name="campana_id" id="campana_{{ $camp->id }}"
                                                value="{{ $camp->id }}"
-                                               {{ old('campana_id') == $camp->id ? 'checked' : '' }}>
+                                               {{ $campanaSeleccionada == $camp->id ? 'checked' : '' }}>
                                         <span class="campana-card-name">{{ $camp->nombre }}</span>
                                         @if($camp->fecha_fin)
                                             <span class="campana-card-date">hasta {{ $camp->fecha_fin->format('d/m/Y') }}</span>
@@ -474,14 +357,14 @@
                     </div>
                     <div class="form-section-body" style="padding:1.25rem 1.5rem;">
 
-                        <div id="resumeCliente" style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                        <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.05);">
                             <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Cliente</div>
-                            <div id="resumeClienteName" style="font-size:0.9rem;color:var(--text-light);font-style:italic;">Sin seleccionar</div>
+                            <div style="font-size:0.9rem;color:var(--text-dark);">{{ $cita->cliente?->nombre_completo ?? '—' }}</div>
                         </div>
 
                         <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.05);">
                             <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Servicios</div>
-                            <div id="resumeServicios" style="font-size:0.9rem;color:var(--text-light);font-style:italic;">Sin seleccionar</div>
+                            <div id="resumeServicios" style="font-size:0.9rem;color:var(--text-light);font-style:italic;">Cargando…</div>
                         </div>
 
                         <div style="margin-bottom:1.5rem;">
@@ -490,9 +373,9 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="width:100%;text-align:center;justify-content:center;">
-                            Guardar cita
+                            Guardar cambios
                         </button>
-                        <a href="{{ route('admin.citas.calendario') }}"
+                        <a href="{{ route('admin.citas.show', $cita) }}"
                            class="btn btn-outline btn-sm"
                            style="width:100%;text-align:center;display:block;margin-top:0.75rem;">
                             Cancelar
@@ -508,73 +391,13 @@
 
 @push('scripts')
 <script>
-    const CLIENTES  = @json($clientesJson);
     const SERVICIOS = @json($serviciosJson);
     const EMPLEADOS = @json($empleadosJson);
 
-    let servicioIdx = 1;
-    let profIdx     = 0;
+    let servicioIdx = {{ $cita->citaServicios->count() }};
+    let profIdx     = {{ $cita->citaServicios->whereNotNull('empleado_id')->count() }};
 
-    // Map: rowIndex → {servicio_id, nombre} de los servicios seleccionados
     const serviciosSeleccionados = new Map();
-
-    // ===== Toggle cliente =====
-    function switchCliente(tipo) {
-        document.getElementById('clienteTipo').value = tipo;
-        document.getElementById('btnExistente').classList.toggle('active', tipo === 'existente');
-        document.getElementById('btnNuevo').classList.toggle('active', tipo === 'nuevo');
-        document.getElementById('sectionExistente').style.display = tipo === 'existente' ? '' : 'none';
-        document.getElementById('sectionNuevo').style.display    = tipo === 'nuevo'      ? '' : 'none';
-        updateResume();
-    }
-
-    // ===== Buscador de cliente =====
-    const searchInput   = document.getElementById('searchInput');
-    const clienteId     = document.getElementById('clienteIdInput');
-    const dropdown      = document.getElementById('searchDropdown');
-    const selectedBadge = document.getElementById('selectedBadge');
-    const selectedName  = document.getElementById('selectedName');
-
-    function renderDropdown(term) {
-        const q = term.toLowerCase().trim();
-        if (q.length < 1) { dropdown.classList.remove('visible'); return; }
-        const matches = CLIENTES.filter(c => c.nombre.toLowerCase().includes(q) || c.tel.includes(q)).slice(0, 12);
-        if (matches.length === 0) {
-            dropdown.innerHTML = `<div class="search-option-empty">No se encontró ningún cliente con "${term}"</div>`;
-        } else {
-            dropdown.innerHTML = matches.map(c => `
-                <div class="search-option" onclick="selectCliente(${c.id}, '${c.nombre.replace(/'/g,"\\'")}')">
-                    <span class="opt-name">${c.nombre}</span>
-                    <span class="opt-phone">${c.tel}</span>
-                </div>`).join('');
-        }
-        dropdown.classList.add('visible');
-    }
-
-    function selectCliente(id, nombre) {
-        clienteId.value = id;
-        searchInput.value = nombre;
-        searchInput.style.display = 'none';
-        dropdown.classList.remove('visible');
-        selectedName.textContent = nombre;
-        selectedBadge.classList.add('visible');
-        updateResume();
-    }
-
-    function clearCliente() {
-        clienteId.value = '';
-        searchInput.value = '';
-        searchInput.style.display = '';
-        searchInput.focus();
-        selectedBadge.classList.remove('visible');
-        updateResume();
-    }
-
-    searchInput.addEventListener('input', () => renderDropdown(searchInput.value));
-    searchInput.addEventListener('focus', () => { if (searchInput.value) renderDropdown(searchInput.value); });
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.search-cliente-wrapper')) dropdown.classList.remove('visible');
-    });
 
     // ===== Sección Servicios =====
     function buildServicioOptions(selected = '') {
@@ -583,14 +406,16 @@
     }
 
     function onServicioChange(sel) {
-        const row     = sel.closest('.linea-servicio');
-        const idx     = row.dataset.index;
-        const opt     = sel.options[sel.selectedIndex];
+        const row   = sel.closest('.linea-servicio');
+        const idx   = row.dataset.index;
+        const opt   = sel.options[sel.selectedIndex];
         const precioInput = row.querySelector('.linea-precio-input');
 
         if (opt.value) {
             serviciosSeleccionados.set(idx, { servicio_id: opt.value, nombre: opt.text });
-            if (precioInput) precioInput.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            if (precioInput && !precioInput.value) {
+                precioInput.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            }
         } else {
             serviciosSeleccionados.delete(idx);
             if (precioInput) precioInput.value = '';
@@ -631,32 +456,26 @@
         updateResume();
     }
 
-    document.getElementById('serviciosContainer').addEventListener('change', e => {
-        if (!e.target.classList.contains('select-servicio')) updateResume();
-    });
-    document.getElementById('serviciosContainer').addEventListener('input', e => {
-        if (e.target.classList.contains('linea-precio-input')) updateResume();
-    });
-
     // ===== Sección Profesionales =====
     function buildEmpleadoOptions() {
         return '<option value="">— Seleccionar —</option>' +
             EMPLEADOS.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
     }
 
-    function buildProfServicioOptions() {
+    function buildProfServicioOptions(selected = '') {
         const items = [...serviciosSeleccionados.values()];
         if (items.length === 0) return '<option value="">— Elige servicios primero —</option>';
         return '<option value="">— Qué realizó —</option>' +
-            items.map(s => `<option value="${s.servicio_id}">${s.nombre}</option>`).join('');
+            items.map(s => `<option value="${s.servicio_id}"${s.servicio_id == selected ? ' selected' : ''}>${s.nombre}</option>`).join('');
     }
 
     function rebuildProfServDropdowns() {
         document.querySelectorAll('.select-prof-servicio').forEach(sel => {
-            const current = sel.value;
+            const current = sel.value || sel.dataset.current;
             const items   = [...serviciosSeleccionados.values()];
             sel.innerHTML = '<option value="">— Qué realizó —</option>' +
                 items.map(s => `<option value="${s.servicio_id}"${s.servicio_id == current ? ' selected' : ''}>${s.nombre}</option>`).join('');
+            delete sel.dataset.current;
         });
     }
 
@@ -692,20 +511,6 @@
 
     // ===== Resumen lateral =====
     function updateResume() {
-        const tipo = document.getElementById('clienteTipo').value;
-        let clienteLabel = 'Sin seleccionar';
-        if (tipo === 'existente' && selectedName.textContent) {
-            clienteLabel = selectedName.textContent;
-        } else if (tipo === 'nuevo') {
-            const n = document.querySelector('[name="nuevo_nombre"]').value.trim();
-            const a = document.querySelector('[name="nuevo_apellido"]').value.trim();
-            clienteLabel = n ? n + (a ? ' ' + a : '') + ' (nuevo)' : 'Completar datos...';
-        }
-        const resumeNombre = document.getElementById('resumeClienteName');
-        resumeNombre.textContent = clienteLabel;
-        resumeNombre.style.fontStyle = clienteLabel === 'Sin seleccionar' ? 'italic' : 'normal';
-        resumeNombre.style.color = clienteLabel === 'Sin seleccionar' ? 'var(--text-light)' : 'var(--text-dark)';
-
         const rows = document.querySelectorAll('#serviciosContainer .linea-servicio');
         const items = [];
         let totalPrecio = 0;
@@ -735,15 +540,35 @@
         document.getElementById('resumePrecio').textContent = totalPrecio > 0 ? 'Bs. ' + totalPrecio.toFixed(2) : '—';
     }
 
-    document.querySelectorAll('[name="nuevo_nombre"],[name="nuevo_apellido"]').forEach(el => {
-        el.addEventListener('input', updateResume);
-    });
+    // ===== Inicializar estado desde filas pre-renderizadas =====
+    document.addEventListener('DOMContentLoaded', function () {
+        // Poblar serviciosSeleccionados desde filas existentes
+        document.querySelectorAll('#serviciosContainer .linea-servicio').forEach(row => {
+            const sel = row.querySelector('.select-servicio');
+            if (sel && sel.value) {
+                serviciosSeleccionados.set(row.dataset.index, {
+                    servicio_id: sel.value,
+                    nombre: sel.options[sel.selectedIndex].text,
+                });
+            }
+        });
 
-    // ===== Selector de campaña =====
-    document.querySelectorAll('.campana-card').forEach(card => {
-        card.addEventListener('click', () => {
-            document.querySelectorAll('.campana-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
+        // Mostrar header de profesionales si hay filas
+        if (document.querySelectorAll('.linea-profesional').length > 0) {
+            document.getElementById('profHeadersRow').style.display = 'grid';
+        }
+
+        // Reconstruir dropdowns de servicio en las filas de profesionales
+        rebuildProfServDropdowns();
+
+        updateResume();
+
+        // ===== Selector de campaña =====
+        document.querySelectorAll('.campana-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.campana-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
         });
     });
 </script>

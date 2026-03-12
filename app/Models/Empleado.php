@@ -33,12 +33,9 @@ class Empleado extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Citas asignadas al empleado
-     */
-    public function citas()
+    public function citaServicios()
     {
-        return $this->hasMany(Cita::class);
+        return $this->hasMany(CitaServicio::class);
     }
 
     /**

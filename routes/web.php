@@ -5,7 +5,11 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\InventarioController;
+use App\Http\Controllers\Admin\CampanaController;
+use App\Http\Controllers\Admin\ComisionController;
+use App\Http\Controllers\Admin\ReporteController;
 
 // Página pública
 Route::get('/', function () {
@@ -36,6 +40,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');
     Route::get('/citas/calendario', [CitaController::class, 'calendario'])->name('citas.calendario');
     Route::get('/citas/calendario/datos', [CitaController::class, 'calendarDatos'])->name('citas.calendarDatos');
+    Route::get('/citas/{cita}', [CitaController::class, 'show'])->name('citas.show');
+    Route::get('/citas/{cita}/editar', [CitaController::class, 'edit'])->name('citas.edit');
+    Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
     
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
@@ -49,10 +56,29 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Servicios
     Route::resource('servicios', \App\Http\Controllers\Admin\ServicioController::class);
     
+    // Campañas
+    Route::get('/campanas', [CampanaController::class, 'index'])->name('campanas.index');
+    Route::get('/campanas/crear', [CampanaController::class, 'create'])->name('campanas.create');
+    Route::post('/campanas', [CampanaController::class, 'store'])->name('campanas.store');
+    Route::get('/campanas/{campana}/editar', [CampanaController::class, 'edit'])->name('campanas.edit');
+    Route::put('/campanas/{campana}', [CampanaController::class, 'update'])->name('campanas.update');
+
+    // Comisiones
+    Route::get('/comisiones', [ComisionController::class, 'index'])->name('comisiones.index');
+    Route::put('/comisiones/{servicio}', [ComisionController::class, 'update'])->name('comisiones.update');
+
+    // Reportes
+    Route::get('/reportes/comisiones', [ReporteController::class, 'comisiones'])->name('reportes.comisiones');
+    Route::get('/reportes/comisiones/pdf', [ReporteController::class, 'comisionesPdf'])->name('reportes.comisiones.pdf');
+    Route::get('/reportes/comisiones/excel', [ReporteController::class, 'comisionesExcel'])->name('reportes.comisiones.excel');
+
     // Empleados
-    Route::get('/empleados', function () {
-        return view('admin.empleados.index');
-    })->name('empleados.index');
+    Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
+    Route::get('/empleados/crear', [EmpleadoController::class, 'create'])->name('empleados.create');
+    Route::post('/empleados', [EmpleadoController::class, 'store'])->name('empleados.store');
+    Route::get('/empleados/{empleado}', [EmpleadoController::class, 'show'])->name('empleados.show');
+    Route::get('/empleados/{empleado}/editar', [EmpleadoController::class, 'edit'])->name('empleados.edit');
+    Route::put('/empleados/{empleado}', [EmpleadoController::class, 'update'])->name('empleados.update');
     
     // Usuarios
     Route::get('/usuarios', function () {

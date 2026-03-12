@@ -11,8 +11,7 @@ class Cita extends Model
 
     protected $fillable = [
         'cliente_id',
-        'servicio_id',
-        'empleado_id',
+        'campana_id',
         'fecha',
         'hora',
         'estado',
@@ -26,28 +25,19 @@ class Cita extends Model
         'precio_final' => 'decimal:2',
     ];
 
-    /**
-     * Cliente de la cita
-     */
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
     }
 
-    /**
-     * Servicio de la cita
-     */
-    public function servicio()
+    public function campana()
     {
-        return $this->belongsTo(Servicio::class);
+        return $this->belongsTo(Campana::class);
     }
 
-    /**
-     * Empleado/Estilista asignado
-     */
-    public function empleado()
+    public function citaServicios()
     {
-        return $this->belongsTo(Empleado::class);
+        return $this->hasMany(CitaServicio::class);
     }
 
     /**
