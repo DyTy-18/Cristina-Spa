@@ -433,6 +433,9 @@
                         </div>
                         <p class="pkg-tier-desc">Tu transformación esencial para el gran día</p>
                         <div class="pkg-price">Desde <strong>450 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/novia/novia_1.jpg') }}" alt="Paquete Novias Esmeralda">
+                        </div>
                         <ul class="package-services">
                             <li>Lavado y peinado profesional</li>
                             <li>Maquillaje de novia básico</li>
@@ -451,6 +454,9 @@
                         </div>
                         <p class="pkg-tier-desc">La elección más elegida por nuestras novias</p>
                         <div class="pkg-price">Desde <strong>850 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/novia/novia_2.jpg') }}" alt="Paquete Novias Rubí">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Esmeralda</li>
                             <li>Maquillaje de gala con pestañas</li>
@@ -470,6 +476,9 @@
                         </div>
                         <p class="pkg-tier-desc">La experiencia definitiva, sin límites</p>
                         <div class="pkg-price"><strong>A consultar</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/novia/novia_3.jpg') }}" alt="Paquete Novias Diamante">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Rubí</li>
                             <li>Colorimetría o balayage premium</li>
@@ -496,6 +505,9 @@
                         </div>
                         <p class="pkg-tier-desc">El inicio de tu noche de gala perfecta</p>
                         <div class="pkg-price">Desde <strong>380 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_22.jpg') }}" alt="Paquete Quinceañeras Esmeralda">
+                        </div>
                         <ul class="package-services">
                             <li>Lavado y peinado de gala</li>
                             <li>Maquillaje básico de fiesta</li>
@@ -513,6 +525,9 @@
                         </div>
                         <p class="pkg-tier-desc">La elección de las princesas de La Paz</p>
                         <div class="pkg-price">Desde <strong>720 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_32.jpg') }}" alt="Paquete Quinceañeras Rubí">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Esmeralda</li>
                             <li>Maquillaje artístico con pestañas</li>
@@ -531,6 +546,9 @@
                         </div>
                         <p class="pkg-tier-desc">Una noche que recordarás toda la vida</p>
                         <div class="pkg-price"><strong>A consultar</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_33.jpg') }}" alt="Paquete Quinceañeras Diamante">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Rubí</li>
                             <li>Colorimetría o mechas creativas</li>
@@ -557,6 +575,9 @@
                         </div>
                         <p class="pkg-tier-desc">Imagen profesional para tu evento</p>
                         <div class="pkg-price">Desde <strong>300 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/colorimetria/CRISTINA SPA FOTOS_23.jpg') }}" alt="Paquete Eventos Esmeralda">
+                        </div>
                         <ul class="package-services">
                             <li>Peinado de fiesta</li>
                             <li>Maquillaje básico</li>
@@ -574,6 +595,9 @@
                         </div>
                         <p class="pkg-tier-desc">Para grupos y desfiles corporativos</p>
                         <div class="pkg-price">Desde <strong>580 Bs.</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/colorimetria/CRISTINA SPA FOTOS_25.jpg') }}" alt="Paquete Eventos Rubí">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Esmeralda</li>
                             <li>Maquillaje artístico de evento</li>
@@ -592,6 +616,9 @@
                         </div>
                         <p class="pkg-tier-desc">Experiencia VIP para desfiles y empresas</p>
                         <div class="pkg-price"><strong>A consultar</strong></div>
+                        <div class="pkg-card-img">
+                            <img src="{{ asset('images/galeria/spa/spa_1.jpg') }}" alt="Paquete Eventos Diamante">
+                        </div>
                         <ul class="package-services">
                             <li>Todo lo del Rubí</li>
                             <li>Equipo completo de estilistas</li>
@@ -612,160 +639,122 @@
 
     <!-- Branches Section -->
     <section id="sucursales" class="branches">
-        <div class="container">
-            <div class="services-intro">
+        <div class="branches-inner">
+
+            <div class="branches-header">
                 <span class="section-label">Encuéntranos</span>
-                <h2 class="section-title section-title-center">Nuestras Sucursales</h2>
-                <p>Con 6 ubicaciones en La Paz, siempre hay un Cristina Spa cerca de ti.</p>
+                <h2 class="section-title">Nuestras<br>Sucursales</h2>
+                <p class="branches-subtitle">Cuatro ubicaciones en La Paz para estar siempre cerca de ti.</p>
+                <div class="branches-city-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    La Paz, Bolivia
+                </div>
             </div>
+
             <div class="branches-grid">
-                <!-- Zona Central -->
+
+                <!-- 01 Hotel Gloria -->
                 <div class="branch-card">
-                    <div class="branch-zone">Zona Central</div>
-                    <h3>Hotel Gloria</h3>
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Lun - Sáb: 9:00 - 20:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122906962">
-                            📞 2906962
-                        </a>
+                    <span class="branch-num"></span>
+                    <div class="branch-top">
+                        <span class="branch-zone">Zona Central</span>
+                        <h3 class="branch-name-link" onclick="openBranchModal('gloria')">Hotel Gloria</h3>
                     </div>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <div class="branch-body">
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Lun – Sáb &nbsp; 9:00 – 20:00</span>
+                        </div>
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                            <div class="branch-phones">
+                                <a href="tel:+59122906962">2906962</a>
+                                <a href="tel:+59122770838">2770838</a>
+                            </div>
+                        </div>
                     </div>
-                    <a href="https://maps.google.com/?q=Hotel+Gloria+La+Paz+Bolivia" target="_blank"
-                        class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
+                    <button class="branch-map-link" onclick="openBranchModal('gloria')">
+                        Ver en Maps
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </button>
                 </div>
 
-                <!-- Mega Center -->
-                {{-- <div class="branch-card">
-                    <div class="branch-zone">Zona Sur</div>
-                    <h3>Mega Center</h3>
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Lun - Dom: 10:00 - 22:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
-                    </div>
-                    <a href="https://maps.google.com/?q=Mega+Center+Irpavi+La+Paz+Bolivia" target="_blank"
-                        class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
-                </div> --}}
-
-                <!-- Obrajes -->
-                {{-- <div class="branch-card">
-                    <div class="branch-zone">Zona Sur</div>
-                    <h3>Obrajes</h3>
-                    <span class="branch-location">Calle 15 Av. Hernando Siles</span>
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Lun - Sáb: 9:00 - 20:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122787766">
-                            📞 2787766
-                        </a>
-                    </div>
-                    <a href="https://maps.google.com/?q=Calle+15+Avenida+Hernando+Siles+Obrajes+La+Paz+Bolivia"
-                        target="_blank" class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
-                </div> --}}
-
-                <!-- San Miguel -->
+                <!-- 02 San Miguel -->
                 <div class="branch-card">
-                    <div class="branch-zone">Zona Sur</div>
-                    <h3>San Miguel</h3>
-                    
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Mar - Sáb: 9:00 - 20:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122773147">
-                            📞 2773147
-                        </a>
+                    <span class="branch-num"></span>
+                    <div class="branch-top">
+                        <span class="branch-zone">Zona Sur</span>
+                        <h3 class="branch-name-link" onclick="openBranchModal('sanmiguel')">San Miguel</h3>
                     </div>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <div class="branch-body">
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Mar – Sáb &nbsp; 9:00 – 20:00</span>
+                        </div>
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                            <div class="branch-phones">
+                                <a href="tel:+59122773147">2773147</a>
+                                <a href="tel:+59122770838">2770838</a>
+                            </div>
+                        </div>
                     </div>
-                    <a href="https://maps.google.com/?q=San+Miguel+Bloque+L+La+Paz+Bolivia" target="_blank"
-                        class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
+                    <button class="branch-map-link" onclick="openBranchModal('sanmiguel')">
+                        Ver en Maps
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </button>
                 </div>
 
-                <!-- Calacoto -->
+                <!-- 03 Calacoto -->
                 <div class="branch-card">
-                    <div class="branch-zone">Zona Sur</div>
-                    <h3>Calacoto</h3>
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Lun - Sáb: 9:00 - 20:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <span class="branch-num"></span>
+                    <div class="branch-top">
+                        <span class="branch-zone">Zona Sur</span>
+                        <h3 class="branch-name-link" onclick="openBranchModal('calacoto')">Calacoto</h3>
                     </div>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <div class="branch-body">
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Lun – Sáb &nbsp; 9:00 – 20:00</span>
+                        </div>
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                            <div class="branch-phones">
+                                <a href="tel:+59122770838">2770838</a>
+                            </div>
+                        </div>
                     </div>
-                    <a href="https://maps.google.com/?q=Calacoto+La+Paz+Bolivia" target="_blank"
-                        class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
+                    <button class="branch-map-link" onclick="openBranchModal('calacoto')">
+                        Ver en Maps
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </button>
                 </div>
 
-                <!-- Achumani -->
+                <!-- 04 Achumani -->
                 <div class="branch-card">
-                    <div class="branch-zone">Zona Sur</div>
-                    <h3>Achumani</h3>
-                    <ul class="branch-details">
-                        <li>
-                            <span>🕒</span>
-                            <span>Mar - Sáb: 9:00 - 20:00</span>
-                        </li>
-                    </ul>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <span class="branch-num"></span>
+                    <div class="branch-top">
+                        <span class="branch-zone">Zona Sur</span>
+                        <h3 class="branch-name-link" onclick="openBranchModal('achumani')">Achumani</h3>
                     </div>
-                    <div class="branch-phone">
-                        <a href="tel:+59122770838">
-                            📞 2770838
-                        </a>
+                    <div class="branch-body">
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Mar – Sáb &nbsp; 9:00 – 20:00</span>
+                        </div>
+                        <div class="branch-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                            <div class="branch-phones">
+                                <a href="tel:+59122770838">2770838</a>
+                            </div>
+                        </div>
                     </div>
-                    <a href="https://maps.google.com/?q=Achumani+La+Paz+Bolivia" target="_blank"
-                        class="branch-map-link">
-                        📍 Ver en Google Maps
-                    </a>
+                    <button class="branch-map-link" onclick="openBranchModal('achumani')">
+                        Ver en Maps
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </button>
                 </div>
+
             </div>
         </div>
     </section>
@@ -942,98 +931,148 @@
 
     <!-- Contact Section -->
     <section id="contacto" class="contact">
-        <div class="container">
-            <div class="services-intro">
+        <div class="contact-inner">
+
+            <!-- Left: info -->
+            <div class="contact-info">
                 <span class="section-label">Contáctanos</span>
-                <h2 class="section-title section-title-center">Reserva tu Cita</h2>
-            </div>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <h3>¿Lista para transformarte?</h3>
-                    <p class="contact-description">
-                        Reserva tu cita online y vive la experiencia Cristina Spa.
-                        Nuestro equipo te espera para brindarte un servicio personalizado
-                        y de la más alta calidad.
-                    </p>
-                    <div class="info-item">
-                        <span class="info-icon">📍</span>
+                <h2 class="section-title">Reserva<br>tu Cita</h2>
+                <p class="contact-description">
+                    Escríbenos y nuestro equipo te confirmará la disponibilidad en tu sucursal preferida. Atención personalizada, calidad de primera.
+                </p>
+
+                <div class="contact-items">
+                    <div class="contact-item">
+                        <div class="contact-item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
                         <div>
-                            <p><strong>6 Sucursales</strong></p>
-                            <p>Hotel Gloria, Mega Center, Obrajes, San Miguel, Calacoto C.19, Calacoto C.13</p>
+                            <p class="contact-item-label">Sucursales</p>
+                            <p class="contact-item-value">Hotel Gloria · San Miguel<br>Calacoto · Achumani</p>
                         </div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-icon">📞</span>
+                    <div class="contact-item">
+                        <div class="contact-item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                        </div>
                         <div>
-                            <p><strong>Teléfono Central</strong></p>
-                            <p>2906962</p>
+                            <p class="contact-item-label">Teléfonos</p>
+                            <p class="contact-item-value">
+                                <a href="tel:+59122906962">2906962</a> &nbsp;·&nbsp; <a href="tel:+59122770838">2770838</a>
+                            </p>
                         </div>
                     </div>
-                    <div class="info-item">
-                        <span class="info-icon">✉️</span>
-                        <div>
-                            <p><strong>Email</strong></p>
-                            <p>info@cristinaspa.com</p>
+                    <div class="contact-item">
+                        <div class="contact-item-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">🕒</span>
                         <div>
-                            <p><strong>Horario General</strong></p>
-                            <p>Lunes a Sábados</p>
-                            <p>Ver horarios por sucursal</p>
+                            <p class="contact-item-label">Horario general</p>
+                            <p class="contact-item-value">Lun – Sáb: 9:00 – 20:00</p>
                         </div>
                     </div>
                 </div>
-                <form class="contact-form">
-                    <h3>Solicitar Cita</h3>
+
+                <a href="https://wa.me/59176768796?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa" target="_blank" rel="noopener noreferrer" class="contact-wa-btn">
+                    <svg viewBox="0 0 32 32" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M16.004 0h-.008C7.174 0 0 7.176 0 16c0 3.5 1.128 6.744 3.046 9.378L1.054 31.29l6.156-1.97A15.89 15.89 0 0016.004 32C24.826 32 32 24.822 32 16S24.826 0 16.004 0zm9.316 22.594c-.39 1.1-1.932 2.012-3.156 2.28-.838.178-1.932.32-5.618-1.208-4.714-1.952-7.75-6.744-7.986-7.058-.228-.314-1.874-2.494-1.874-4.756 0-2.262 1.186-3.374 1.608-3.834.39-.424 1.032-.618 1.646-.618.198 0 .376.01.536.018.422.018.634.042.912.708.346.832 1.186 2.89 1.29 3.102.104.212.202.49.078.782-.114.294-.212.424-.424.66-.212.236-.414.416-.626.672-.198.228-.42.472-.18.912.24.432 1.068 1.762 2.294 2.854 1.578 1.406 2.906 1.842 3.318 2.044.314.154.69.132.94-.13.314-.332.702-.882 1.098-1.424.282-.386.638-.434.98-.294.346.132 2.192 1.034 2.568 1.222.376.19.628.284.72.44.09.156.09.896-.3 1.994z"/></svg>
+                    Escribir por WhatsApp
+                </a>
+            </div>
+
+            <!-- Right: form -->
+            <div class="contact-form-wrap">
+                <form class="contact-form" id="reservaForm">
+                    <p class="contact-form-eyebrow">Solicitud de cita</p>
+                    <h3 class="contact-form-title">¿Lista para transformarte?</h3>
+
                     <div class="form-row">
-                        <input type="text" placeholder="Nombre completo" required>
-                        <input type="email" placeholder="Correo electrónico" required>
+                        <div class="form-field">
+                            <label>Nombre completo</label>
+                            <input type="text" name="nombre" placeholder="Tu nombre" required>
+                        </div>
+                        <div class="form-field">
+                            <label>Teléfono / WhatsApp</label>
+                            <input type="tel" name="telefono" placeholder="Ej. 7xxxxxxx" required>
+                        </div>
                     </div>
+
                     <div class="form-row">
-                        <input type="tel" placeholder="Teléfono / WhatsApp" required>
-                        <select required>
-                            <option value="">Selecciona sucursal</option>
-                            <option value="hotel-gloria">Hotel Gloria - Zona Central</option>
-                            <option value="mega-center">Mega Center - Irpavi</option>
-                            <option value="obrajes">Obrajes - Calle 15</option>
-                            <option value="san-miguel">San Miguel - Bloque L</option>
-                            <option value="calacoto-c19">Calacoto - Calle 19</option>
-                            <option value="calacoto-c13">Calacoto - Calle 13</option>
-                        </select>
+                        <div class="form-field">
+                            <label>Sucursal</label>
+                            <select name="sucursal" required>
+                                <option value="">Selecciona sucursal</option>
+                                <option value="Hotel Gloria">Hotel Gloria – Zona Central</option>
+                                <option value="San Miguel">San Miguel – Zona Sur</option>
+                                <option value="Calacoto">Calacoto – Zona Sur</option>
+                                <option value="Achumani">Achumani – Zona Sur</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>Servicio</label>
+                            <select name="servicio" required>
+                                <option value="">Selecciona un servicio</option>
+                                <optgroup label="Peluquería">
+                                    <option>Corte de Cabello</option>
+                                    <option>Colorimetría</option>
+                                    <option>Balayage</option>
+                                    <option>Tratamiento Capilar</option>
+                                </optgroup>
+                                <optgroup label="Spa & Bienestar">
+                                    <option>Masaje Relajante</option>
+                                    <option>Masaje Terapéutico</option>
+                                    <option>Tratamiento Corporal</option>
+                                </optgroup>
+                                <optgroup label="Estética">
+                                    <option>Manicura</option>
+                                    <option>Pedicura</option>
+                                    <option>Extensiones de Pestañas</option>
+                                    <option>Diseño de Cejas</option>
+                                </optgroup>
+                                <optgroup label="Paquetes Especiales">
+                                    <option>Paquete Novia</option>
+                                    <option>Paquete Quinceañera</option>
+                                    <option>Evento Especial</option>
+                                </optgroup>
+                            </select>
+                        </div>
                     </div>
-                    <select required>
-                        <option value="">Selecciona un servicio</option>
-                        <optgroup label="Peluquería">
-                            <option value="corte">Corte de Cabello</option>
-                            <option value="color">Colorimetría</option>
-                            <option value="balayage">Balayage</option>
-                            <option value="tratamiento-capilar">Tratamiento Capilar</option>
-                        </optgroup>
-                        <optgroup label="Spa & Bienestar">
-                            <option value="masaje-relajante">Masaje Relajante</option>
-                            <option value="masaje-terapeutico">Masaje Terapéutico</option>
-                            <option value="tratamiento-corporal">Tratamiento Corporal</option>
-                        </optgroup>
-                        <optgroup label="Estética">
-                            <option value="manicura">Manicura</option>
-                            <option value="pedicura">Pedicura</option>
-                            <option value="pestanas">Extensiones de Pestañas</option>
-                            <option value="cejas">Diseño de Cejas</option>
-                        </optgroup>
-                        <optgroup label="Paquetes Especiales">
-                            <option value="novia">Paquete Novia</option>
-                            <option value="quinceanera">Paquete Quinceañera</option>
-                            <option value="evento">Evento Especial</option>
-                        </optgroup>
-                    </select>
-                    <textarea placeholder="Mensaje o comentarios adicionales (opcional)" rows="4"></textarea>
-                    <button type="submit" class="submit-button">Enviar Solicitud</button>
+
+                    <div class="form-field">
+                        <label>Comentarios <span class="form-optional">(opcional)</span></label>
+                        <textarea name="mensaje" placeholder="Fecha preferida, alguna solicitud especial…" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-button">
+                        <svg viewBox="0 0 32 32" width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M16.004 0h-.008C7.174 0 0 7.176 0 16c0 3.5 1.128 6.744 3.046 9.378L1.054 31.29l6.156-1.97A15.89 15.89 0 0016.004 32C24.826 32 32 24.822 32 16S24.826 0 16.004 0zm9.316 22.594c-.39 1.1-1.932 2.012-3.156 2.28-.838.178-1.932.32-5.618-1.208-4.714-1.952-7.75-6.744-7.986-7.058-.228-.314-1.874-2.494-1.874-4.756 0-2.262 1.186-3.374 1.608-3.834.39-.424 1.032-.618 1.646-.618.198 0 .376.01.536.018.422.018.634.042.912.708.346.832 1.186 2.89 1.29 3.102.104.212.202.49.078.782-.114.294-.212.424-.424.66-.212.236-.414.416-.626.672-.198.228-.42.472-.18.912.24.432 1.068 1.762 2.294 2.854 1.578 1.406 2.906 1.842 3.318 2.044.314.154.69.132.94-.13.314-.332.702-.882 1.098-1.424.282-.386.638-.434.98-.294.346.132 2.192 1.034 2.568 1.222.376.19.628.284.72.44.09.156.09.896-.3 1.994z"/></svg>
+                        Enviar por WhatsApp
+                    </button>
                 </form>
             </div>
+
         </div>
     </section>
+
+    <script>
+    (function() {
+        document.getElementById('reservaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var nombre   = this.nombre.value.trim();
+            var telefono = this.telefono.value.trim();
+            var sucursal = this.sucursal.value;
+            var servicio = this.servicio.value;
+            var mensaje  = this.mensaje.value.trim();
+
+            var text = '¡Hola! Quiero reservar una cita en Cristina Spa.\n\n'
+                + '👤 Nombre: ' + nombre + '\n'
+                + '📱 Teléfono: ' + telefono + '\n'
+                + '📍 Sucursal: ' + sucursal + '\n'
+                + '💆 Servicio: ' + servicio;
+            if (mensaje) text += '\n📝 Comentarios: ' + mensaje;
+
+            window.open('https://wa.me/59176768796?text=' + encodeURIComponent(text), '_blank');
+        });
+    })();
+    </script>
 
     <!-- WhatsApp Floating Button -->
     <script>
@@ -1110,7 +1149,125 @@
     })();
     </script>
 
-    <a href="https://wa.me/59122906962?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa"
+    <!-- ── Branch Modal ── -->
+    <div class="bmodal-overlay" id="branchModal" aria-hidden="true">
+        <div class="bmodal" role="dialog" aria-modal="true">
+
+            <button class="bmodal-close" id="branchModalClose" aria-label="Cerrar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+
+            <!-- Left: info -->
+            <div class="bmodal-info">
+                <span class="bmodal-num" id="bmodalNum"></span>
+                <span class="bmodal-zone" id="bmodalZone"></span>
+                <h2 class="bmodal-name" id="bmodalName"></h2>
+
+                <div class="bmodal-detail">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <div>
+                        <p class="bmodal-label">Horario de atención</p>
+                        <p class="bmodal-value" id="bmodalHours"></p>
+                    </div>
+                </div>
+
+                <div class="bmodal-detail">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
+                    <div>
+                        <p class="bmodal-label">Teléfonos</p>
+                        <div class="bmodal-phones" id="bmodalPhones"></div>
+                    </div>
+                </div>
+
+                <a class="bmodal-gmaps-btn" id="bmodalGmapsBtn" target="_blank" rel="noopener noreferrer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Abrir en Google Maps
+                </a>
+            </div>
+
+            <!-- Right: map -->
+            <div class="bmodal-map">
+                <iframe id="bmodalIframe" src="" frameborder="0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var branches = {
+            gloria: {
+                num: '', zone: 'Zona Central', name: 'Hotel Gloria',
+                hours: 'Lun – Sáb: 9:00 – 20:00',
+                phones: [{tel:'tel:+59122906962', label:'2906962'}, {tel:'tel:+59122770838', label:'2770838'}],
+                share: 'https://share.google/YZBmY2INSRjvVPOwA',
+                embed: 'https://maps.google.com/maps?q=Hotel+Gloria+La+Paz+Bolivia&output=embed&z=17'
+            },
+            sanmiguel: {
+                num: '', zone: 'Zona Sur', name: 'San Miguel',
+                hours: 'Mar – Sáb: 9:00 – 20:00',
+                phones: [{tel:'tel:+59122773147', label:'2773147'}, {tel:'tel:+59122770838', label:'2770838'}],
+                share: 'https://share.google/zqx1Q9LdyQo1F0xLW',
+                embed: 'https://maps.google.com/maps?q=Cristina+Spa+San+Miguel+La+Paz+Bolivia&output=embed&z=17'
+            },
+            calacoto: {
+                num: '', zone: 'Zona Sur', name: 'Calacoto',
+                hours: 'Lun – Sáb: 9:00 – 20:00',
+                phones: [{tel:'tel:+59122770838', label:'2770838'}],
+                share: 'https://share.google/AjGQMWwxCCluXj0Ej',
+                embed: 'https://maps.google.com/maps?q=Cristina+Spa+Calacoto+La+Paz+Bolivia&output=embed&z=17'
+            },
+            achumani: {
+                num: '', zone: 'Zona Sur', name: 'Achumani',
+                hours: 'Mar – Sáb: 9:00 – 20:00',
+                phones: [{tel:'tel:+59122770838', label:'2770838'}],
+                share: 'https://share.google/haFHDhdFR7DASz92z',
+                embed: 'https://maps.google.com/maps?q=Cristina+Spa+Achumani+La+Paz+Bolivia&output=embed&z=17'
+            }
+        };
+
+        var overlay  = document.getElementById('branchModal');
+        var iframe   = document.getElementById('bmodalIframe');
+        var closeBtn = document.getElementById('branchModalClose');
+
+        window.openBranchModal = function(id) {
+            var b = branches[id];
+            if (!b) return;
+
+            document.getElementById('bmodalNum').textContent   = b.num;
+            document.getElementById('bmodalZone').textContent  = b.zone;
+            document.getElementById('bmodalName').textContent  = b.name;
+            document.getElementById('bmodalHours').textContent = b.hours;
+
+            var phonesEl = document.getElementById('bmodalPhones');
+            phonesEl.innerHTML = b.phones.map(function(p) {
+                return '<a href="' + p.tel + '">' + p.label + '</a>';
+            }).join('');
+
+            document.getElementById('bmodalGmapsBtn').href = b.share;
+            iframe.src = b.embed;
+
+            overlay.classList.add('active');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function closeBranchModal() {
+            overlay.classList.remove('active');
+            overlay.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            iframe.src = '';
+        }
+
+        closeBtn.addEventListener('click', closeBranchModal);
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) closeBranchModal(); });
+        document.addEventListener('keydown', function(e) {
+            if (overlay.classList.contains('active') && e.key === 'Escape') closeBranchModal();
+        });
+    })();
+    </script>
+
+    <a href="https://wa.me/59176768796?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa"
         class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat en WhatsApp">
         <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
             <path

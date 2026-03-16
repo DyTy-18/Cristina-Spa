@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\InventarioController;
 use App\Http\Controllers\Admin\CampanaController;
 use App\Http\Controllers\Admin\ComisionController;
 use App\Http\Controllers\Admin\ReporteController;
+use App\Http\Controllers\Admin\UsuarioController;
+use App\Http\Controllers\Admin\RolController;
+use App\Http\Controllers\Admin\ActivityLogController;
 
 // Página pública
 Route::get('/', function () {
@@ -57,20 +60,28 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('servicios', \App\Http\Controllers\Admin\ServicioController::class);
     
     // Campañas
-    Route::get('/campanas', [CampanaController::class, 'index'])->name('campanas.index');
-    Route::get('/campanas/crear', [CampanaController::class, 'create'])->name('campanas.create');
-    Route::post('/campanas', [CampanaController::class, 'store'])->name('campanas.store');
-    Route::get('/campanas/{campana}/editar', [CampanaController::class, 'edit'])->name('campanas.edit');
-    Route::put('/campanas/{campana}', [CampanaController::class, 'update'])->name('campanas.update');
+    Route::middleware('permission:ver campanas')->group(function () {
+        Route::get('/campanas', [CampanaController::class, 'index'])->name('campanas.index');
+        Route::middleware('permission:gestionar campanas')->group(function () {
+            Route::get('/campanas/crear', [CampanaController::class, 'create'])->name('campanas.create');
+            Route::post('/campanas', [CampanaController::class, 'store'])->name('campanas.store');
+            Route::get('/campanas/{campana}/editar', [CampanaController::class, 'edit'])->name('campanas.edit');
+            Route::put('/campanas/{campana}', [CampanaController::class, 'update'])->name('campanas.update');
+        });
+    });
 
     // Comisiones
-    Route::get('/comisiones', [ComisionController::class, 'index'])->name('comisiones.index');
-    Route::put('/comisiones/{servicio}', [ComisionController::class, 'update'])->name('comisiones.update');
+    Route::middleware('permission:ver comisiones')->group(function () {
+        Route::get('/comisiones', [ComisionController::class, 'index'])->name('comisiones.index');
+        Route::put('/comisiones/{servicio}', [ComisionController::class, 'update'])->name('comisiones.update');
+    });
 
     // Reportes
-    Route::get('/reportes/comisiones', [ReporteController::class, 'comisiones'])->name('reportes.comisiones');
-    Route::get('/reportes/comisiones/pdf', [ReporteController::class, 'comisionesPdf'])->name('reportes.comisiones.pdf');
-    Route::get('/reportes/comisiones/excel', [ReporteController::class, 'comisionesExcel'])->name('reportes.comisiones.excel');
+    Route::middleware('permission:ver reportes')->group(function () {
+        Route::get('/reportes/comisiones', [ReporteController::class, 'comisiones'])->name('reportes.comisiones');
+        Route::get('/reportes/comisiones/pdf', [ReporteController::class, 'comisionesPdf'])->name('reportes.comisiones.pdf');
+        Route::get('/reportes/comisiones/excel', [ReporteController::class, 'comisionesExcel'])->name('reportes.comisiones.excel');
+    });
 
     // Empleados
     Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
@@ -80,18 +91,29 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/empleados/{empleado}/editar', [EmpleadoController::class, 'edit'])->name('empleados.edit');
     Route::put('/empleados/{empleado}', [EmpleadoController::class, 'update'])->name('empleados.update');
     
-    // Usuarios
-    Route::get('/usuarios', function () {
-        return view('admin.usuarios.index');
-    })->name('usuarios.index');
+    // Usuarios y Roles (solo admin)
+    Route::middleware('permission:gestionar usuarios')->group(function () {
+        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+        Route::get('/usuarios/crear', [UsuarioController::class, 'create'])->name('usuarios.create');
+        Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::get('/usuarios/{usuario}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');
+        Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
+        Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+
+        Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
+        Route::get('/roles/{rol}/editar', [RolController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{rol}', [RolController::class, 'update'])->name('roles.update');
+
+        Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
+    });
     
     // Mis Citas (para estilistas)
     Route::get('/mis-citas', function () {
         return view('admin.mis-citas.index');
     })->name('mis-citas');
 
-    // Inventario (solo admin)
-    Route::middleware('role:admin')->prefix('inventario')->name('inventario.')->group(function () {
+    // Inventario (admin, cajero, finanzas)
+    Route::middleware('permission:ver inventario')->prefix('inventario')->name('inventario.')->group(function () {
         Route::get('/', [InventarioController::class, 'index'])->name('index');
 
         Route::get('/productos', [InventarioController::class, 'productos'])->name('productos');

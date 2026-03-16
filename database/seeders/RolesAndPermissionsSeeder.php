@@ -70,6 +70,14 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::create(['name' => 'ver reportes']);
         Permission::create(['name' => 'exportar reportes']);
 
+        // Permisos para campañas de marketing
+        Permission::create(['name' => 'ver campanas']);
+        Permission::create(['name' => 'gestionar campanas']);
+
+        // Permisos para comisiones
+        Permission::create(['name' => 'ver comisiones']);
+        Permission::create(['name' => 'gestionar comisiones']);
+
         // Permisos de configuración del sistema
         Permission::create(['name' => 'gestionar configuracion']);
         Permission::create(['name' => 'gestionar usuarios']);
@@ -97,7 +105,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Caja
             'ver caja', 'registrar pagos', 'ver ventas',
             // Inventario (solo ver)
-            'ver inventario'
+            'ver inventario',
+            // Campañas
+            'ver campanas',
         ]);
 
         // ESTILISTA - Profesional que realiza los servicios
@@ -113,19 +123,31 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver inventario'
         ]);
 
-        // CAJERO - Manejo de pagos y caja
+        // CAJERO - Gestión de citas, clientes, inventario y campañas
         $cajero = Role::create(['name' => 'cajero']);
         $cajero->givePermissionTo([
-            // Citas (solo ver)
-            'ver citas',
+            // Citas
+            'ver citas', 'crear citas', 'editar citas', 'confirmar citas', 'cancelar citas',
             // Clientes
-            'ver clientes',
-            // Servicios (para facturar)
+            'ver clientes', 'crear clientes', 'editar clientes', 'ver historial clientes',
+            // Servicios (para agendar)
             'ver servicios',
-            // Caja y ventas
-            'ver caja', 'registrar pagos', 'ver ventas', 'hacer cierres caja',
             // Inventario
-            'ver inventario', 'gestionar inventario'
+            'ver inventario', 'gestionar inventario',
+            // Campañas
+            'ver campanas', 'gestionar campanas',
+        ]);
+
+        // FINANZAS - Inventario, empleados y comisiones
+        $finanzas = Role::create(['name' => 'finanzas']);
+        $finanzas->givePermissionTo([
+            // Inventario
+            'ver inventario',
+            // Empleados
+            'ver empleados',
+            // Comisiones y reportes
+            'ver comisiones', 'gestionar comisiones',
+            'ver reportes', 'exportar reportes',
         ]);
 
         // CLIENTE - Usuario registrado que puede reservar citas
@@ -136,5 +158,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'crear citas',
             'cancelar citas'
         ]);
+
+        // Re-asignar rol admin al usuario admin si existe
+        $adminUser = \App\Models\User::where('email', 'admin@cristinaspa.com')->first();
+        if ($adminUser && !$adminUser->hasRole('admin')) {
+            $adminUser->assignRole('admin');
+        }
     }
 }

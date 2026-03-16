@@ -59,7 +59,7 @@
                     </a>
                 @endif
 
-                @if (auth()->user()->hasAnyRole(['admin', 'secretario']))
+                @if (auth()->user()->hasPermissionTo('ver campanas'))
                     <a href="{{ route('admin.campanas.index') }}"
                         class="nav-item {{ request()->routeIs('admin.campanas.*') ? 'active' : '' }}">
                         <span class="nav-icon">📣</span>
@@ -67,7 +67,7 @@
                     </a>
                 @endif
 
-                @if (auth()->user()->hasRole('admin'))
+                @if (auth()->user()->hasPermissionTo('ver comisiones'))
                     <a href="{{ route('admin.comisiones.index') }}"
                         class="nav-item {{ request()->routeIs('admin.comisiones.*') ? 'active' : '' }}">
                         <span class="nav-icon">💲</span>
@@ -94,9 +94,19 @@
                         <span class="nav-icon">👤</span>
                         <span>Usuarios</span>
                     </a>
+                    <a href="{{ route('admin.roles.index') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                        <span class="nav-icon">🔐</span>
+                        <span>Roles y Permisos</span>
+                    </a>
+                    <a href="{{ route('admin.logs.index') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📋</span>
+                        <span>Registro de actividad</span>
+                    </a>
                 @endif
 
-                @if (auth()->user()->hasRole('admin'))
+                @if (auth()->user()->hasPermissionTo('ver inventario'))
                     <a href="{{ route('admin.inventario.index') }}"
                         class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
                         <span class="nav-icon">📦</span>

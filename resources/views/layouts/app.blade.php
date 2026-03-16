@@ -46,8 +46,6 @@
                             <button type="submit" class="nav-logout-btn">Salir</button>
                         </form>
                     </li>
-                @else
-                    <li><a href="{{ route('login') }}" class="nav-login">Entrar</a></li>
                 @endauth
             </ul>
             <div class="nav-toggle">
