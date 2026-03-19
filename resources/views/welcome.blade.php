@@ -668,7 +668,7 @@
                         <div class="branch-row">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
                             <div class="branch-phones">
-                                <a href="tel:+59176768798">76768798</a>
+                                <a href="https://wa.me/59176768798?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa%20%E2%80%93%20Hotel%20Gloria" target="_blank" rel="noopener">76768798</a>
                             </div>
                         </div>
                     </div>
@@ -693,9 +693,8 @@
                         <div class="branch-row">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
                             <div class="branch-phones">
-                                <a href="tel:+59176769723">76769723</a>
+                                <a href="https://wa.me/59176769723?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa%20%E2%80%93%20San%20Miguel" target="_blank" rel="noopener">76769723</a>
                                 <a href="tel:+59122773147">2773147</a>
-                                
                             </div>
                         </div>
                     </div>
@@ -720,7 +719,7 @@
                         <div class="branch-row">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
                             <div class="branch-phones">
-                                <a href="tel:+59176768796">76768796</a>
+                                <a href="https://wa.me/59176768796?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa%20%E2%80%93%20Calacoto" target="_blank" rel="noopener">76768796</a>
                                 <a href="tel:+5912799352">2799352</a>
                             </div>
                         </div>
@@ -746,7 +745,7 @@
                         <div class="branch-row">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.76A16 16 0 0 0 16 16.76l1.12-1.12a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 18v-.08z"/></svg>
                             <div class="branch-phones">
-                                <a href="tel:+59167097032">67097032</a>
+                                <a href="https://wa.me/59167097032?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa%20%E2%80%93%20Achumani" target="_blank" rel="noopener">67097032</a>
                             </div>
                         </div>
                     </div>
@@ -959,7 +958,7 @@
                         <div>
                             <p class="contact-item-label">Teléfonos</p>
                             <p class="contact-item-value">
-                                <a href="tel:+59122906962">2906962</a> &nbsp;·&nbsp; <a href="tel:+59122770838">2770838</a>
+                                <a href="https://wa.me/59176768796?text=Hola%2C%20quiero%20reservar%20una%20cita%20en%20Cristina%20Spa" target="_blank" rel="noopener">76768796</a>
                             </p>
                         </div>
                     </div>
