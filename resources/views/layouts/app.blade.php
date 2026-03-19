@@ -2,16 +2,85 @@
 <html lang="es">
 
 <head>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NLLGX42L');</script>
+    <!-- End Google Tag Manager -->
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Cristina Spa - Belleza & Estilo')</title>
+
+    @php
+        $pageTitle = trim(strip_tags(View::yieldContent('title', 'Cristina Spa - Belleza, Estilo & Bienestar | Desde 2006 | La Paz, Bolivia')));
+        $pageDescription = trim(strip_tags(View::yieldContent('meta_description', 'Cristina Spa — Desde 2006, el spa y salón de belleza de referencia en La Paz, Bolivia. Peluquería, coloración, spa, estética, manicura, pedicura y paquetes especiales para novias y quinceañeras. 6 sucursales.')));
+        $canonicalUrl = trim(strip_tags(View::yieldContent('canonical', config('app.url') . request()->getPathInfo())));
+        $ogImage = trim(strip_tags(View::yieldContent('og_image', asset('images/logos/logo-cristina_spa.png'))));
+    @endphp
+
+    <title>{{ $pageTitle }}</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description"
-        content="Cristina Spa - Desde 2006, el mejor spa y salón de belleza en La Paz, Bolivia. Servicios de peluquería, spa, estética y paquetes especiales para novias y quinceañeras.">
-    <meta name="keywords"
-        content="spa la paz, peluquería la paz, salón de belleza bolivia, novias, quinceañeras, masajes, manicura, pedicura">
+    <meta name="description" content="{{ $pageDescription }}">
+    <meta name="keywords" content="spa la paz, peluquería la paz, salón de belleza bolivia, cristina spa, coloración cabello, balayage, tinte, manicura, pedicura, masajes, facial, paquete novias, quinceañeras, belleza la paz, zona sur la paz, obrajes, calacoto, san miguel">
     <meta name="author" content="Cristina Spa">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDescription }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:alt" content="Cristina Spa - La Paz, Bolivia">
+    <meta property="og:locale" content="es_BO">
+    <meta property="og:site_name" content="Cristina Spa">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $pageDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
+    <!-- Schema.org JSON-LD: Local Business -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BeautySalon",
+        "name": "Cristina Spa",
+        "description": "Spa y salón de belleza de referencia en La Paz, Bolivia desde 2006. Peluquería, coloración, spa, estética, manicura, pedicura y paquetes especiales para novias y quinceañeras.",
+        "url": "{{ config('app.url') }}",
+        "logo": "{{ asset('images/logos/logo-cristina_spa.png') }}",
+        "image": "{{ asset('images/logos/logo-cristina_spa.png') }}",
+        "telephone": "+591-2-2906962",
+        "email": "info@cristinaspa.com",
+        "foundingDate": "2006",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "La Paz",
+            "addressCountry": "BO"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "-16.5000",
+            "longitude": "-68.1193"
+        },
+        "priceRange": "$$",
+        "openingHours": "Mo-Sa 09:00-20:00",
+        "sameAs": [
+            "https://www.facebook.com/CristinaSpaOficial",
+            "https://www.instagram.com/cristinaspaoficial",
+            "https://www.tiktok.com/@cristinaspa"
+        ]
+    }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,9 +91,16 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+
+    @yield('head')
 </head>
 
 <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NLLGX42L"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <header class="header">
         <nav class="nav">
             <div class="logo">
