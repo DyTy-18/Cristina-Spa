@@ -67,10 +67,12 @@
     <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;">
         <a href="{{ route('admin.empleados.index') }}" class="btn btn-sm btn-outline">← Todos los empleados</a>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-            @if(auth()->user()->hasRole('admin'))
+            @can('ver comisiones')
+                <a href="{{ route('admin.empleados.comisiones.index', $empleado) }}"
+                   class="btn btn-sm btn-outline">⚙️ Comisiones</a>
                 <a href="{{ route('admin.reportes.comisiones', ['empleado_id' => $empleado->id]) }}"
-                   class="btn btn-sm btn-outline">📈 Ver comisiones</a>
-            @endif
+                   class="btn btn-sm btn-outline">📈 Ver reporte</a>
+            @endcan
             <a href="{{ route('admin.empleados.edit', $empleado) }}" class="btn btn-sm btn-accent">Editar datos</a>
         </div>
     </div>

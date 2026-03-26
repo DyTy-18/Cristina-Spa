@@ -18,7 +18,7 @@ class ReporteController extends Controller
     // ──────────────────────────────────────────
     private function calcular(string $desde, string $hasta, ?int $empleadoId = null): array
     {
-        $query = CitaServicio::with(['empleado', 'servicio', 'servicio.comision', 'cita.cliente'])
+        $query = CitaServicio::with(['empleado', 'servicio', 'servicio.comision', 'servicio.comisionesEmpleado', 'cita.cliente'])
             ->whereHas('cita', fn($q) =>
                 $q->whereBetween('fecha', [$desde, $hasta])
                   ->where('estado', 'completada')
@@ -46,10 +46,13 @@ class ReporteController extends Controller
                     $key           = $cs->cita_id . '-' . $cs->servicio_id;
                     $participantes = $participantesPorLinea[$key] ?? 1;
 
-                    $com       = $cs->servicio?->comision;
-                    $comActiva = $com && $com->activo;
-                    $precio    = (float) ($cs->precio_unitario ?? 0);
-                    $pct       = $comActiva ? (float) $com->porcentaje : 0;
+                    // Prioridad: comisión personal del empleado → comisión base del servicio
+                    $comPersonal = $cs->servicio?->comisionesEmpleado
+                        ->firstWhere('empleado_id', $cs->empleado_id);
+                    $com        = $comPersonal ?? $cs->servicio?->comision;
+                    $comActiva  = $com && $com->activo;
+                    $precio     = (float) ($cs->precio_unitario ?? 0);
+                    $pct        = $comActiva ? (float) $com->porcentaje : 0;
 
                     // Dividir la comisión entre todos los co-participantes
                     $monto = $comActiva
@@ -67,6 +70,7 @@ class ReporteController extends Controller
                         'com_estado'     => $com
                             ? ($com->activo ? 'activa' : 'inactiva')
                             : 'sin_config',
+                        'com_fuente'     => $comPersonal ? 'personal' : 'servicio',
                     ];
                 })->sortBy('fecha');
 

@@ -47,6 +47,11 @@ class Servicio extends Model
         return $this->hasOne(Comision::class);
     }
 
+    public function comisionesEmpleado()
+    {
+        return $this->hasMany(ComisionEmpleado::class);
+    }
+
     /**
      * Scope para servicios activos
      */

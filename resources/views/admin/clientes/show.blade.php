@@ -234,17 +234,122 @@
         font-weight: 300;
     }
 
-    /* ===== Líneas de servicio en modal ===== */
-    .linea-modal {
+    /* ===== Service icon cards in modal ===== */
+    .servicio-cards-grid {
         display: grid;
-        grid-template-columns: 1fr 90px auto;
-        gap: 0.6rem;
-        align-items: end;
-        padding: 0.6rem;
+        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+        gap: 0.5rem;
+    }
+    .servicio-card {
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 0.85rem 0.5rem 0.7rem;
+        cursor: pointer;
+        text-align: center;
+        transition: var(--transition);
+        background: var(--white);
+        user-select: none;
+        position: relative;
+    }
+    .servicio-card:hover {
+        border-color: var(--accent-color);
+        background: var(--light-bg);
+    }
+    .servicio-card.sel {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+    }
+    .servicio-card.sel .sc-name { color: var(--white); }
+    .servicio-card.sel .sc-price { color: rgba(255,255,255,0.7); }
+    .sc-check {
+        position: absolute;
+        top: 5px; right: 7px;
+        font-size: 0.6rem;
+        color: var(--white);
+        opacity: 0;
+        transition: var(--transition);
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+    .servicio-card.sel .sc-check { opacity: 1; }
+    .sc-icon { font-size: 1.8rem; display: block; margin-bottom: 0.35rem; line-height: 1; }
+    .sc-name {
+        font-size: 0.67rem;
+        color: var(--text-dark);
+        line-height: 1.25;
+        letter-spacing: 0.2px;
+    }
+    .sc-price {
+        font-size: 0.62rem;
+        color: var(--text-light);
+        margin-top: 0.18rem;
+    }
+
+    /* Price panel for selected services */
+    .sc-precio-row {
+        display: grid;
+        grid-template-columns: 1fr 100px 88px auto;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.7rem;
         background: var(--light-bg);
         border: 1px solid rgba(0,0,0,0.06);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.35rem;
     }
+    .sc-precio-name {
+        font-size: 0.8rem;
+        color: var(--text-dark);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .sc-precio-wrap { position: relative; }
+    .sc-precio-prefix {
+        position: absolute;
+        left: 0.6rem; top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.72rem;
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    .sc-precio-input { padding-left: 1.9rem !important; width: 100%; }
+
+    .sc-desc-wrap { position: relative; }
+    .sc-desc-suffix {
+        position: absolute;
+        right: 0.55rem; top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.72rem;
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    .sc-desc-input { padding-right: 1.6rem !important; width: 100%; }
+
+    .sc-neto {
+        font-size: 0.78rem;
+        color: var(--secondary-color);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1rem;
+        white-space: nowrap;
+        text-align: right;
+    }
+    .sc-neto.has-desc { color: var(--success-color); }
+
+    /* Discount badge in timeline */
+    .desc-badge {
+        display: inline-block;
+        font-size: 0.67rem;
+        font-weight: 400;
+        letter-spacing: 0.3px;
+        color: var(--white);
+        background: var(--success-color);
+        padding: 0.1rem 0.4rem;
+        border-radius: 2px;
+        vertical-align: middle;
+        margin-left: 0.35rem;
+    }
+
+    /* ===== Líneas de profesionales en modal ===== */
     .linea-prof-modal {
         display: grid;
         grid-template-columns: 1fr 1fr auto;
@@ -255,17 +360,6 @@
         border: 1px solid rgba(0,0,0,0.07);
         margin-bottom: 0.5rem;
     }
-    .linea-precio-modal-wrap { position: relative; }
-    .linea-precio-modal-prefix {
-        position: absolute;
-        left: 0.6rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.75rem;
-        color: var(--text-light);
-        pointer-events: none;
-    }
-    .linea-precio-modal-input { padding-left: 1.8rem !important; }
     .btn-remove-linea-modal {
         background: none;
         border: 1px solid rgba(0,0,0,0.12);
@@ -278,6 +372,72 @@
         transition: var(--transition);
     }
     .btn-remove-linea-modal:hover { color: var(--error-color); border-color: var(--error-color); }
+
+    /* ===== Pestañas Servicios / Paquetes en modal ===== */
+    .modal-srv-tabs {
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid rgba(0,0,0,.08);
+        background: var(--light-bg);
+        margin-bottom: 1rem;
+    }
+    .modal-srv-tab {
+        padding: .55rem 1.25rem;
+        font-size: .72rem;
+        letter-spacing: .7px;
+        text-transform: uppercase;
+        font-weight: 400;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        color: var(--text-light);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+    .modal-srv-tab:hover:not(.active) { color: var(--text-dark); }
+    .modal-srv-tab.active { color: var(--primary-color); border-bottom-color: var(--accent-color); background: var(--white); font-weight: 500; }
+    .modal-pkg-chip {
+        display: none;
+        align-items: center;
+        gap: .3rem;
+        margin-left: auto;
+        padding: 0 .75rem;
+        font-size: .7rem;
+        color: #166534;
+        background: rgba(34,197,94,.06);
+        border-left: 1px solid rgba(0,0,0,.06);
+    }
+    .modal-pkg-chip.show { display: flex; }
+
+    /* Package cards in modal */
+    .modal-pkg-cat-strip { display: flex; gap: 0; margin-bottom: .75rem; flex-wrap: wrap; border: 1px solid rgba(0,0,0,.09); width: fit-content; }
+    .modal-pkg-cat-btn {
+        padding: .3rem .85rem;
+        font-size: .68rem;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        cursor: pointer;
+        background: var(--white);
+        border: none;
+        border-right: 1px solid rgba(0,0,0,.09);
+        color: var(--text-light);
+        transition: var(--transition);
+    }
+    .modal-pkg-cat-btn:last-child { border-right: none; }
+    .modal-pkg-cat-btn.active { background: var(--primary-color); color: #fff; }
+    .modal-pkg-cat-btn:not(.active):hover { background: var(--light-bg); }
+
+    .modal-pkg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .5rem; }
+    .modal-pkg-card {
+        border: 1px solid rgba(0,0,0,.08);
+        padding: .65rem .75rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .modal-pkg-card:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .modal-pkg-card.applied { border-color: #22c55e; background: rgba(34,197,94,.05); }
 
     /* ===== Modal ===== */
     .modal-backdrop {
@@ -397,6 +557,9 @@
             <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-outline">
                 Editar datos
             </a>
+            <a href="{{ route('admin.contratos.index', ['cliente_id' => $cliente->id]) }}" class="btn btn-sm btn-outline">
+                📋 Contratos
+            </a>
             <button type="button" class="btn btn-accent btn-sm" onclick="document.getElementById('modalVisita').classList.add('open')">
                 + Registrar visita
             </button>
@@ -434,27 +597,27 @@
     <div class="stats-grid" style="margin-bottom:1.5rem;">
         <div class="stat-card">
             <div class="stat-icon">💆</div>
-            <div class="stat-value">{{ $stats['citas_completadas'] }}</div>
-            <div class="stat-label">Visitas completadas</div>
+            <div class="stat-value">{{ $stats['visitas_mes'] }}</div>
+            <div class="stat-label">Visitas este mes</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">💰</div>
-            <div class="stat-value">Bs. {{ number_format($stats['total_gastado'], 0) }}</div>
-            <div class="stat-label">Total invertido</div>
+            <div class="stat-value">Bs. {{ number_format($stats['total_mes'], 0) }}</div>
+            <div class="stat-label">Total este mes</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">📅</div>
             <div class="stat-value" style="font-size:1.6rem;">
-                {{ $stats['primera_visita'] ? \Carbon\Carbon::parse($stats['primera_visita'])->format('d/m/Y') : '—' }}
+                {{ $stats['ultima_visita'] ? \Carbon\Carbon::parse($stats['ultima_visita'])->format('d/m/Y') : '—' }}
             </div>
-            <div class="stat-label">Primera visita</div>
+            <div class="stat-label">Última visita</div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">⭐</div>
+            <div class="stat-icon">✂️</div>
             <div class="stat-value" style="font-size:1.4rem;line-height:1.2;">
-                {{ $servicioFavorito?->servicio?->nombre ?? '—' }}
+                {{ $ultimoServicio ?: '—' }}
             </div>
-            <div class="stat-label">Servicio favorito</div>
+            <div class="stat-label">Último servicio</div>
         </div>
     </div>
 
@@ -528,9 +691,13 @@
                                         @php
                                             $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
                                             $nombresEmps  = $cita->citaServicios->filter(fn($cs) => $cs->empleado)->map(fn($cs) => $cs->empleado->nombre . ' ' . $cs->empleado->apellido)->unique();
+                                            $descuentos   = $cita->citaServicios->filter(fn($cs) => $cs->descuento_porcentaje > 0);
                                         @endphp
                                         <div class="timeline-service">
                                             {{ $nombresServs->isNotEmpty() ? $nombresServs->implode(' + ') : 'Servicio no encontrado' }}
+                                            @foreach($descuentos as $cs)
+                                                <span class="desc-badge">-{{ rtrim(rtrim(number_format($cs->descuento_porcentaje, 2), '0'), '.') }}%</span>
+                                            @endforeach
                                         </div>
                                         @if($nombresEmps->isNotEmpty())
                                             <div class="timeline-stylist">
@@ -579,35 +746,60 @@
                 <form action="{{ route('admin.clientes.storeCita', $cliente) }}" method="POST">
                     @csrf
 
-                    {{-- Servicios --}}
+                    {{-- Pestañas Servicios / Paquetes --}}
                     <div class="form-group">
-                        <label class="form-label" style="margin-bottom:0.4rem;">Servicios <span style="color:var(--error-color)">*</span></label>
-                        <div style="display:grid;grid-template-columns:1fr 90px auto;gap:0.4rem;margin-bottom:0.3rem;padding:0 0.1rem;">
-                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Servicio</span>
-                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">Precio</span>
-                            <span></span>
-                        </div>
-                        <div id="modalServiciosContainer">
-                            <div class="linea-modal" data-index="0">
-                                <select name="servicios[0][servicio_id]" class="form-control modal-select-servicio" required
-                                        onchange="onModalServicioChange(this)">
-                                    <option value="">— Seleccionar —</option>
-                                    @foreach($servicios as $s)
-                                        <option value="{{ $s->id }}" data-precio="{{ $s->precio }}">{{ $s->nombre }}</option>
-                                    @endforeach
-                                </select>
-                                <div class="linea-precio-modal-wrap">
-                                    <span class="linea-precio-modal-prefix">Bs.</span>
-                                    <input type="number" name="servicios[0][precio]" class="form-control linea-precio-modal-input"
-                                           step="0.01" min="0" placeholder="0.00">
-                                </div>
-                                <button type="button" class="btn-remove-linea-modal" onclick="removeModalServicio(this)" title="Quitar">✕</button>
+                        {{-- Tab strip --}}
+                        <div class="modal-srv-tabs">
+                            <button type="button" class="modal-srv-tab active" id="mTabBtnServicios"
+                                onclick="switchModalTab('servicios')">✂️ Servicios</button>
+                            <button type="button" class="modal-srv-tab" id="mTabBtnPaquetes"
+                                onclick="switchModalTab('paquetes')">🎁 Paquetes</button>
+                            <div class="modal-pkg-chip" id="modalPkgChip">
+                                <span>✓</span>
+                                <span id="modalPkgChipText"></span>
+                                <button type="button" onclick="clearModalPaquete()"
+                                    style="background:none;border:none;cursor:pointer;color:#166534;font-size:.85rem;padding:0;"
+                                    title="Quitar paquete">✕</button>
                             </div>
+                            <span id="scCountBadge" style="display:none;margin-left:auto;margin-right:.75rem;align-self:center;font-size:.72rem;font-weight:400;color:var(--accent-color);letter-spacing:0.5px;"></span>
                         </div>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="addModalServicio()" style="margin-top:0.25rem;">
-                            + Agregar servicio
-                        </button>
-                    </div>
+
+                        {{-- Panel: Servicios --}}
+                        <div id="mPanelServicios">
+                            <div id="servicioCardsGrid" class="servicio-cards-grid"></div>
+                        <div id="scErrorMsg" style="display:none;color:var(--error-color);font-size:0.78rem;margin-top:0.4rem;">
+                            Selecciona al menos un servicio para continuar.
+                        </div>
+
+                        {{-- Price editing panel (visible when ≥1 card selected) --}}
+                        <div id="scPreciosPanel" style="margin-top:0.9rem;display:none;">
+                            <div style="display:grid;grid-template-columns:1fr 100px 88px auto;gap:0.5rem;padding:0 0.7rem;margin-bottom:0.3rem;">
+                                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Servicio</span>
+                                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Precio</span>
+                                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Descuento</span>
+                                <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);text-align:right;">Neto</span>
+                            </div>
+                            <div id="scPreciosContainer"></div>
+                        </div>
+
+                            {{-- Hidden inputs injected here by JS before submit --}}
+                            <div id="scHiddenInputs"></div>
+                        </div>{{-- end mPanelServicios --}}
+
+                        {{-- Panel: Paquetes --}}
+                        <div id="mPanelPaquetes" style="display:none;">
+                            <div class="modal-pkg-cat-strip">
+                                <button type="button" class="modal-pkg-cat-btn active" data-cat="todos" onclick="modalFilterCat('todos')">Todos</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="novia" onclick="modalFilterCat('novia')">👰 Novia</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="quinceañera" onclick="modalFilterCat('quinceañera')">🌸 Quinceañera</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="eventos" onclick="modalFilterCat('eventos')">🎉 Eventos</button>
+                            </div>
+                            <div class="modal-pkg-grid" id="modalPkgCards"></div>
+                            <p style="font-size:.72rem;color:var(--text-light);margin-top:.65rem;font-style:italic;">
+                                Al seleccionar un paquete se marcan los servicios automáticamente.
+                            </p>
+                        </div>
+                    </div>{{-- end form-group tabs --}}
 
                     {{-- Profesionales --}}
                     <div class="form-group" style="margin-top:1rem;">
@@ -664,6 +856,55 @@
                     </div>
                     @endif
 
+                    {{-- Sección contrato (aparece al seleccionar un paquete) --}}
+                    <div id="modalContratoSection" style="display:none;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(201,169,110,0.25);background:rgba(201,169,110,0.04);padding:0.9rem;border:1px solid rgba(201,169,110,0.2);">
+                        <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent-color);font-weight:500;margin-bottom:0.65rem;">📋 Contrato del paquete</div>
+                        <input type="hidden" name="crear_contrato" id="mContrCrear" value="0">
+                        <input type="hidden" name="paquete_id" id="mContrPaqueteId" value="">
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="font-size:0.72rem;">Fecha inicio</label>
+                                <input type="date" name="contrato_fecha_inicio" class="form-control" value="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="font-size:0.72rem;">Precio total (Bs.)</label>
+                                <input type="number" name="contrato_precio_total" id="mContrPrecio" class="form-control" step="0.01" min="0" placeholder="0.00" oninput="mUpdateContrSuma()">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:0.5rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                                <div style="font-size:0.72rem;color:var(--text-light);">Pagos registrados</div>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="mAddContrPago()" style="font-size:.7rem;padding:.2rem .6rem;">+ Añadir pago</button>
+                            </div>
+                            <div id="mContrPagosContainer">
+                                <div style="display:grid;grid-template-columns:1fr 100px 1fr auto;gap:0.35rem;align-items:center;margin-bottom:0.3rem;">
+                                    <input type="number" name="contrato_pagos[0][monto]" class="form-control mContrMonto"
+                                           step="0.01" min="0" placeholder="Monto (Bs.)" oninput="mUpdateContrSuma()">
+                                    <input type="date" name="contrato_pagos[0][fecha_pago]" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <select name="contrato_pagos[0][metodo_pago]" class="form-control" style="font-size:.78rem;">
+                                        <option value="">— Método —</option>
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="tarjeta">Tarjeta</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="qr">QR</option>
+                                    </select>
+                                    <span style="font-size:.68rem;color:var(--accent-color);font-weight:600;">★</span>
+                                </div>
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.25rem;">
+                                Adelantado: Bs. <span id="mContrSuma" style="color:var(--text-dark);font-weight:400;">0.00</span>
+                                · Pendiente: Bs. <span id="mContrTotal">0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" style="font-size:0.72rem;">Notas del contrato</label>
+                            <textarea name="contrato_notas" class="form-control" rows="2" placeholder="Observaciones..."></textarea>
+                        </div>
+                    </div>
+
                     <div style="display:flex;gap:1rem;margin-top:0.5rem;">
                         <button type="submit" class="btn btn-primary">Guardar visita</button>
                         <button type="button" class="btn btn-outline"
@@ -680,80 +921,354 @@
 <script>
     const MODAL_SERVICIOS = @json($modalServiciosJson);
     const MODAL_EMPLEADOS = @json($modalEmpleadosJson);
+    const MODAL_PAQUETES  = @json($paquetesJson);
 
-    let modalServicioIdx = 1;
-    let modalProfIdx     = 0;
-    const modalServiciosSeleccionados = new Map();
+    // ── Pestañas Servicios / Paquetes en modal ────────────────────────────────
+    let modalPkgCat      = 'todos';
+    let modalPkgAplicado = null;
 
-    // ===== Servicios del modal =====
-    function buildModalServicioOptions() {
-        return '<option value="">— Seleccionar —</option>' +
-            MODAL_SERVICIOS.map(s => `<option value="${s.id}" data-precio="${s.precio}">${s.nombre}</option>`).join('');
-    }
-
-    function onModalServicioChange(sel) {
-        const row   = sel.closest('.linea-modal');
-        const idx   = row.dataset.index;
-        const opt   = sel.options[sel.selectedIndex];
-        const input = row.querySelector('.linea-precio-modal-input');
-
-        if (opt.value) {
-            modalServiciosSeleccionados.set(idx, { servicio_id: opt.value, nombre: opt.text });
-            if (input) input.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
-        } else {
-            modalServiciosSeleccionados.delete(idx);
-            if (input) input.value = '';
+    function switchModalTab(tab) {
+        const isServicios = tab === 'servicios';
+        document.getElementById('mPanelServicios').style.display  = isServicios ? '' : 'none';
+        document.getElementById('mPanelPaquetes').style.display   = isServicios ? 'none' : '';
+        document.getElementById('mTabBtnServicios').classList.toggle('active', isServicios);
+        document.getElementById('mTabBtnPaquetes').classList.toggle('active', !isServicios);
+        if (!isServicios && document.getElementById('modalPkgCards').children.length === 0) {
+            renderModalPkgCards();
         }
-        rebuildModalProfServDropdowns();
     }
 
-    function addModalServicio() {
-        const idx = String(modalServicioIdx++);
+    function modalFilterCat(cat) {
+        modalPkgCat = cat;
+        document.querySelectorAll('.modal-pkg-cat-btn').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+        renderModalPkgCards();
+    }
+
+    function renderModalPkgCards() {
+        const wrap = document.getElementById('modalPkgCards');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        const list = modalPkgCat === 'todos' ? MODAL_PAQUETES : MODAL_PAQUETES.filter(p => p.categoria === modalPkgCat);
+        if (list.length === 0) {
+            wrap.innerHTML = '<p style="font-size:.78rem;color:var(--text-light);font-style:italic;">Sin paquetes en esta categoría.</p>';
+            return;
+        }
+        list.forEach(pkg => {
+            const card = document.createElement('div');
+            card.className = 'modal-pkg-card' + (pkg.id === modalPkgAplicado ? ' applied' : '');
+            const badge = pkg.nivel
+                ? `<span style="background:${pkg.nivel.color};color:#fff;font-size:.58rem;font-weight:700;padding:.05rem .35rem;border-radius:2px;letter-spacing:.8px;text-transform:uppercase;display:inline-block;margin-bottom:.25rem;">${pkg.nivel.nombre}</span><br>`
+                : '';
+            const total  = pkg.precio_total ? `Bs. ${parseFloat(pkg.precio_total).toFixed(0)}` : '';
+            const sNames = pkg.servicios.map(s => s.nombre).join(' · ');
+            card.innerHTML = `${badge}
+                <div style="font-size:.82rem;color:var(--text-dark);font-weight:400;">${pkg.nombre}</div>
+                <div style="font-size:.73rem;color:var(--accent-color);font-weight:500;">${total}</div>
+                <div style="font-size:.66rem;color:var(--text-light);font-style:italic;line-height:1.3;margin-top:.15rem;">${sNames}</div>`;
+            card.addEventListener('click', () => applyModalPaquete(pkg));
+            wrap.appendChild(card);
+        });
+    }
+
+    function applyModalPaquete(pkg) {
+        scSelected.clear();
+        document.querySelectorAll('.servicio-card.sel').forEach(c => c.classList.remove('sel'));
+
+        pkg.servicios.forEach(ps => {
+            const id = String(ps.servicio_id);
+            scSelected.set(id, {
+                nombre:    ps.nombre,
+                precio:    ps.precio.toFixed(2),
+                descuento: ps.descuento > 0 ? String(ps.descuento) : '',
+            });
+            const card = document.querySelector(`.servicio-card[data-id="${id}"]`);
+            if (card) card.classList.add('sel');
+        });
+
+        modalPkgAplicado = pkg.id;
+        document.getElementById('modalPkgChipText').textContent = pkg.nombre + ' · ' + pkg.servicios.length + ' servicios';
+        document.getElementById('modalPkgChip').classList.add('show');
+        renderModalPkgCards();
+        renderPreciosPanel();
+        rebuildModalProfServDropdowns();
+        updateScCountBadge();
+        document.getElementById('scErrorMsg').style.display = 'none';
+        mShowContratoSection(pkg);
+        // Cambiar a pestaña servicios para ver lo seleccionado
+        switchModalTab('servicios');
+    }
+
+    function clearModalPaquete() {
+        modalPkgAplicado = null;
+        document.getElementById('modalPkgChip').classList.remove('show');
+        renderModalPkgCards();
+        mHideContratoSection();
+    }
+
+    // ── Modal: Sección contrato ───────────────────────────────────────────────
+    let mContrPagoIdx = 1;
+
+    function mShowContratoSection(pkg) {
+        document.getElementById('modalContratoSection').style.display = '';
+        document.getElementById('mContrCrear').value     = '1';
+        document.getElementById('mContrPaqueteId').value = pkg.id;
+        const precio = pkg.precio_total ? parseFloat(pkg.precio_total).toFixed(2) : '';
+        document.getElementById('mContrPrecio').value = precio;
+        // Reset extra pago rows (keep only first mandatory)
+        const container = document.getElementById('mContrPagosContainer');
+        [...container.children].slice(1).forEach(r => r.remove());
+        mContrPagoIdx = 1;
+        mUpdateContrSuma();
+    }
+
+    function mHideContratoSection() {
+        document.getElementById('modalContratoSection').style.display = 'none';
+        document.getElementById('mContrCrear').value     = '0';
+        document.getElementById('mContrPaqueteId').value = '';
+    }
+
+    function mAddContrPago() {
+        const idx = mContrPagoIdx++;
+        const today = new Date().toISOString().split('T')[0];
         const div = document.createElement('div');
-        div.className = 'linea-modal';
-        div.dataset.index = idx;
+        div.style.cssText = 'display:grid;grid-template-columns:1fr 100px 1fr auto;gap:0.35rem;align-items:center;margin-bottom:0.3rem;';
         div.innerHTML = `
-            <select name="servicios[${idx}][servicio_id]" class="form-control modal-select-servicio" required
-                    onchange="onModalServicioChange(this)">
-                ${buildModalServicioOptions()}
+            <input type="number" name="contrato_pagos[${idx}][monto]" class="form-control mContrMonto"
+                   step="0.01" min="0" placeholder="Monto (Bs.)" oninput="mUpdateContrSuma()">
+            <input type="date" name="contrato_pagos[${idx}][fecha_pago]" class="form-control" value="${today}">
+            <select name="contrato_pagos[${idx}][metodo_pago]" class="form-control" style="font-size:.78rem;">
+                <option value="">— Método —</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="qr">QR</option>
             </select>
-            <div class="linea-precio-modal-wrap">
-                <span class="linea-precio-modal-prefix">Bs.</span>
-                <input type="number" name="servicios[${idx}][precio]" class="form-control linea-precio-modal-input"
-                       step="0.01" min="0" placeholder="0.00">
-            </div>
-            <button type="button" class="btn-remove-linea-modal" onclick="removeModalServicio(this)" title="Quitar">✕</button>`;
-        document.getElementById('modalServiciosContainer').appendChild(div);
+            <button type="button" class="btn-remove-linea" onclick="this.closest('div').remove();mUpdateContrSuma();" title="Quitar">✕</button>`;
+        document.getElementById('mContrPagosContainer').appendChild(div);
     }
 
-    function removeModalServicio(btn) {
-        const container = document.getElementById('modalServiciosContainer');
-        if (container.querySelectorAll('.linea-modal').length <= 1) return;
-        const row = btn.closest('.linea-modal');
-        modalServiciosSeleccionados.delete(row.dataset.index);
-        row.remove();
+    function mUpdateContrSuma() {
+        let suma = 0;
+        document.querySelectorAll('.mContrMonto').forEach(inp => suma += parseFloat(inp.value) || 0);
+        document.getElementById('mContrSuma').textContent = suma.toFixed(2);
+        const precioVal = parseFloat(document.getElementById('mContrPrecio').value) || 0;
+        const pend = Math.max(0, precioVal - suma);
+        document.getElementById('mContrTotal').textContent = pend.toFixed(2);
+    }
+
+    // ── Icon map by keyword ───────────────────────────────────────────────────
+    const SC_ICONS = [
+        { keys: ['corte','cabello','pelo','haircut'],            icon: '✂️' },
+        { keys: ['tinte','color','balayage','mechas','rubio'],   icon: '🎨' },
+        { keys: ['novia','bridal','boda','quinceañ'],            icon: '👰' },
+        { keys: ['manicure','manicura','uña','nail'],            icon: '💅' },
+        { keys: ['pedicure','pedicura','pies','foot'],           icon: '🦶' },
+        { keys: ['masaje','massage','relajante','corporal'],     icon: '🧖' },
+        { keys: ['facial','limpieza','hidra','rostro','face'],   icon: '✨' },
+        { keys: ['depilac','cera','laser'],                      icon: '🪷' },
+        { keys: ['maquillaje','makeup','look'],                  icon: '💄' },
+        { keys: ['tratamiento','keratina','proteína','repair'],  icon: '💆' },
+        { keys: ['cejas','barba','bigote','brow'],               icon: '🪮' },
+        { keys: ['spa','relajación','hammam','vapor'],           icon: '🛁' },
+    ];
+
+    function getServicioIcon(nombre) {
+        const n = nombre.toLowerCase();
+        for (const entry of SC_ICONS) {
+            if (entry.keys.some(k => n.includes(k))) return entry.icon;
+        }
+        return '⭐';
+    }
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    // Map<servicio_id (string) → { nombre, precio (string) }>
+    const scSelected = new Map();
+
+    // ── Render cards ──────────────────────────────────────────────────────────
+    function renderServicioCards() {
+        const grid = document.getElementById('servicioCardsGrid');
+        grid.innerHTML = '';
+        MODAL_SERVICIOS.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'servicio-card' + (scSelected.has(String(s.id)) ? ' sel' : '');
+            card.dataset.id       = s.id;
+            card.dataset.nombre   = s.nombre;
+            card.dataset.precio   = s.precio;
+            card.dataset.descuento = s.descuento ?? 0;
+
+            const desc     = parseFloat(s.descuento ?? 0);
+            const precioBase = parseFloat(s.precio);
+            const precioFmt  = desc > 0
+                ? `<span style="text-decoration:line-through;opacity:.55;font-size:.58rem;">Bs.${precioBase.toFixed(0)}</span> Bs.${Math.round(precioBase*(1-desc/100))}`
+                : `Bs. ${precioBase.toFixed(0)}`;
+            const descLabel = desc > 0
+                ? `<div style="font-size:.6rem;color:#fff;background:var(--success-color);padding:.05rem .3rem;border-radius:2px;margin-top:.2rem;display:inline-block;">-${desc}%</div>`
+                : '';
+
+            card.innerHTML = `
+                <span class="sc-check">✓</span>
+                <span class="sc-icon">${getServicioIcon(s.nombre)}</span>
+                <div class="sc-name">${s.nombre}</div>
+                <div class="sc-price">${precioFmt}</div>
+                ${descLabel}`;
+            card.addEventListener('click', () => toggleServicioCard(card));
+            grid.appendChild(card);
+        });
+    }
+
+    function toggleServicioCard(card) {
+        const id       = String(card.dataset.id);
+        const nombre   = card.dataset.nombre;
+        const precio   = parseFloat(card.dataset.precio || 0).toFixed(2);
+        const descuento = parseFloat(card.dataset.descuento || 0);
+
+        if (scSelected.has(id)) {
+            scSelected.delete(id);
+            card.classList.remove('sel');
+        } else {
+            // Auto-aplica el descuento programado vigente
+            scSelected.set(id, { nombre, precio, descuento: descuento > 0 ? String(descuento) : '' });
+            card.classList.add('sel');
+        }
+        document.getElementById('scErrorMsg').style.display = 'none';
+        renderPreciosPanel();
         rebuildModalProfServDropdowns();
+        updateScCountBadge();
     }
 
-    // ===== Profesionales del modal =====
+    function updateScCountBadge() {
+        const badge = document.getElementById('scCountBadge');
+        const n = scSelected.size;
+        if (n > 0) {
+            badge.textContent = `${n} seleccionado${n > 1 ? 's' : ''}`;
+            badge.style.display = 'inline';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // ── Prices panel ──────────────────────────────────────────────────────────
+    function calcNeto(precio, descuento) {
+        const p = parseFloat(precio) || 0;
+        const d = parseFloat(descuento) || 0;
+        return Math.round(p * (1 - d / 100) * 100) / 100;
+    }
+
+    function updateNetoLabel(id) {
+        const row   = document.querySelector(`.sc-precio-row[data-id="${id}"]`);
+        if (!row) return;
+        const state = scSelected.get(id);
+        const neto  = calcNeto(state.precio, state.descuento);
+        const label = row.querySelector('.sc-neto');
+        const hasDiscount = parseFloat(state.descuento) > 0;
+        label.textContent = `Bs. ${neto.toFixed(2)}`;
+        label.className   = 'sc-neto' + (hasDiscount ? ' has-desc' : '');
+    }
+
+    function renderPreciosPanel() {
+        const panel     = document.getElementById('scPreciosPanel');
+        const container = document.getElementById('scPreciosContainer');
+
+        if (scSelected.size === 0) {
+            panel.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        panel.style.display = 'block';
+        const existing = new Set([...container.querySelectorAll('.sc-precio-row')].map(r => r.dataset.id));
+
+        // Add rows for newly selected services
+        scSelected.forEach(({ nombre, precio, descuento }, id) => {
+            if (!existing.has(id)) {
+                const row = document.createElement('div');
+                row.className = 'sc-precio-row';
+                row.dataset.id = id;
+                row.innerHTML = `
+                    <span class="sc-precio-name">${nombre}</span>
+                    <div class="sc-precio-wrap">
+                        <span class="sc-precio-prefix">Bs.</span>
+                        <input type="number" class="form-control sc-precio-input"
+                               data-id="${id}" step="0.01" min="0" value="${precio}" placeholder="0.00">
+                    </div>
+                    <div class="sc-desc-wrap">
+                        <input type="number" class="form-control sc-desc-input"
+                               data-id="${id}" step="1" min="0" max="100" value="${descuento || ''}" placeholder="0">
+                        <span class="sc-desc-suffix">%</span>
+                    </div>
+                    <span class="sc-neto">Bs. ${parseFloat(precio).toFixed(2)}</span>`;
+
+                row.querySelector('.sc-precio-input').addEventListener('input', e => {
+                    scSelected.get(id).precio = e.target.value;
+                    updateNetoLabel(id);
+                });
+                row.querySelector('.sc-desc-input').addEventListener('input', e => {
+                    scSelected.get(id).descuento = e.target.value;
+                    updateNetoLabel(id);
+                });
+                container.appendChild(row);
+                updateNetoLabel(id);
+            }
+        });
+
+        // Remove rows for deselected services
+        container.querySelectorAll('.sc-precio-row').forEach(row => {
+            if (!scSelected.has(row.dataset.id)) row.remove();
+        });
+    }
+
+    // ── Hidden inputs (injected on submit) ────────────────────────────────────
+    function injectHiddenInputs() {
+        const wrap = document.getElementById('scHiddenInputs');
+        wrap.innerHTML = '';
+        let i = 0;
+        scSelected.forEach(({ precio, descuento }, id) => {
+            const d = parseFloat(descuento) || 0;
+            wrap.innerHTML += `
+                <input type="hidden" name="servicios[${i}][servicio_id]" value="${id}">
+                <input type="hidden" name="servicios[${i}][precio]" value="${precio || 0}">
+                <input type="hidden" name="servicios[${i}][descuento]" value="${d}">`;
+            i++;
+        });
+    }
+
+    // ── Form submit guard ─────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        renderServicioCards();
+        renderModalPkgCards();
+
+        document.querySelector('#modalVisita form').addEventListener('submit', function(e) {
+            if (scSelected.size === 0) {
+                e.preventDefault();
+                document.getElementById('scErrorMsg').style.display = 'block';
+                document.getElementById('servicioCardsGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            injectHiddenInputs();
+        });
+    });
+
+    // ── Profesionales ─────────────────────────────────────────────────────────
+    let modalProfIdx = 0;
+
     function buildModalEmpleadoOptions() {
         return '<option value="">— Seleccionar —</option>' +
             MODAL_EMPLEADOS.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
     }
 
     function buildModalProfServicioOptions() {
-        const items = [...modalServiciosSeleccionados.values()];
-        if (items.length === 0) return '<option value="">— Elige servicios primero —</option>';
+        if (scSelected.size === 0) return '<option value="">— Elige servicios primero —</option>';
         return '<option value="">— Qué realizó —</option>' +
-            items.map(s => `<option value="${s.servicio_id}">${s.nombre}</option>`).join('');
+            [...scSelected.entries()].map(([id, { nombre }]) =>
+                `<option value="${id}">${nombre}</option>`).join('');
     }
 
     function rebuildModalProfServDropdowns() {
         document.querySelectorAll('.modal-select-prof-serv').forEach(sel => {
             const current = sel.value;
-            const items   = [...modalServiciosSeleccionados.values()];
             sel.innerHTML = '<option value="">— Qué realizó —</option>' +
-                items.map(s => `<option value="${s.servicio_id}"${s.servicio_id == current ? ' selected' : ''}>${s.nombre}</option>`).join('');
+                [...scSelected.entries()].map(([id, { nombre }]) =>
+                    `<option value="${id}"${id == current ? ' selected' : ''}>${nombre}</option>`).join('');
         });
     }
 
@@ -781,6 +1296,7 @@
         }
     }
 
+    // ── Campaña ───────────────────────────────────────────────────────────────
     function selectModalCampana(card) {
         document.querySelectorAll('.campana-card-modal').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');

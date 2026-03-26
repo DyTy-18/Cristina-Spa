@@ -8,7 +8,7 @@
     /* ===== Líneas de servicio ===== */
     .linea-servicio {
         display: grid;
-        grid-template-columns: 1fr 120px auto;
+        grid-template-columns: 1fr 100px 78px auto;
         gap: 0.75rem;
         align-items: end;
         padding: 0.75rem;
@@ -16,6 +16,16 @@
         border: 1px solid rgba(0,0,0,0.06);
         margin-bottom: 0.6rem;
     }
+    .linea-desc-wrap { position: relative; }
+    .linea-desc-suffix {
+        position: absolute;
+        right: 0.55rem; top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    .linea-desc-input { padding-right: 1.6rem !important; }
 
     /* ===== Líneas de profesional ===== */
     .linea-profesional {
@@ -185,9 +195,10 @@
                             <span style="color:var(--error-color);font-size:0.78rem;display:block;margin-bottom:0.5rem;">{{ $message }}</span>
                         @enderror
 
-                        <div style="display:grid;grid-template-columns:1fr 120px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
+                        <div style="display:grid;grid-template-columns:1fr 100px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Servicio</span>
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Desc.</span>
                             <span></span>
                         </div>
 
@@ -214,6 +225,13 @@
                                                step="0.01" min="0" placeholder="0.00"
                                                value="{{ $cs->precio_unitario !== null ? number_format($cs->precio_unitario, 2, '.', '') : '' }}"
                                                oninput="updateResume()">
+                                    </div>
+                                    <div class="form-group linea-desc-wrap" style="margin:0;">
+                                        <input type="number" name="servicios[{{ $i }}][descuento]" class="form-control linea-desc-input"
+                                               step="1" min="0" max="100" placeholder="0"
+                                               value="{{ $cs->descuento_porcentaje > 0 ? number_format($cs->descuento_porcentaje, 0, '.', '') : '' }}"
+                                               oninput="updateResume()">
+                                        <span class="linea-desc-suffix">%</span>
                                     </div>
                                     <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>
                                 </div>
@@ -369,6 +387,7 @@
 
                         <div style="margin-bottom:1.5rem;">
                             <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Total estimado</div>
+                            <div id="resumeAhorro" style="font-size:0.78rem;color:var(--success-color);margin-bottom:0.15rem;display:none;"></div>
                             <div id="resumePrecio" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--secondary-color);line-height:1;">—</div>
                         </div>
 
@@ -406,19 +425,27 @@
     }
 
     function onServicioChange(sel) {
-        const row   = sel.closest('.linea-servicio');
-        const idx   = row.dataset.index;
-        const opt   = sel.options[sel.selectedIndex];
-        const precioInput = row.querySelector('.linea-precio-input');
+        const row       = sel.closest('.linea-servicio');
+        const idx       = row.dataset.index;
+        const opt       = sel.options[sel.selectedIndex];
+        const precioInp = row.querySelector('.linea-precio-input');
+        const descInp   = row.querySelector('.linea-desc-input');
 
         if (opt.value) {
             serviciosSeleccionados.set(idx, { servicio_id: opt.value, nombre: opt.text });
-            if (precioInput && !precioInput.value) {
-                precioInput.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            const srv = SERVICIOS.find(s => s.id == opt.value);
+            if (precioInp && !precioInp.value) precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            // Solo auto-aplica descuento si el campo está vacío (fila nueva)
+            if (descInp && !descInp.value) {
+                const desc = srv?.descuento ?? 0;
+                descInp.value            = desc > 0 ? desc : '';
+                descInp.style.background = desc > 0 ? 'rgba(76,175,80,0.08)' : '';
+                descInp.title            = desc > 0 ? `Descuento programado: ${desc}%` : '';
             }
         } else {
             serviciosSeleccionados.delete(idx);
-            if (precioInput) precioInput.value = '';
+            if (precioInp) precioInp.value = '';
+            if (descInp)  { descInp.value = ''; descInp.style.background = ''; descInp.title = ''; }
         }
 
         rebuildProfServDropdowns();
@@ -441,6 +468,11 @@
                 <span class="linea-precio-prefix">Bs.</span>
                 <input type="number" name="servicios[${idx}][precio]" class="form-control linea-precio-input"
                        step="0.01" min="0" placeholder="0.00" oninput="updateResume()">
+            </div>
+            <div class="form-group linea-desc-wrap" style="margin:0;">
+                <input type="number" name="servicios[${idx}][descuento]" class="form-control linea-desc-input"
+                       step="1" min="0" max="100" placeholder="0" oninput="updateResume()">
+                <span class="linea-desc-suffix">%</span>
             </div>
             <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>`;
         document.getElementById('serviciosContainer').appendChild(div);
@@ -513,31 +545,47 @@
     function updateResume() {
         const rows = document.querySelectorAll('#serviciosContainer .linea-servicio');
         const items = [];
-        let totalPrecio = 0;
+        let totalBruto = 0;
+        let totalNeto  = 0;
 
         rows.forEach(row => {
-            const sel   = row.querySelector('.select-servicio');
-            const input = row.querySelector('.linea-precio-input');
+            const sel      = row.querySelector('.select-servicio');
+            const precioIn = row.querySelector('.linea-precio-input');
+            const descIn   = row.querySelector('.linea-desc-input');
             if (sel && sel.value) {
-                const nombre = sel.options[sel.selectedIndex].text;
-                const precio = input && input.value ? parseFloat(input.value) : parseFloat(sel.options[sel.selectedIndex].dataset.precio || 0);
-                items.push({ nombre, precio });
-                totalPrecio += precio;
+                const nombre  = sel.options[sel.selectedIndex].text;
+                const precio  = precioIn && precioIn.value ? parseFloat(precioIn.value) : parseFloat(sel.options[sel.selectedIndex].dataset.precio || 0);
+                const desc    = descIn && descIn.value ? parseFloat(descIn.value) : 0;
+                const neto    = Math.round(precio * (1 - desc / 100) * 100) / 100;
+                items.push({ nombre, precio, desc, neto });
+                totalBruto += precio;
+                totalNeto  += neto;
             }
         });
+
+        const ahorro = Math.round((totalBruto - totalNeto) * 100) / 100;
 
         const resumeServicios = document.getElementById('resumeServicios');
         if (items.length > 0) {
             resumeServicios.innerHTML = items.map(i => `
-                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.2rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.2rem;gap:0.5rem;">
                     <span style="color:var(--text-dark);">• ${i.nombre}</span>
-                    <span style="color:var(--accent-color);font-weight:400;">Bs. ${i.precio.toFixed(2)}</span>
+                    <span style="color:var(--accent-color);font-weight:400;white-space:nowrap;">
+                        ${i.desc > 0 ? `<span style="text-decoration:line-through;color:var(--text-light);font-size:0.78rem;">Bs.${i.precio.toFixed(2)}</span> ` : ''}Bs. ${i.neto.toFixed(2)}
+                    </span>
                 </div>`).join('');
         } else {
             resumeServicios.innerHTML = '<span style="color:var(--text-light);font-style:italic;">Sin seleccionar</span>';
         }
 
-        document.getElementById('resumePrecio').textContent = totalPrecio > 0 ? 'Bs. ' + totalPrecio.toFixed(2) : '—';
+        const ahorroEl = document.getElementById('resumeAhorro');
+        if (ahorro > 0) {
+            ahorroEl.textContent = `Ahorro: Bs. ${ahorro.toFixed(2)}`;
+            ahorroEl.style.display = 'block';
+        } else {
+            ahorroEl.style.display = 'none';
+        }
+        document.getElementById('resumePrecio').textContent = totalNeto > 0 ? 'Bs. ' + totalNeto.toFixed(2) : '—';
     }
 
     // ===== Inicializar estado desde filas pre-renderizadas =====

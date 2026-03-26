@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ClienteController;
@@ -9,15 +10,23 @@ use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\InventarioController;
 use App\Http\Controllers\Admin\CampanaController;
 use App\Http\Controllers\Admin\ComisionController;
+use App\Http\Controllers\Admin\EmpleadoComisionController;
+use App\Http\Controllers\Admin\LeadController as AdminLeadController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Admin\RolController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\DescuentoController;
+use App\Http\Controllers\Admin\PaqueteController;
+use App\Http\Controllers\Admin\ContratoPaqueteController;
 
 // Página pública
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Leads desde formulario público (sin auth)
+Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
 
 // Rutas de autenticación (solo para invitados)
 Route::middleware('guest')->group(function () {
@@ -74,6 +83,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::middleware('permission:ver comisiones')->group(function () {
         Route::get('/comisiones', [ComisionController::class, 'index'])->name('comisiones.index');
         Route::put('/comisiones/{servicio}', [ComisionController::class, 'update'])->name('comisiones.update');
+
+        // Comisiones personales por empleado
+        Route::get('/empleados/{empleado}/comisiones', [EmpleadoComisionController::class, 'index'])->name('empleados.comisiones.index');
+        Route::put('/empleados/{empleado}/comisiones/{servicio}', [EmpleadoComisionController::class, 'update'])->name('empleados.comisiones.update');
     });
 
     // Reportes
@@ -107,6 +120,53 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
     });
     
+    // Paquetes de servicios (solo admin)
+    Route::middleware('role:admin')->prefix('paquetes')->name('paquetes.')->group(function () {
+        Route::get('/', [PaqueteController::class, 'index'])->name('index');
+        Route::post('/', [PaqueteController::class, 'store'])->name('store');
+        Route::put('/{paquete}', [PaqueteController::class, 'update'])->name('update');
+        Route::put('/{paquete}/toggle', [PaqueteController::class, 'toggle'])->name('toggle');
+        Route::delete('/{paquete}', [PaqueteController::class, 'destroy'])->name('destroy');
+        Route::get('/{paquete}/servicios', [PaqueteController::class, 'serviciosJson'])->name('servicios');
+
+        // Niveles
+        Route::post('/niveles', [PaqueteController::class, 'storeNivel'])->name('niveles.store');
+        Route::put('/niveles/{nivel}', [PaqueteController::class, 'updateNivel'])->name('niveles.update');
+        Route::delete('/niveles/{nivel}', [PaqueteController::class, 'destroyNivel'])->name('niveles.destroy');
+    });
+
+    // Contratos de paquetes
+    Route::middleware('role:admin')->prefix('contratos')->name('contratos.')->group(function () {
+        Route::get('/', [ContratoPaqueteController::class, 'index'])->name('index');
+        Route::post('/', [ContratoPaqueteController::class, 'store'])->name('store');
+        Route::get('/{contrato}', [ContratoPaqueteController::class, 'show'])->name('show');
+        Route::delete('/{contrato}', [ContratoPaqueteController::class, 'destroy'])->name('destroy');
+        Route::put('/{contrato}/estado', [ContratoPaqueteController::class, 'cambiarEstado'])->name('estado');
+        Route::put('/{contrato}/servicios/{servicio}/toggle', [ContratoPaqueteController::class, 'toggleServicio'])->name('servicios.toggle');
+        Route::put('/{contrato}/pagos/{pago}/pagar', [ContratoPaqueteController::class, 'pagarCuota'])->name('pagos.pagar');
+        Route::post('/{contrato}/pagos', [ContratoPaqueteController::class, 'addCuota'])->name('pagos.store');
+    });
+
+    // Descuentos & Cupones (solo admin)
+    Route::middleware('role:admin')->prefix('descuentos')->name('descuentos.')->group(function () {
+        Route::get('/', [DescuentoController::class, 'index'])->name('index');
+
+        Route::post('/programados', [DescuentoController::class, 'storeProgramado'])->name('programados.store');
+        Route::put('/programados/{descuento}/toggle', [DescuentoController::class, 'toggleProgramado'])->name('programados.toggle');
+        Route::delete('/programados/{descuento}', [DescuentoController::class, 'destroyProgramado'])->name('programados.destroy');
+
+        Route::post('/cupones', [DescuentoController::class, 'storeCupon'])->name('cupones.store');
+        Route::get('/cupones/verificar', [DescuentoController::class, 'verificarCupon'])->name('cupones.verificar');
+        Route::put('/cupones/{cupon}/toggle', [DescuentoController::class, 'toggleCupon'])->name('cupones.toggle');
+        Route::delete('/cupones/{cupon}', [DescuentoController::class, 'destroyCupon'])->name('cupones.destroy');
+    });
+
+    // Leads (admin y secretario)
+    Route::middleware('role:admin|secretario')->group(function () {
+        Route::get('/leads', [AdminLeadController::class, 'index'])->name('leads.index');
+        Route::put('/leads/{lead}', [AdminLeadController::class, 'update'])->name('leads.update');
+    });
+
     // Mis Citas (para estilistas)
     Route::get('/mis-citas', function () {
         return view('admin.mis-citas.index');

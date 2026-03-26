@@ -2,18 +2,35 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\CitaServicio;
 use App\Models\Cliente;
+use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
 use App\Models\Campana;
+use App\Models\Paquete;
 use App\Models\Servicio;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CitaController extends Controller
 {
+    use CreaContratoPaquete;
+    /** Devuelve un mapa [servicio_id => porcentaje] con los descuentos vigentes. */
+    private function descuentosVigentesMapa(): array
+    {
+        $vigentes = DescuentoProgramado::vigentes()->get(['servicio_id', 'porcentaje']);
+        $global   = (float) ($vigentes->whereNull('servicio_id')->max('porcentaje') ?? 0);
+
+        return $vigentes->whereNotNull('servicio_id')
+            ->groupBy('servicio_id')
+            ->map(fn($g) => (float) $g->max('porcentaje'))
+            ->union($global > 0 ? ['__global' => $global] : [])
+            ->toArray();
+    }
+
     public function create()
     {
         $clientesRaw = Cliente::orderBy('apellido')->orderBy('nombre')->get(['id', 'nombre', 'apellido', 'telefono']);
@@ -26,13 +43,15 @@ class CitaController extends Controller
             'tel'    => $c->telefono ?? '',
         ])->values();
 
-        $campanas = Campana::activas()->orderBy('nombre')->get();
+        $campanas       = Campana::activas()->orderBy('nombre')->get();
+        $descuentosMapa = $this->descuentosVigentesMapa();
 
         $serviciosJson = $servicios->map(fn($s) => [
-            'id'       => $s->id,
-            'nombre'   => $s->nombre,
-            'precio'   => $s->precio,
-            'duracion' => $s->duracion_minutos,
+            'id'        => $s->id,
+            'nombre'    => $s->nombre,
+            'precio'    => $s->precio,
+            'duracion'  => $s->duracion_minutos,
+            'descuento' => $descuentosMapa[$s->id] ?? $descuentosMapa['__global'] ?? 0,
         ])->values();
 
         $empleadosJson = $empleados->map(fn($e) => [
@@ -40,14 +59,35 @@ class CitaController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
-        return view('admin.citas.create', compact('clientesRaw', 'clientesJson', 'servicios', 'empleados', 'campanas', 'serviciosJson', 'empleadosJson'));
+        $paquetes    = Paquete::where('activo', true)->with(['nivel', 'servicios'])->orderBy('categoria')->orderBy('nombre')->get();
+        $paquetesJson = $paquetes->map(fn($p) => [
+            'id'       => $p->id,
+            'nombre'   => $p->nombre,
+            'categoria'=> $p->categoria,
+            'nivel'    => $p->nivel ? ['nombre' => $p->nivel->nombre, 'color' => $p->nivel->color] : null,
+            'descuento_general' => $p->descuento_general,
+            'precio_total' => $p->precio_total,
+            'servicios'=> $p->servicios->map(fn($s) => [
+                'servicio_id' => $s->id,
+                'nombre'      => $s->nombre,
+                'precio'      => (float) $s->precio,
+                'descuento'   => $s->pivot->descuento_porcentaje !== null
+                                    ? (float) $s->pivot->descuento_porcentaje
+                                    : (float) ($p->descuento_general ?? 0),
+            ])->values(),
+        ])->values();
+
+        return view('admin.citas.create', compact(
+            'clientesRaw', 'clientesJson', 'servicios', 'empleados', 'campanas',
+            'serviciosJson', 'empleadosJson', 'paquetesJson'
+        ));
     }
 
     public function store(Request $request)
     {
         $clienteTipo = $request->input('cliente_tipo', 'existente');
 
-        $rules = [
+        $rules = array_merge([
             'cliente_tipo'                  => 'required|in:existente,nuevo',
             'fecha'                         => 'required|date',
             'hora'                          => 'required',
@@ -57,10 +97,11 @@ class CitaController extends Controller
             'servicios'                     => 'required|array|min:1',
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
+            'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
-        ];
+        ], $this->contratoValidationRules());
 
         if ($clienteTipo === 'existente') {
             $rules['cliente_id'] = 'required|exists:clientes,id';
@@ -95,9 +136,11 @@ class CitaController extends Controller
             }
         }
 
-        $precioTotal = collect($data['servicios'])->sum(
-            fn($s) => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0)
-        );
+        $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
+            $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
+            $desc   = (float) ($s['descuento'] ?? 0);
+            return round($precio * (1 - $desc / 100), 2);
+        });
 
         $cita = Cita::create([
             'cliente_id'   => $clienteId,
@@ -110,13 +153,18 @@ class CitaController extends Controller
         ]);
 
         foreach ($data['servicios'] as $s) {
+            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
             CitaServicio::create([
-                'cita_id'         => $cita->id,
-                'servicio_id'     => $s['servicio_id'],
-                'empleado_id'     => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario' => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'cita_id'              => $cita->id,
+                'servicio_id'          => $s['servicio_id'],
+                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'descuento_porcentaje' => $desc,
             ]);
         }
+
+        // Crear contrato de paquete si se solicitó
+        $this->crearContratoSiCorresponde($request, $clienteId);
 
         return redirect()->route('admin.citas.calendario')
             ->with('success', 'Cita registrada exitosamente.');
@@ -135,11 +183,14 @@ class CitaController extends Controller
         $empleados = Empleado::where('activo', true)->orderBy('apellido')->get(['id', 'nombre', 'apellido']);
         $campanas  = Campana::activas()->orWhere('id', $cita->campana_id)->orderBy('nombre')->get();
 
+        $descuentosMapa = $this->descuentosVigentesMapa();
+
         $serviciosJson = $servicios->map(fn($s) => [
-            'id'       => $s->id,
-            'nombre'   => $s->nombre,
-            'precio'   => $s->precio,
-            'duracion' => $s->duracion_minutos,
+            'id'        => $s->id,
+            'nombre'    => $s->nombre,
+            'precio'    => $s->precio,
+            'duracion'  => $s->duracion_minutos,
+            'descuento' => $descuentosMapa[$s->id] ?? $descuentosMapa['__global'] ?? 0,
         ])->values();
 
         $empleadosJson = $empleados->map(fn($e) => [
@@ -161,6 +212,7 @@ class CitaController extends Controller
             'servicios'                     => 'required|array|min:1',
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
+            'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
@@ -175,9 +227,11 @@ class CitaController extends Controller
             }
         }
 
-        $precioTotal = collect($data['servicios'])->sum(
-            fn($s) => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0)
-        );
+        $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
+            $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
+            $desc   = (float) ($s['descuento'] ?? 0);
+            return round($precio * (1 - $desc / 100), 2);
+        });
 
         $cita->update([
             'campana_id'   => $data['campana_id'] ?? null,
@@ -191,11 +245,13 @@ class CitaController extends Controller
         $cita->citaServicios()->delete();
 
         foreach ($data['servicios'] as $s) {
+            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
             CitaServicio::create([
-                'cita_id'         => $cita->id,
-                'servicio_id'     => $s['servicio_id'],
-                'empleado_id'     => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario' => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'cita_id'              => $cita->id,
+                'servicio_id'          => $s['servicio_id'],
+                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'descuento_porcentaje' => $desc,
             ]);
         }
 

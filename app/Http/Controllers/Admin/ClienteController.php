@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
 use App\Http\Controllers\Controller;
 use App\Models\Campana;
 use App\Models\Cita;
 use App\Models\CitaServicio;
 use App\Models\Cliente;
+use App\Models\ContratoPaquete;
+use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
+use App\Models\Paquete;
 use App\Models\Servicio;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
+    use CreaContratoPaquete;
     public function index()
     {
         $clientes = Cliente::withCount('citas')
@@ -74,20 +78,30 @@ class ClienteController extends Controller
         $citas = $query->get();
 
         // KPIs siempre de todo el historial
+        $citasCompletadas = $cliente->citas()->where('estado', 'completada');
+
         $stats = [
             'total_citas'       => $cliente->citas()->count(),
-            'citas_completadas' => $cliente->citas()->where('estado', 'completada')->count(),
-            'total_gastado'     => $cliente->citas()->where('estado', 'completada')->sum('precio_final'),
-            'primera_visita'    => $cliente->citas()->where('estado', 'completada')->min('fecha'),
-            'ultima_visita'     => $cliente->citas()->where('estado', 'completada')->max('fecha'),
+            'citas_completadas' => $citasCompletadas->count(),
+            'total_gastado'     => $citasCompletadas->sum('precio_final'),
+            'ultima_visita'     => $citasCompletadas->max('fecha'),
+            'visitas_mes'       => (clone $citasCompletadas)->whereMonth('fecha', now()->month)->whereYear('fecha', now()->year)->count(),
+            'total_mes'         => (clone $citasCompletadas)->whereMonth('fecha', now()->month)->whereYear('fecha', now()->year)->sum('precio_final'),
         ];
 
-        $servicioFavorito = CitaServicio::whereHas('cita', fn($q) => $q->where('cliente_id', $cliente->id)->where('estado', 'completada'))
-            ->select('servicio_id', DB::raw('count(*) as total'))
-            ->groupBy('servicio_id')
-            ->orderByDesc('total')
-            ->with('servicio')
+        $ultimaCitaCompletada = $cliente->citas()
+            ->where('estado', 'completada')
+            ->with('citaServicios.servicio')
+            ->orderBy('fecha', 'desc')
+            ->orderBy('hora', 'desc')
             ->first();
+
+        $ultimoServicio = $ultimaCitaCompletada?->citaServicios
+            ->map(fn($cs) => $cs->servicio?->nombre)
+            ->filter()
+            ->implode(' + ');
+
+        $servicioFavorito = null;
 
         $citasPorMes = $citas->groupBy(fn($c) => \Carbon\Carbon::parse($c->fecha)->format('Y-m'));
 
@@ -95,10 +109,14 @@ class ClienteController extends Controller
         $empleados = Empleado::where('activo', true)->orderBy('apellido')->get();
         $campanas  = Campana::activas()->orderBy('nombre')->get();
 
+        $descVigentes   = DescuentoProgramado::vigentes()->get(['servicio_id', 'porcentaje']);
+        $descGlobal     = (float) ($descVigentes->whereNull('servicio_id')->max('porcentaje') ?? 0);
+
         $modalServiciosJson = $servicios->map(fn($s) => [
-            'id'     => $s->id,
-            'nombre' => $s->nombre,
-            'precio' => $s->precio,
+            'id'        => $s->id,
+            'nombre'    => $s->nombre,
+            'precio'    => $s->precio,
+            'descuento' => (float) ($descVigentes->where('servicio_id', $s->id)->max('porcentaje') ?? $descGlobal ?: 0),
         ])->values();
 
         $modalEmpleadosJson = $empleados->map(fn($e) => [
@@ -106,9 +124,26 @@ class ClienteController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
+        $paquetes     = Paquete::where('activo', true)->with(['nivel', 'servicios'])->orderBy('categoria')->orderBy('nombre')->get();
+        $paquetesJson = $paquetes->map(fn($p) => [
+            'id'       => $p->id,
+            'nombre'   => $p->nombre,
+            'categoria'=> $p->categoria,
+            'nivel'    => $p->nivel ? ['nombre' => $p->nivel->nombre, 'color' => $p->nivel->color] : null,
+            'precio_total' => $p->precio_total,
+            'servicios'=> $p->servicios->map(fn($s) => [
+                'servicio_id' => $s->id,
+                'nombre'      => $s->nombre,
+                'precio'      => (float) $s->precio,
+                'descuento'   => $s->pivot->descuento_porcentaje !== null
+                                    ? (float) $s->pivot->descuento_porcentaje
+                                    : (float) ($p->descuento_general ?? 0),
+            ])->values(),
+        ])->values();
+
         return view('admin.clientes.show', compact(
-            'cliente', 'citas', 'citasPorMes', 'stats', 'servicioFavorito', 'periodo',
-            'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson'
+            'cliente', 'citas', 'citasPorMes', 'stats', 'ultimoServicio', 'periodo',
+            'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson', 'paquetesJson'
         ));
     }
 
@@ -137,7 +172,7 @@ class ClienteController extends Controller
 
     public function storeCita(Request $request, Cliente $cliente)
     {
-        $data = $request->validate([
+        $data = $request->validate(array_merge([
             'fecha'                         => 'required|date',
             'hora'                          => 'required',
             'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
@@ -145,11 +180,12 @@ class ClienteController extends Controller
             'servicios'                     => 'required|array|min:1',
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
+            'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
             'campana_id'                    => 'nullable|exists:campanas,id',
-        ]);
+        ], $this->contratoValidationRules()));
 
         $serviciosBase = Servicio::whereIn('id', collect($data['servicios'])->pluck('servicio_id'))->pluck('precio', 'id');
 
@@ -160,9 +196,12 @@ class ClienteController extends Controller
             }
         }
 
-        $precioTotal = collect($data['servicios'])->sum(
-            fn($s) => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0)
-        );
+        // Total = suma de precios netos (precio_unitario aplicando descuento)
+        $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
+            $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
+            $desc   = (float) ($s['descuento'] ?? 0);
+            return round($precio * (1 - $desc / 100), 2);
+        });
 
         $cita = Cita::create([
             'cliente_id'   => $cliente->id,
@@ -175,13 +214,17 @@ class ClienteController extends Controller
         ]);
 
         foreach ($data['servicios'] as $s) {
+            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
             CitaServicio::create([
-                'cita_id'         => $cita->id,
-                'servicio_id'     => $s['servicio_id'],
-                'empleado_id'     => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario' => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'cita_id'              => $cita->id,
+                'servicio_id'          => $s['servicio_id'],
+                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                'descuento_porcentaje' => $desc,
             ]);
         }
+
+        $this->crearContratoSiCorresponde($request, $cliente->id);
 
         return redirect()->route('admin.clientes.show', $cliente)
             ->with('success', 'Visita registrada exitosamente.');

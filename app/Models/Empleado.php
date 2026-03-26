@@ -49,6 +49,11 @@ class Empleado extends Model
         return $this->hasMany(CitaServicio::class);
     }
 
+    public function comisiones()
+    {
+        return $this->hasMany(ComisionEmpleado::class);
+    }
+
     /**
      * Nombre completo del empleado
      */

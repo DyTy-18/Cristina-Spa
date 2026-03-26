@@ -102,7 +102,7 @@
     /* ===== Líneas de servicio ===== */
     .linea-servicio {
         display: grid;
-        grid-template-columns: 1fr 120px auto;
+        grid-template-columns: 1fr 100px 78px auto;
         gap: 0.75rem;
         align-items: end;
         padding: 0.75rem;
@@ -110,6 +110,16 @@
         border: 1px solid rgba(0,0,0,0.06);
         margin-bottom: 0.6rem;
     }
+    .linea-desc-wrap { position: relative; }
+    .linea-desc-suffix {
+        position: absolute;
+        right: 0.55rem; top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        color: var(--text-light);
+        pointer-events: none;
+    }
+    .linea-desc-input { padding-right: 1.6rem !important; }
 
     /* ===== Líneas de profesional ===== */
     .linea-profesional {
@@ -153,6 +163,79 @@
         height: 38px;
     }
     .btn-remove-linea:hover { color: var(--error-color); border-color: var(--error-color); }
+
+    /* ===== Pestañas Servicios / Paquetes ===== */
+    .srv-tab-strip {
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid rgba(0,0,0,.08);
+        background: var(--light-bg);
+    }
+    .srv-tab {
+        padding: .65rem 1.5rem;
+        font-size: .75rem;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        font-weight: 400;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        color: var(--text-light);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+    .srv-tab:hover:not(.active) { color: var(--text-dark); background: rgba(0,0,0,.03); }
+    .srv-tab.active { color: var(--primary-color); border-bottom-color: var(--accent-color); background: var(--white); font-weight: 500; }
+
+    .pkg-applied-chip {
+        display: none;
+        align-items: center;
+        gap: .4rem;
+        margin-left: auto;
+        padding: 0 1.25rem;
+        font-size: .75rem;
+        color: #166534;
+        background: rgba(34,197,94,.06);
+        border-left: 1px solid rgba(0,0,0,.06);
+    }
+    .pkg-applied-chip.show { display: flex; }
+
+    /* Package cards panel */
+    .pkg-cat-strip { display: flex; gap: 0; margin-bottom: 1rem; border: 1px solid rgba(0,0,0,.09); width: fit-content; flex-wrap: wrap; }
+    .pkg-cat-btn {
+        padding: .35rem 1rem;
+        font-size: .7rem;
+        letter-spacing: .6px;
+        text-transform: uppercase;
+        cursor: pointer;
+        background: var(--white);
+        border: none;
+        border-right: 1px solid rgba(0,0,0,.09);
+        color: var(--text-light);
+        transition: var(--transition);
+    }
+    .pkg-cat-btn:last-child { border-right: none; }
+    .pkg-cat-btn.active { background: var(--primary-color); color: #fff; }
+    .pkg-cat-btn:not(.active):hover { background: var(--light-bg); }
+
+    .pkg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: .75rem; }
+    .pkg-card {
+        border: 1px solid rgba(0,0,0,.08);
+        padding: .9rem 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+    }
+    .pkg-card:hover { border-color: var(--accent-color); box-shadow: 0 2px 10px rgba(0,0,0,.07); }
+    .pkg-card.applied { border-color: #22c55e; background: rgba(34,197,94,.04); }
+    .pkg-nivel-badge { font-size: .58rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; padding: .06rem .4rem; border-radius: 2px; display: inline-block; width: fit-content; }
+    .pkg-card-nombre { font-size: .85rem; color: var(--text-dark); font-weight: 400; margin-top: .1rem; }
+    .pkg-card-precio { font-size: .75rem; color: var(--accent-color); font-weight: 500; }
+    .pkg-card-svcs { font-size: .68rem; color: var(--text-light); font-style: italic; line-height: 1.4; }
 
     /* ===== Sección cards ===== */
     .form-section {
@@ -204,6 +287,22 @@
     @media (max-width: 900px) {
         .create-layout { grid-template-columns: 1fr; }
         .create-aside { position: static; }
+    }
+
+    /* ===== Sección contrato ===== */
+    .contrato-section-inner {
+        background: rgba(201,169,110,0.04);
+        border: 1px solid rgba(201,169,110,0.2);
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.1rem;
+    }
+    .contrato-section-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--accent-color);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
     }
 
     /* ===== Selector de campaña ===== */
@@ -323,20 +422,38 @@
                     </div>
                 </div>
 
-                {{-- SECCIÓN 2: Servicios (múltiples) --}}
+                {{-- SECCIÓN 2: Servicios / Paquetes --}}
                 <div class="form-section">
                     <div class="form-section-header">
                         <div class="form-section-num">2</div>
                         <span class="form-section-title">Servicios y profesionales</span>
                     </div>
-                    <div class="form-section-body">
+
+                    {{-- Tab strip --}}
+                    <div class="srv-tab-strip">
+                        <button type="button" class="srv-tab active" id="tabBtnServicios"
+                            onclick="switchSrvTab('servicios')">✂️ Servicios</button>
+                        <button type="button" class="srv-tab" id="tabBtnPaquetes"
+                            onclick="switchSrvTab('paquetes')">🎁 Paquetes</button>
+                        <div class="pkg-applied-chip" id="pkgAppliedChip">
+                            <span>✓</span>
+                            <span id="pkgAppliedName"></span>
+                            <button type="button" onclick="clearPaquete()"
+                                style="background:none;border:none;cursor:pointer;color:#166534;font-size:.9rem;padding:0;"
+                                title="Quitar paquete">✕</button>
+                        </div>
+                    </div>
+
+                    {{-- Panel: Servicios individuales --}}
+                    <div class="form-section-body" id="srvPanelServicios">
                         @error('lineas')
                             <span style="color:var(--error-color);font-size:0.78rem;display:block;margin-bottom:0.5rem;">{{ $message }}</span>
                         @enderror
 
-                        <div style="display:grid;grid-template-columns:1fr 120px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
+                        <div style="display:grid;grid-template-columns:1fr 100px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Servicio</span>
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Desc.</span>
                             <span></span>
                         </div>
 
@@ -356,8 +473,12 @@
                                 <div class="form-group linea-precio-wrap" style="margin:0;">
                                     <span class="linea-precio-prefix">Bs.</span>
                                     <input type="number" name="servicios[0][precio]" class="form-control linea-precio-input"
-                                           step="0.01" min="0" placeholder="0.00"
-                                           oninput="updateResume()">
+                                           step="0.01" min="0" placeholder="0.00" oninput="updateResume()">
+                                </div>
+                                <div class="form-group linea-desc-wrap" style="margin:0;">
+                                    <input type="number" name="servicios[0][descuento]" class="form-control linea-desc-input"
+                                           step="1" min="0" max="100" placeholder="0" oninput="updateResume()">
+                                    <span class="linea-desc-suffix">%</span>
                                 </div>
                                 <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>
                             </div>
@@ -366,6 +487,20 @@
                         <button type="button" class="btn btn-outline btn-sm" onclick="addServicio()" style="margin-top:0.25rem;">
                             + Agregar servicio
                         </button>
+                    </div>
+
+                    {{-- Panel: Paquetes --}}
+                    <div class="form-section-body" id="srvPanelPaquetes" style="display:none;">
+                        <div class="pkg-cat-strip">
+                            <button type="button" class="pkg-cat-btn active" data-cat="todos" onclick="filterPkgCat('todos')">Todos</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="novia" onclick="filterPkgCat('novia')">👰 Novia</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="quinceañera" onclick="filterPkgCat('quinceañera')">🌸 Quinceañera</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="eventos" onclick="filterPkgCat('eventos')">🎉 Eventos</button>
+                        </div>
+                        <div class="pkg-grid" id="pkgCardsWrap"></div>
+                        <p style="font-size:.75rem;color:var(--text-light);margin-top:.75rem;font-style:italic;">
+                            Al seleccionar un paquete se pre-rellenan los servicios. Puedes modificarlos después.
+                        </p>
                     </div>
                 </div>
 
@@ -464,6 +599,74 @@
                     </div>
                 </div>
 
+                {{-- SECCIÓN 5: Contrato de paquete (aparece al aplicar un paquete) --}}
+                <div class="form-section" id="contratoSection" style="display:none;">
+                    <div class="form-section-header">
+                        <div class="form-section-num">5</div>
+                        <span class="form-section-title">Contrato del paquete</span>
+                    </div>
+                    <div class="form-section-body" style="padding:0;">
+                        <div class="contrato-section-inner">
+                            <div class="contrato-section-label">📋 Datos del contrato</div>
+                            <input type="hidden" name="crear_contrato" id="contrCrear" value="0">
+                            <input type="hidden" name="paquete_id" id="contrPaqueteId" value="">
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Fecha de inicio</label>
+                                    <input type="date" name="contrato_fecha_inicio" class="form-control" value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Precio total (Bs.)</label>
+                                    <input type="number" name="contrato_precio_total" id="contrPrecioTotal" class="form-control"
+                                           step="0.01" min="0" placeholder="0.00" oninput="contrUpdateSuma()">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:0.5rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+                                    <label class="form-label" style="margin:0;">Pagos registrados</label>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="contrAddPago()">+ Añadir pago</button>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 120px 1fr auto;gap:0.4rem;margin-bottom:0.25rem;">
+                                    <span style="font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);">Monto (Bs.)</span>
+                                    <span style="font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);">Fecha</span>
+                                    <span style="font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);">Método</span>
+                                    <span></span>
+                                </div>
+                                <div id="contrPagosContainer">
+                                    <div style="display:grid;grid-template-columns:1fr 120px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.35rem;">
+                                        <div class="form-group linea-precio-wrap" style="margin:0;">
+                                            <span class="linea-precio-prefix">Bs.</span>
+                                            <input type="number" name="contrato_pagos[0][monto]" class="form-control linea-precio-input contr-monto"
+                                                   step="0.01" min="0" placeholder="0.00" oninput="contrUpdateSuma()">
+                                        </div>
+                                        <input type="date" name="contrato_pagos[0][fecha_pago]" class="form-control" value="{{ date('Y-m-d') }}">
+                                        <select name="contrato_pagos[0][metodo_pago]" class="form-control" style="font-size:.8rem;">
+                                            <option value="">— Método —</option>
+                                            <option value="efectivo">Efectivo</option>
+                                            <option value="tarjeta">Tarjeta</option>
+                                            <option value="transferencia">Transferencia</option>
+                                            <option value="qr">QR</option>
+                                        </select>
+                                        <span style="font-size:.7rem;color:var(--accent-color);font-weight:600;">★</span>
+                                    </div>
+                                </div>
+                                <div style="font-size:0.78rem;color:var(--text-light);margin-top:0.3rem;">
+                                    Adelantado: Bs. <span id="contrSumaCuotas" style="color:var(--text-dark);font-weight:400;">0.00</span>
+                                    · Pendiente: Bs. <span id="contrTotalRef">0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label">Notas del contrato</label>
+                                <textarea name="contrato_notas" class="form-control" rows="2"
+                                          placeholder="Observaciones sobre el contrato..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             {{-- ====== COLUMNA LATERAL: resumen ====== --}}
@@ -486,6 +689,7 @@
 
                         <div style="margin-bottom:1.5rem;">
                             <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Total estimado</div>
+                            <div id="resumeAhorro" style="font-size:0.78rem;color:var(--success-color);margin-bottom:0.15rem;display:none;"></div>
                             <div id="resumePrecio" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--secondary-color);line-height:1;">—</div>
                         </div>
 
@@ -511,6 +715,107 @@
     const CLIENTES  = @json($clientesJson);
     const SERVICIOS = @json($serviciosJson);
     const EMPLEADOS = @json($empleadosJson);
+    const PAQUETES  = @json($paquetesJson);
+
+    // ===== Pestañas Servicios / Paquetes =====
+    let pkgCatActual  = 'todos';
+    let pkgAplicadoId = null;
+
+    function switchSrvTab(tab) {
+        const isServicios = tab === 'servicios';
+        document.getElementById('srvPanelServicios').style.display = isServicios ? '' : 'none';
+        document.getElementById('srvPanelPaquetes').style.display  = isServicios ? 'none' : '';
+        document.getElementById('tabBtnServicios').classList.toggle('active', isServicios);
+        document.getElementById('tabBtnPaquetes').classList.toggle('active', !isServicios);
+        if (!isServicios && document.getElementById('pkgCardsWrap').children.length === 0) {
+            renderPkgCards();
+        }
+    }
+
+    function filterPkgCat(cat) {
+        pkgCatActual = cat;
+        document.querySelectorAll('.pkg-cat-btn').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+        renderPkgCards();
+    }
+
+    function renderPkgCards() {
+        const wrap = document.getElementById('pkgCardsWrap');
+        wrap.innerHTML = '';
+        const filtered = pkgCatActual === 'todos' ? PAQUETES : PAQUETES.filter(p => p.categoria === pkgCatActual);
+
+        if (filtered.length === 0) {
+            wrap.innerHTML = '<p style="font-size:.8rem;color:var(--text-light);font-style:italic;">Sin paquetes en esta categoría.</p>';
+            return;
+        }
+
+        filtered.forEach(pkg => {
+            const card = document.createElement('div');
+            card.className = 'pkg-card' + (pkg.id === pkgAplicadoId ? ' applied' : '');
+            const nivelBadge = pkg.nivel
+                ? `<span class="pkg-nivel-badge" style="background:${pkg.nivel.color}">${pkg.nivel.nombre}</span>`
+                : '';
+            const total  = pkg.precio_total ? `Bs. ${parseFloat(pkg.precio_total).toFixed(0)}` : '';
+            const sNames = pkg.servicios.map(s => s.nombre).join(' · ');
+            card.innerHTML = `${nivelBadge}
+                <div class="pkg-card-nombre">${pkg.nombre}</div>
+                <div class="pkg-card-precio">${total}</div>
+                <div class="pkg-card-svcs">${sNames}</div>`;
+            card.addEventListener('click', () => applyPaquete(pkg));
+            wrap.appendChild(card);
+        });
+    }
+
+    function applyPaquete(pkg) {
+        const container = document.getElementById('serviciosContainer');
+        container.innerHTML = '';
+        servicioIdx = 0;
+
+        pkg.servicios.forEach(s => {
+            const idx = String(servicioIdx++);
+            const div = document.createElement('div');
+            div.className = 'linea-servicio';
+            div.dataset.index = idx;
+            div.innerHTML = `
+                <div class="form-group" style="margin:0;">
+                    <select name="servicios[${idx}][servicio_id]" class="form-control select-servicio" required
+                            onchange="onServicioChange(this)">
+                        ${buildServicioOptions(s.servicio_id)}
+                    </select>
+                </div>
+                <div class="form-group linea-precio-wrap" style="margin:0;">
+                    <span class="linea-precio-prefix">Bs.</span>
+                    <input type="number" name="servicios[${idx}][precio]" class="form-control linea-precio-input"
+                           step="0.01" min="0" placeholder="0.00" value="${s.precio.toFixed(2)}" oninput="updateResume()">
+                </div>
+                <div class="form-group linea-desc-wrap" style="margin:0;">
+                    <input type="number" name="servicios[${idx}][descuento]" class="form-control linea-desc-input"
+                           step="1" min="0" max="100" placeholder="0" value="${s.descuento > 0 ? s.descuento : ''}"
+                           oninput="updateResume()"
+                           style="${s.descuento > 0 ? 'background:rgba(34,197,94,0.08);' : ''}">
+                    <span class="linea-desc-suffix">%</span>
+                </div>
+                <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>`;
+            container.appendChild(div);
+            serviciosSeleccionados.set(idx, { servicio_id: String(s.servicio_id), nombre: s.nombre });
+        });
+
+        pkgAplicadoId = pkg.id;
+        document.getElementById('pkgAppliedName').textContent = pkg.nombre + ' · ' + pkg.servicios.length + ' servicios';
+        document.getElementById('pkgAppliedChip').classList.add('show');
+        contrShowSection(pkg);
+        renderPkgCards();
+        rebuildProfServDropdowns();
+        updateResume();
+        // Cambiar a la pestaña de servicios para ver lo que se aplicó
+        switchSrvTab('servicios');
+    }
+
+    function clearPaquete() {
+        pkgAplicadoId = null;
+        document.getElementById('pkgAppliedChip').classList.remove('show');
+        renderPkgCards();
+        contrHideSection();
+    }
 
     let servicioIdx = 1;
     let profIdx     = 0;
@@ -583,17 +888,26 @@
     }
 
     function onServicioChange(sel) {
-        const row     = sel.closest('.linea-servicio');
-        const idx     = row.dataset.index;
-        const opt     = sel.options[sel.selectedIndex];
-        const precioInput = row.querySelector('.linea-precio-input');
+        const row       = sel.closest('.linea-servicio');
+        const idx       = row.dataset.index;
+        const opt       = sel.options[sel.selectedIndex];
+        const precioInp = row.querySelector('.linea-precio-input');
+        const descInp   = row.querySelector('.linea-desc-input');
 
         if (opt.value) {
             serviciosSeleccionados.set(idx, { servicio_id: opt.value, nombre: opt.text });
-            if (precioInput) precioInput.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            const srv = SERVICIOS.find(s => s.id == opt.value);
+            if (precioInp) precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+            if (descInp) {
+                const desc = srv?.descuento ?? 0;
+                descInp.value          = desc > 0 ? desc : '';
+                descInp.style.background = desc > 0 ? 'rgba(76,175,80,0.08)' : '';
+                descInp.title          = desc > 0 ? `Descuento programado: ${desc}%` : '';
+            }
         } else {
             serviciosSeleccionados.delete(idx);
-            if (precioInput) precioInput.value = '';
+            if (precioInp) precioInp.value = '';
+            if (descInp)  { descInp.value = ''; descInp.style.background = ''; descInp.title = ''; }
         }
 
         rebuildProfServDropdowns();
@@ -616,6 +930,11 @@
                 <span class="linea-precio-prefix">Bs.</span>
                 <input type="number" name="servicios[${idx}][precio]" class="form-control linea-precio-input"
                        step="0.01" min="0" placeholder="0.00" oninput="updateResume()">
+            </div>
+            <div class="form-group linea-desc-wrap" style="margin:0;">
+                <input type="number" name="servicios[${idx}][descuento]" class="form-control linea-desc-input"
+                       step="1" min="0" max="100" placeholder="0" oninput="updateResume()">
+                <span class="linea-desc-suffix">%</span>
             </div>
             <button type="button" class="btn-remove-linea" onclick="removeServicio(this)" title="Quitar">✕</button>`;
         document.getElementById('serviciosContainer').appendChild(div);
@@ -708,36 +1027,105 @@
 
         const rows = document.querySelectorAll('#serviciosContainer .linea-servicio');
         const items = [];
-        let totalPrecio = 0;
+        let totalBruto = 0;
+        let totalNeto  = 0;
 
         rows.forEach(row => {
-            const sel   = row.querySelector('.select-servicio');
-            const input = row.querySelector('.linea-precio-input');
+            const sel      = row.querySelector('.select-servicio');
+            const precioIn = row.querySelector('.linea-precio-input');
+            const descIn   = row.querySelector('.linea-desc-input');
             if (sel && sel.value) {
-                const nombre = sel.options[sel.selectedIndex].text;
-                const precio = input && input.value ? parseFloat(input.value) : parseFloat(sel.options[sel.selectedIndex].dataset.precio || 0);
-                items.push({ nombre, precio });
-                totalPrecio += precio;
+                const nombre  = sel.options[sel.selectedIndex].text;
+                const precio  = precioIn && precioIn.value ? parseFloat(precioIn.value) : parseFloat(sel.options[sel.selectedIndex].dataset.precio || 0);
+                const desc    = descIn && descIn.value ? parseFloat(descIn.value) : 0;
+                const neto    = Math.round(precio * (1 - desc / 100) * 100) / 100;
+                items.push({ nombre, precio, desc, neto });
+                totalBruto += precio;
+                totalNeto  += neto;
             }
         });
+
+        const ahorro = Math.round((totalBruto - totalNeto) * 100) / 100;
 
         const resumeServicios = document.getElementById('resumeServicios');
         if (items.length > 0) {
             resumeServicios.innerHTML = items.map(i => `
-                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.2rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.2rem;gap:0.5rem;">
                     <span style="color:var(--text-dark);">• ${i.nombre}</span>
-                    <span style="color:var(--accent-color);font-weight:400;">Bs. ${i.precio.toFixed(2)}</span>
+                    <span style="color:var(--accent-color);font-weight:400;white-space:nowrap;">
+                        ${i.desc > 0 ? `<span style="text-decoration:line-through;color:var(--text-light);font-size:0.78rem;">Bs.${i.precio.toFixed(2)}</span> ` : ''}Bs. ${i.neto.toFixed(2)}
+                    </span>
                 </div>`).join('');
         } else {
             resumeServicios.innerHTML = '<span style="color:var(--text-light);font-style:italic;">Sin seleccionar</span>';
         }
 
-        document.getElementById('resumePrecio').textContent = totalPrecio > 0 ? 'Bs. ' + totalPrecio.toFixed(2) : '—';
+        const ahorroEl = document.getElementById('resumeAhorro');
+        if (ahorro > 0) {
+            ahorroEl.textContent = `Ahorro: Bs. ${ahorro.toFixed(2)}`;
+            ahorroEl.style.display = 'block';
+        } else {
+            ahorroEl.style.display = 'none';
+        }
+        document.getElementById('resumePrecio').textContent = totalNeto > 0 ? 'Bs. ' + totalNeto.toFixed(2) : '—';
     }
 
     document.querySelectorAll('[name="nuevo_nombre"],[name="nuevo_apellido"]').forEach(el => {
         el.addEventListener('input', updateResume);
     });
+
+    // ===== Sección Contrato =====
+    let contrPagoIdx = 1;
+
+    function contrShowSection(pkg) {
+        document.getElementById('contratoSection').style.display = '';
+        document.getElementById('contrCrear').value     = '1';
+        document.getElementById('contrPaqueteId').value = pkg.id;
+        const precio = pkg.precio_total ? parseFloat(pkg.precio_total).toFixed(2) : '';
+        document.getElementById('contrPrecioTotal').value = precio;
+        // Reset extra pago rows (keep only the first mandatory one)
+        const container = document.getElementById('contrPagosContainer');
+        [...container.children].slice(1).forEach(r => r.remove());
+        contrPagoIdx = 1;
+        contrUpdateSuma();
+    }
+
+    function contrHideSection() {
+        document.getElementById('contratoSection').style.display = 'none';
+        document.getElementById('contrCrear').value     = '0';
+        document.getElementById('contrPaqueteId').value = '';
+    }
+
+    function contrAddPago() {
+        const idx = contrPagoIdx++;
+        const div = document.createElement('div');
+        div.style.cssText = 'display:grid;grid-template-columns:1fr 120px 1fr auto;gap:0.4rem;align-items:center;margin-bottom:0.35rem;';
+        div.innerHTML = `
+            <div class="form-group linea-precio-wrap" style="margin:0;">
+                <span class="linea-precio-prefix">Bs.</span>
+                <input type="number" name="contrato_pagos[${idx}][monto]" class="form-control linea-precio-input contr-monto"
+                       step="0.01" min="0" placeholder="0.00" oninput="contrUpdateSuma()">
+            </div>
+            <input type="date" name="contrato_pagos[${idx}][fecha_pago]" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+            <select name="contrato_pagos[${idx}][metodo_pago]" class="form-control" style="font-size:.8rem;">
+                <option value="">— Método —</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="qr">QR</option>
+            </select>
+            <button type="button" class="btn-remove-linea" onclick="this.closest('div').remove();contrUpdateSuma();" title="Quitar">✕</button>`;
+        document.getElementById('contrPagosContainer').appendChild(div);
+    }
+
+    function contrUpdateSuma() {
+        let suma = 0;
+        document.querySelectorAll('.contr-monto').forEach(inp => suma += parseFloat(inp.value) || 0);
+        document.getElementById('contrSumaCuotas').textContent = suma.toFixed(2);
+        const precioVal = parseFloat(document.getElementById('contrPrecioTotal').value) || 0;
+        const pend = Math.max(0, precioVal - suma);
+        document.getElementById('contrTotalRef').textContent = pend.toFixed(2);
+    }
 
     // ===== Selector de campaña =====
     document.querySelectorAll('.campana-card').forEach(card => {

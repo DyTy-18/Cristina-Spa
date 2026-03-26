@@ -1062,6 +1062,21 @@
             var servicio = this.servicio.value;
             var mensaje  = this.mensaje.value.trim();
 
+            // Guardar lead en el backend (no bloqueante)
+            var csrf = document.querySelector('meta[name="csrf-token"]');
+            if (csrf) {
+                fetch('/leads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf.content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ nombre: nombre, telefono: telefono, sucursal: sucursal, servicio: servicio, mensaje: mensaje }),
+                }).catch(function() {}); // silencioso si falla
+            }
+
+            // Abrir WhatsApp como antes
             var text = '¡Hola! Quiero reservar una cita en Cristina Spa.\n\n'
                 + '👤 Nombre: ' + nombre + '\n'
                 + '📱 Teléfono: ' + telefono + '\n'

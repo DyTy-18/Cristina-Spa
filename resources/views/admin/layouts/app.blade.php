@@ -51,6 +51,14 @@
                     </a>
                 @endif
 
+                @if (auth()->user()->hasAnyRole(['admin', 'secretario']))
+                    <a href="{{ route('admin.leads.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📥</span>
+                        <span>Leads Web</span>
+                    </a>
+                @endif
+
                 @if (auth()->user()->hasPermissionTo('ver servicios'))
                     <a href="{{ route('admin.servicios.index') }}"
                         class="nav-item {{ request()->routeIs('admin.servicios.*') ? 'active' : '' }}">
@@ -59,11 +67,32 @@
                     </a>
                 @endif
 
+                @if (auth()->user()->hasRole('admin'))
+                    <a href="{{ route('admin.paquetes.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.paquetes.*') ? 'active' : '' }}">
+                        <span class="nav-icon">🎁</span>
+                        <span>Paquetes</span>
+                    </a>
+                    <a href="{{ route('admin.contratos.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.contratos.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📋</span>
+                        <span>Contratos</span>
+                    </a>
+                @endif
+
                 @if (auth()->user()->hasPermissionTo('ver campanas'))
                     <a href="{{ route('admin.campanas.index') }}"
                         class="nav-item {{ request()->routeIs('admin.campanas.*') ? 'active' : '' }}">
                         <span class="nav-icon">📣</span>
                         <span>Campañas</span>
+                    </a>
+                @endif
+
+                @if (auth()->user()->hasRole('admin'))
+                    <a href="{{ route('admin.descuentos.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.descuentos.*') ? 'active' : '' }}">
+                        <span class="nav-icon">🏷️</span>
+                        <span>Descuentos & Cupones</span>
                     </a>
                 @endif
 

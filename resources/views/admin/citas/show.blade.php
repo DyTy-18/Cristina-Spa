@@ -100,6 +100,27 @@
         font-size: 1.25rem;
         color: var(--secondary-color);
         white-space: nowrap;
+        text-align: right;
+    }
+    .servicio-precio-original {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 0.95rem;
+        color: var(--text-light);
+        text-decoration: line-through;
+        display: block;
+        text-align: right;
+    }
+    .servicio-desc-badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        color: var(--white);
+        background: var(--success-color);
+        padding: 0.1rem 0.4rem;
+        border-radius: 2px;
+        margin-left: 0.35rem;
+        vertical-align: middle;
     }
     .servicio-total-row {
         display: flex;
@@ -203,10 +224,22 @@
             <div class="detail-card">
                 <div class="detail-card-header">Servicios</div>
                 <div class="detail-card-body" style="padding-top:0.5rem;padding-bottom:0.5rem;">
+                    @php
+                        $totalOriginal  = $cita->citaServicios->sum(fn($cs) => (float)($cs->precio_unitario ?? 0));
+                        $totalAhorro    = $cita->citaServicios->sum(fn($cs) => (float)($cs->precio_unitario ?? 0) - (float)($cs->precio_neto ?? $cs->precio_unitario ?? 0));
+                        $hayDescuentos  = $cita->citaServicios->contains(fn($cs) => $cs->descuento_porcentaje > 0);
+                    @endphp
                     @forelse($cita->citaServicios as $cs)
                         <div class="servicio-row">
                             <div>
-                                <div class="servicio-nombre">{{ $cs->servicio?->nombre ?? 'Servicio eliminado' }}</div>
+                                <div class="servicio-nombre">
+                                    {{ $cs->servicio?->nombre ?? 'Servicio eliminado' }}
+                                    @if($cs->descuento_porcentaje > 0)
+                                        <span class="servicio-desc-badge">
+                                            -{{ rtrim(rtrim(number_format($cs->descuento_porcentaje, 2), '0'), '.') }}%
+                                        </span>
+                                    @endif
+                                </div>
                                 @if($cs->empleado)
                                     <div class="servicio-info">
                                         Realizado por {{ $cs->empleado->nombre_completo }}
@@ -215,7 +248,12 @@
                             </div>
                             <div class="servicio-precio">
                                 @if($cs->precio_unitario !== null)
-                                    Bs. {{ number_format($cs->precio_unitario, 2) }}
+                                    @if($cs->descuento_porcentaje > 0)
+                                        <span class="servicio-precio-original">Bs. {{ number_format($cs->precio_unitario, 2) }}</span>
+                                        Bs. {{ number_format($cs->precio_neto, 2) }}
+                                    @else
+                                        Bs. {{ number_format($cs->precio_unitario, 2) }}
+                                    @endif
                                 @else
                                     —
                                 @endif
@@ -225,7 +263,21 @@
                         <p style="color:var(--text-light);font-style:italic;font-size:0.88rem;padding:0.5rem 0;">Sin servicios registrados.</p>
                     @endforelse
 
-                    @if($cita->citaServicios->count() > 1 && $cita->precio_final)
+                    @if($cita->citaServicios->count() > 0 && $cita->precio_final)
+                        @if($hayDescuentos && $totalAhorro > 0)
+                            <div class="servicio-total-row" style="border-top:none;padding-top:0.4rem;margin-top:0;">
+                                <span class="servicio-total-label" style="color:var(--text-light);">Subtotal</span>
+                                <span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--text-light);text-decoration:line-through;">
+                                    Bs. {{ number_format($totalOriginal, 2) }}
+                                </span>
+                            </div>
+                            <div class="servicio-total-row" style="border-top:none;padding-top:0.2rem;margin-top:0;">
+                                <span class="servicio-total-label" style="color:var(--success-color);">Ahorro</span>
+                                <span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--success-color);">
+                                    − Bs. {{ number_format($totalAhorro, 2) }}
+                                </span>
+                            </div>
+                        @endif
                         <div class="servicio-total-row">
                             <span class="servicio-total-label">Total</span>
                             <span class="servicio-total-val">Bs. {{ number_format($cita->precio_final, 2) }}</span>
