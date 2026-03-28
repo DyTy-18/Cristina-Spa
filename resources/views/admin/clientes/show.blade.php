@@ -100,139 +100,202 @@
         color: var(--white);
     }
 
-    /* ===== Timeline ===== */
-    .timeline-wrapper {
-        position: relative;
-    }
-
-    .timeline-month-group {
-        margin-bottom: 2.5rem;
-    }
-
-    .timeline-month-label {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 1.4rem;
-        color: var(--secondary-color);
-        letter-spacing: 2px;
-        margin-bottom: 1rem;
-        padding-left: 2.5rem;
-        position: relative;
-    }
-
-    .timeline-month-label::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 1.2rem;
-        height: 1px;
-        background: var(--accent-color);
-    }
-
-    .timeline-events {
-        position: relative;
-        padding-left: 2.5rem;
-    }
-
-    .timeline-events::before {
-        content: '';
-        position: absolute;
-        left: 0.55rem;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: rgba(0,0,0,0.08);
-    }
-
-    .timeline-event {
-        position: relative;
-        margin-bottom: 1rem;
-    }
-
-    .timeline-dot {
-        position: absolute;
-        left: -2.04rem;
-        top: 1.2rem;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid var(--white);
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
-        background: var(--text-light);
-        z-index: 1;
-    }
-
-    .timeline-dot.completada  { background: var(--success-color); box-shadow: 0 0 0 1px var(--success-color); }
-    .timeline-dot.confirmada  { background: var(--accent-color);  box-shadow: 0 0 0 1px var(--accent-color); }
-    .timeline-dot.pendiente   { background: var(--warning-color); box-shadow: 0 0 0 1px var(--warning-color); }
-    .timeline-dot.cancelada   { background: var(--error-color);   box-shadow: 0 0 0 1px var(--error-color); }
-
-    .timeline-card {
+    /* ===== Agenda (reemplaza timeline) ===== */
+    .agenda-wrapper {
         background: var(--white);
-        border: 1px solid rgba(0,0,0,0.05);
-        padding: 1.2rem 1.5rem;
+        border: 1px solid rgba(0,0,0,0.06);
+        overflow: visible;
+    }
+
+    .agenda-month-header {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        transition: var(--transition);
-        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 1.4rem;
+        background: rgba(0,0,0,0.022);
+        border-bottom: 1px solid rgba(0,0,0,0.06);
     }
 
-    .timeline-card:hover {
-        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
-        transform: translateX(2px);
-    }
-
-    .timeline-card-left {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        min-width: 0;
-    }
-
-    .timeline-date {
-        font-size: 0.78rem;
-        color: var(--text-light);
-        font-weight: 300;
-        letter-spacing: 0.5px;
-    }
-
-    .timeline-service {
+    .agenda-month-name {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 1.2rem;
-        color: var(--primary-color);
+        font-size: 0.95rem;
+        color: var(--secondary-color);
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
         font-weight: 400;
     }
 
-    .timeline-stylist {
-        font-size: 0.82rem;
+    .agenda-month-count {
+        font-size: 0.68rem;
         color: var(--text-light);
-        font-weight: 300;
+        letter-spacing: 0.5px;
     }
 
-    .timeline-card-right {
+    .agenda-row {
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        gap: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.045);
+        transition: background 0.15s;
+        position: relative;
+    }
+    .agenda-row:last-child { border-bottom: none; }
+    .agenda-row:hover { background: rgba(0,0,0,0.014); }
+
+    .agenda-date-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 0.4rem;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 0;
+        border-right: 1px solid rgba(0,0,0,0.045);
         flex-shrink: 0;
     }
 
-    .timeline-price {
+    .agenda-day-num {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 1.3rem;
-        color: var(--secondary-color);
+        font-size: 1.6rem;
+        color: var(--primary-color);
+        line-height: 1;
+        font-weight: 400;
     }
 
-    .timeline-notas {
+    .agenda-day-name {
+        font-size: 0.62rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-top: 0.1rem;
+    }
+
+    .agenda-hour {
+        font-size: 0.65rem;
+        color: var(--accent-color);
+        letter-spacing: 0.3px;
+        margin-top: 0.25rem;
+        font-weight: 400;
+    }
+
+    .agenda-body-col {
+        padding: 0.9rem 1.2rem;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.2rem;
+    }
+
+    .agenda-service-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.15rem;
+        color: var(--primary-color);
+        font-weight: 400;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .agenda-sub {
         font-size: 0.78rem;
         color: var(--text-light);
-        font-style: italic;
-        margin-top: 0.4rem;
         font-weight: 300;
     }
+
+    .agenda-notes {
+        font-size: 0.73rem;
+        color: var(--text-light);
+        font-style: italic;
+        font-weight: 300;
+        margin-top: 0.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .agenda-right-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0.9rem 1.2rem;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .agenda-price {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.2rem;
+        color: var(--secondary-color);
+        white-space: nowrap;
+    }
+
+    /* ===== Status pill / inline changer ===== */
+    .estado-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.22rem 0.65rem;
+        font-size: 0.68rem;
+        font-weight: 400;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: opacity 0.15s, box-shadow 0.15s;
+        user-select: none;
+        position: relative;
+        white-space: nowrap;
+    }
+    .estado-pill:hover { opacity: 0.82; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .estado-pill::after { content: ' ▾'; font-size: 0.55rem; opacity: 0.7; }
+    .estado-pill.loading::after { content: ' ···'; }
+
+    .estado-pill.completada { background: rgba(34,197,94,0.1);  border-color: rgba(34,197,94,0.3);  color: #15803d; }
+    .estado-pill.confirmada { background: rgba(201,169,110,0.12); border-color: rgba(201,169,110,0.4); color: var(--accent-color); }
+    .estado-pill.pendiente  { background: rgba(234,179,8,0.1);  border-color: rgba(234,179,8,0.3);  color: #92400e; }
+    .estado-pill.cancelada  { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #b91c1c; }
+
+    .estado-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        background: var(--white);
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        z-index: 500;
+        min-width: 140px;
+        overflow: hidden;
+    }
+    .estado-menu.open { display: block; }
+
+    .estado-menu-item {
+        padding: 0.5rem 0.9rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-dark);
+        transition: background 0.12s;
+        white-space: nowrap;
+    }
+    .estado-menu-item:hover { background: var(--light-bg); }
+    .estado-menu-item.current { color: var(--text-light); cursor: default; }
+    .estado-menu-item.current:hover { background: transparent; }
+
+    .estado-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .estado-dot.completada { background: #22c55e; }
+    .estado-dot.confirmada { background: var(--accent-color); }
+    .estado-dot.pendiente  { background: #eab308; }
+    .estado-dot.cancelada  { background: #ef4444; }
 
     /* ===== Service icon cards in modal ===== */
     .servicio-cards-grid {
@@ -545,6 +608,93 @@
         border-color: var(--primary-color);
         color: var(--white);
     }
+
+    /* ===== Sección Recomendaciones ===== */
+    .reco-section {
+        margin-top: 2rem;
+        background: var(--white);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .reco-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 1.4rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .reco-section-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+        letter-spacing: 1px;
+    }
+    .reco-leads-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+    .reco-leads-table th {
+        padding: 0.5rem 1rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--text-light);
+        font-weight: 400;
+        text-align: left;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        background: rgba(0,0,0,0.018);
+    }
+    .reco-leads-table td {
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        color: var(--text-dark);
+        font-weight: 300;
+    }
+    .reco-leads-table tr:last-child td { border-bottom: none; }
+    .reco-leads-table tr:hover td { background: rgba(0,0,0,0.012); }
+
+    /* ===== Modal Recomendación ===== */
+    .reco-modal-link-box {
+        background: var(--light-bg);
+        border: 1px solid rgba(0,0,0,0.08);
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+    .reco-modal-link-url {
+        flex: 1;
+        font-size: 0.75rem;
+        color: var(--text-dark);
+        word-break: break-all;
+        font-weight: 300;
+    }
+    .reco-modal-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .reco-modal-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    .reco-modal-stat-val {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        line-height: 1;
+    }
+    .reco-modal-stat-lbl {
+        font-size: 0.68rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 </style>
 @endpush
 
@@ -560,6 +710,10 @@
             <a href="{{ route('admin.contratos.index', ['cliente_id' => $cliente->id]) }}" class="btn btn-sm btn-outline">
                 📋 Contratos
             </a>
+            <button type="button" class="btn btn-sm btn-outline" onclick="generarEnlaceRecomendacion()"
+                    id="btnGenRecomendacion" data-url="{{ route('admin.clientes.recomendacion.generar', $cliente) }}">
+                🔗 Recomendar
+            </button>
             <button type="button" class="btn btn-accent btn-sm" onclick="document.getElementById('modalVisita').classList.add('open')">
                 + Registrar visita
             </button>
@@ -589,6 +743,18 @@
                 <p style="margin-top:0.6rem;font-size:0.82rem;color:var(--text-light);font-style:italic;font-weight:300;">
                     {{ $cliente->notas }}
                 </p>
+            @endif
+
+            @php $cuponPendiente = $cliente->cuponRecomendacionActivo(); @endphp
+            @if($cuponPendiente)
+                <div style="margin-top:0.75rem;display:inline-flex;align-items:center;gap:0.5rem;background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.35);padding:0.35rem 0.8rem;">
+                    <span style="font-size:0.95rem;">🎁</span>
+                    <span style="font-size:0.72rem;color:var(--accent-color);letter-spacing:0.5px;">
+                        Cupón de recomendación activo —
+                        <strong style="font-weight:500;">{{ $cuponPendiente->valor_label }} off en su próxima visita</strong>
+                        · se aplicará automáticamente
+                    </span>
+                </div>
             @endif
         </div>
     </div>
@@ -658,7 +824,7 @@
         </div>
     @endif
 
-    {{-- Timeline --}}
+    {{-- Agenda --}}
     @if($citas->isEmpty())
         <div class="table-container">
             <div class="empty-state">
@@ -670,70 +836,203 @@
             </div>
         </div>
     @else
-        <div class="timeline-wrapper">
+        <div class="agenda-wrapper">
             @foreach($citasPorMes as $mesKey => $citasDelMes)
                 @php
-                    $fecha = \Carbon\Carbon::createFromFormat('Y-m', $mesKey);
-                    $mesLabel = mb_convert_case($fecha->translatedFormat('F Y'), MB_CASE_TITLE, 'UTF-8');
+                    $fechaMes  = \Carbon\Carbon::createFromFormat('Y-m', $mesKey);
+                    $mesLabel  = mb_convert_case($fechaMes->translatedFormat('F Y'), MB_CASE_TITLE, 'UTF-8');
+                    $countMes  = count($citasDelMes);
                 @endphp
-                <div class="timeline-month-group">
-                    <div class="timeline-month-label">{{ $mesLabel }}</div>
-                    <div class="timeline-events">
-                        @foreach($citasDelMes as $cita)
-                            <div class="timeline-event">
-                                <div class="timeline-dot {{ $cita->estado }}"></div>
-                                <div class="timeline-card">
-                                    <div class="timeline-card-left">
-                                        <div class="timeline-date">
-                                            {{ \Carbon\Carbon::parse($cita->fecha)->format('l d') }} &nbsp;·&nbsp;
-                                            {{ \Carbon\Carbon::parse($cita->hora)->format('H:i') }}
+                <div class="agenda-month-header">
+                    <span class="agenda-month-name">{{ $mesLabel }}</span>
+                    <span class="agenda-month-count">{{ $countMes }} {{ $countMes === 1 ? 'visita' : 'visitas' }}</span>
+                </div>
+
+                @foreach($citasDelMes as $cita)
+                    @php
+                        $fechaCita    = \Carbon\Carbon::parse($cita->fecha);
+                        $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
+                        $nombresEmps  = $cita->citaServicios
+                                            ->filter(fn($cs) => $cs->empleado)
+                                            ->map(fn($cs) => $cs->empleado->nombre)
+                                            ->unique();
+                        $descuentos   = $cita->citaServicios->filter(fn($cs) => $cs->descuento_porcentaje > 0);
+                        $updateUrl    = route('admin.clientes.cita.estado', [$cliente, $cita]);
+                    @endphp
+                    <div class="agenda-row" id="row-cita-{{ $cita->id }}">
+
+                        {{-- Columna fecha --}}
+                        <div class="agenda-date-col">
+                            <span class="agenda-day-num">{{ $fechaCita->format('d') }}</span>
+                            <span class="agenda-day-name">{{ mb_substr($fechaCita->translatedFormat('D'), 0, 3) }}</span>
+                            <span class="agenda-hour">{{ \Carbon\Carbon::parse($cita->hora)->format('H:i') }}</span>
+                        </div>
+
+                        {{-- Columna cuerpo --}}
+                        <div class="agenda-body-col">
+                            <div class="agenda-service-name">
+                                {{ $nombresServs->isNotEmpty() ? $nombresServs->implode(' · ') : 'Servicio no registrado' }}
+                                @foreach($descuentos as $cs)
+                                    <span class="desc-badge">-{{ rtrim(rtrim(number_format($cs->descuento_porcentaje, 2), '0'), '.') }}%</span>
+                                @endforeach
+                            </div>
+                            @if($nombresEmps->isNotEmpty())
+                                <div class="agenda-sub">con {{ $nombresEmps->implode(', ') }}</div>
+                            @endif
+                            @if($cita->notas)
+                                <div class="agenda-notes" title="{{ $cita->notas }}">{{ $cita->notas }}</div>
+                            @endif
+                        </div>
+
+                        {{-- Columna derecha: precio + estado pill --}}
+                        <div class="agenda-right-col">
+                            @if($cita->precio_final)
+                                <div class="agenda-price">Bs. {{ number_format($cita->precio_final, 0) }}</div>
+                            @endif
+
+                            <div style="position:relative;">
+                                <div class="estado-pill {{ $cita->estado }}"
+                                     data-cita-id="{{ $cita->id }}"
+                                     data-url="{{ $updateUrl }}"
+                                     onclick="toggleEstadoMenu(this)">
+                                    {{ $cita->estado }}
+                                </div>
+                                <div class="estado-menu" id="emenu-{{ $cita->id }}">
+                                    @foreach(['completada','confirmada','pendiente','cancelada'] as $est)
+                                        <div class="estado-menu-item {{ $cita->estado === $est ? 'current' : '' }}"
+                                             data-estado="{{ $est }}"
+                                             onclick="cambiarEstado('{{ $cita->id }}', '{{ $est }}', '{{ $updateUrl }}')">
+                                            <span class="estado-dot {{ $est }}"></span>
+                                            {{ ucfirst($est) }}
                                         </div>
-                                        @php
-                                            $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
-                                            $nombresEmps  = $cita->citaServicios->filter(fn($cs) => $cs->empleado)->map(fn($cs) => $cs->empleado->nombre . ' ' . $cs->empleado->apellido)->unique();
-                                            $descuentos   = $cita->citaServicios->filter(fn($cs) => $cs->descuento_porcentaje > 0);
-                                        @endphp
-                                        <div class="timeline-service">
-                                            {{ $nombresServs->isNotEmpty() ? $nombresServs->implode(' + ') : 'Servicio no encontrado' }}
-                                            @foreach($descuentos as $cs)
-                                                <span class="desc-badge">-{{ rtrim(rtrim(number_format($cs->descuento_porcentaje, 2), '0'), '.') }}%</span>
-                                            @endforeach
-                                        </div>
-                                        @if($nombresEmps->isNotEmpty())
-                                            <div class="timeline-stylist">
-                                                con {{ $nombresEmps->implode(', ') }}
-                                            </div>
-                                        @endif
-                                        @if($cita->notas)
-                                            <div class="timeline-notas">{{ $cita->notas }}</div>
-                                        @endif
-                                    </div>
-                                    <div class="timeline-card-right">
-                                        @php
-                                            $badgeMap = [
-                                                'completada' => 'badge-success',
-                                                'confirmada' => 'badge-info',
-                                                'pendiente'  => 'badge-warning',
-                                                'cancelada'  => 'badge-danger',
-                                            ];
-                                        @endphp
-                                        <span class="badge {{ $badgeMap[$cita->estado] ?? 'badge-info' }}">
-                                            {{ $cita->estado }}
-                                        </span>
-                                        @if($cita->precio_final)
-                                            <div class="timeline-price">
-                                                Bs. {{ number_format($cita->precio_final, 2) }}
-                                            </div>
-                                        @endif
-                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
-                        @endforeach
+                        </div>
+
                     </div>
-                </div>
+                @endforeach
             @endforeach
         </div>
     @endif
+
+    {{-- Sección Recomendaciones --}}
+    @php
+        $recoLinks = $cliente->recomendacionLinks()->with('leads')->latest()->get();
+        $recoLeads = \App\Models\Lead::whereIn('recomendacion_link_id', $recoLinks->pluck('id'))
+                        ->with(['servicioRel','cita'])
+                        ->latest()
+                        ->get();
+    @endphp
+
+    <div class="reco-section">
+        <div class="reco-section-header">
+            <span class="reco-section-title">Recomendaciones</span>
+            <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+                @if($recoLeads->count() > 0)
+                    <span style="font-size:0.75rem;color:var(--text-light);">
+                        {{ $recoLeads->count() }} {{ $recoLeads->count() === 1 ? 'persona registrada' : 'personas registradas' }}
+                    </span>
+                @endif
+                <button type="button" class="btn btn-sm btn-outline"
+                        id="btnGenRecomendacion2"
+                        data-url="{{ route('admin.clientes.recomendacion.generar', $cliente) }}"
+                        onclick="generarEnlaceRecomendacion()">
+                    🔗 Generar enlace de recomendación
+                </button>
+            </div>
+        </div>
+
+        @if($recoLeads->isEmpty())
+            <div style="padding:1.5rem;text-align:center;color:var(--text-light);font-size:0.82rem;font-style:italic;font-weight:300;">
+                Aún no hay personas registradas mediante este cliente.
+            </div>
+        @else
+            <table class="reco-leads-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Sucursal</th>
+                        <th>Servicio</th>
+                        <th>Cita</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($recoLeads as $lead)
+                        <tr>
+                            <td>
+                                @if($lead->cliente)
+                                    <a href="{{ route('admin.clientes.show', $lead->cliente) }}"
+                                       style="color:var(--primary-color);text-decoration:none;">
+                                        {{ $lead->nombre }}
+                                    </a>
+                                @else
+                                    {{ $lead->nombre }}
+                                @endif
+                            </td>
+                            <td>{{ $lead->telefono }}</td>
+                            <td>{{ $lead->sucursal ?? '—' }}</td>
+                            <td>{{ $lead->servicio ?? '—' }}</td>
+                            <td>
+                                @if($lead->cita)
+                                    <span class="badge {{ ['completada'=>'badge-success','confirmada'=>'badge-info','pendiente'=>'badge-warning','cancelada'=>'badge-danger'][$lead->cita->estado] ?? 'badge-info' }}">
+                                        {{ $lead->cita->estado }}
+                                    </span>
+                                @else
+                                    <span style="color:var(--text-light);">—</span>
+                                @endif
+                            </td>
+                            <td style="color:var(--text-light);">
+                                {{ $lead->created_at->format('d/m/Y') }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
+
+    {{-- Modal: Enlace de recomendación --}}
+    <div id="modalRecomendacion" class="modal-backdrop" onclick="if(event.target===this)this.classList.remove('open')">
+        <div class="modal-box" style="max-width:520px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Enlace de recomendación</h3>
+                <button type="button" class="modal-close" onclick="document.getElementById('modalRecomendacion').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="recoModalLoading" style="text-align:center;padding:1.5rem;color:var(--text-light);font-size:0.82rem;">
+                    Generando enlace...
+                </div>
+                <div id="recoModalContent" style="display:none;">
+                    <div class="reco-modal-stats" id="recoModalStats"></div>
+
+                    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);margin-bottom:0.4rem;">
+                        Enlace para compartir
+                    </div>
+                    <div class="reco-modal-link-box">
+                        <span class="reco-modal-link-url" id="recoModalUrl"></span>
+                        <button type="button" onclick="copiarEnlace()" class="btn btn-sm btn-outline" style="flex-shrink:0;">
+                            Copiar
+                        </button>
+                    </div>
+
+                    <a id="recoWhatsappBtn" href="#" target="_blank" rel="noopener"
+                       style="display:flex;align-items:center;justify-content:center;gap:0.6rem;width:100%;padding:0.85rem;background:#25d366;color:#fff;font-size:0.8rem;font-weight:400;letter-spacing:1px;text-decoration:none;text-transform:uppercase;transition:opacity 0.15s;"
+                       onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Enviar por WhatsApp
+                    </a>
+
+                    <p style="margin-top:0.85rem;font-size:0.72rem;color:var(--text-light);font-style:italic;text-align:center;line-height:1.5;">
+                        La persona que abra el enlace obtendrá <strong style="color:var(--text-dark);font-weight:400;">10% de descuento</strong> en su primera visita.<br>
+                        Tú recibirás un <strong style="color:var(--text-dark);font-weight:400;">cupón de 10%</strong> automáticamente cuando se registre.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- Modal: Registrar visita --}}
     <div id="modalVisita" class="modal-backdrop" onclick="if(event.target===this)this.classList.remove('open')">
@@ -1301,6 +1600,123 @@
         document.querySelectorAll('.campana-card-modal').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         document.getElementById('modalCampanaId').value = card.dataset.id;
+    }
+
+    // ── Enlace de recomendación ───────────────────────────────────────────────
+    const RECO_GENERAR_URL = '{{ route('admin.clientes.recomendacion.generar', $cliente) }}';
+
+    function generarEnlaceRecomendacion() {
+        const modal   = document.getElementById('modalRecomendacion');
+        const loading = document.getElementById('recoModalLoading');
+        const content = document.getElementById('recoModalContent');
+
+        modal.classList.add('open');
+        loading.style.display = '';
+        content.style.display = 'none';
+
+        fetch(RECO_GENERAR_URL, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('recoModalUrl').textContent = data.url;
+            document.getElementById('recoWhatsappBtn').href = data.whatsapp_url;
+
+            const stats = document.getElementById('recoModalStats');
+            stats.innerHTML = `
+                <div class="reco-modal-stat">
+                    <span class="reco-modal-stat-val">${data.clicks}</span>
+                    <span class="reco-modal-stat-lbl">Aperturas</span>
+                </div>
+                <div class="reco-modal-stat">
+                    <span class="reco-modal-stat-val">${data.convertidos}</span>
+                    <span class="reco-modal-stat-lbl">Registros</span>
+                </div>
+            `;
+
+            loading.style.display = 'none';
+            content.style.display = '';
+        })
+        .catch(() => {
+            loading.textContent = 'No se pudo generar el enlace. Intenta de nuevo.';
+        });
+    }
+
+    function copiarEnlace() {
+        const url = document.getElementById('recoModalUrl').textContent;
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copiado';
+            btn.style.color = 'var(--success-color)';
+            setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+        });
+    }
+
+    // ── Cambio de estado inline ───────────────────────────────────────────────
+    function toggleEstadoMenu(pill) {
+        const citaId = pill.dataset.citaId;
+        const menu   = document.getElementById('emenu-' + citaId);
+        const isOpen = menu.classList.contains('open');
+        // Cierra todos los demás
+        document.querySelectorAll('.estado-menu.open').forEach(m => m.classList.remove('open'));
+        if (!isOpen) menu.classList.add('open');
+    }
+
+    // Cierra menú al clickear fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.estado-pill') && !e.target.closest('.estado-menu')) {
+            document.querySelectorAll('.estado-menu.open').forEach(m => m.classList.remove('open'));
+        }
+    });
+
+    function cambiarEstado(citaId, nuevoEstado, url) {
+        const menu = document.getElementById('emenu-' + citaId);
+        const pill = document.querySelector(`.estado-pill[data-cita-id="${citaId}"]`);
+
+        // No hacer nada si es el estado actual
+        if (pill.classList.contains(nuevoEstado)) { menu.classList.remove('open'); return; }
+
+        pill.classList.add('loading');
+        menu.classList.remove('open');
+
+        fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                              || '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ estado: nuevoEstado }),
+        })
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(data => {
+            // Actualiza la pill
+            pill.classList.remove('completada','confirmada','pendiente','cancelada','loading');
+            pill.classList.add(data.estado);
+            pill.childNodes[0].textContent = data.estado;
+
+            // Actualiza los items del menú
+            menu.querySelectorAll('.estado-menu-item').forEach(item => {
+                item.classList.toggle('current', item.dataset.estado === data.estado);
+            });
+
+            // Flash sutil en la fila
+            const row = document.getElementById('row-cita-' + citaId);
+            row.style.transition = 'background 0s';
+            row.style.background = 'rgba(201,169,110,0.08)';
+            setTimeout(() => { row.style.transition = 'background 0.6s'; row.style.background = ''; }, 50);
+        })
+        .catch(() => {
+            pill.classList.remove('loading');
+            alert('No se pudo actualizar el estado. Intenta de nuevo.');
+        });
     }
 </script>
 @endpush

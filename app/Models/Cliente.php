@@ -52,6 +52,31 @@ class Cliente extends Model
     }
 
     /**
+     * Links de recomendación generados por este cliente
+     */
+    public function recomendacionLinks()
+    {
+        return $this->hasMany(RecomendacionLink::class);
+    }
+
+    /**
+     * Primer cupón de recomendación activo que tiene pendiente como referidor.
+     */
+    public function cuponRecomendacionActivo(): ?\App\Models\Cupon
+    {
+        $linkIds = $this->recomendacionLinks()->pluck('id');
+        if ($linkIds->isEmpty()) return null;
+
+        return \App\Models\Lead::whereIn('recomendacion_link_id', $linkIds)
+            ->whereNotNull('cupon_referidor_id')
+            ->with('cuponReferidor')
+            ->get()
+            ->pluck('cuponReferidor')
+            ->filter(fn($c) => $c && $c->isValido())
+            ->first();
+    }
+
+    /**
      * Nombre completo del cliente
      */
     public function getNombreCompletoAttribute()

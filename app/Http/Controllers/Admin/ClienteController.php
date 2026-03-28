@@ -224,9 +224,43 @@ class ClienteController extends Controller
             ]);
         }
 
+        // Auto-aplicar cupón de recomendación si el cliente tiene uno pendiente
+        $cuponReco = $cliente->cuponRecomendacionActivo();
+        if ($cuponReco) {
+            $nuevoPrecio = 0;
+            foreach ($cita->citaServicios as $cs) {
+                $descFinal = max((float) ($cs->descuento_porcentaje ?? 0), (float) $cuponReco->valor);
+                $cs->update(['descuento_porcentaje' => $descFinal]);
+                $nuevoPrecio += round((float) $cs->precio_unitario * (1 - $descFinal / 100), 2);
+            }
+            $cita->update(['precio_final' => $nuevoPrecio ?: null]);
+
+            \App\Models\CuponUso::create([
+                'cupon_id'   => $cuponReco->id,
+                'cita_id'    => $cita->id,
+                'cliente_id' => $cliente->id,
+                'notas'      => 'Cupón de recomendación aplicado automáticamente (20%).',
+            ]);
+        }
+
         $this->crearContratoSiCorresponde($request, $cliente->id);
 
         return redirect()->route('admin.clientes.show', $cliente)
-            ->with('success', 'Visita registrada exitosamente.');
+            ->with('success', $cuponReco
+                ? 'Visita registrada con cupón de recomendación aplicado (20% off).'
+                : 'Visita registrada exitosamente.');
+    }
+
+    public function updateCitaEstado(Request $request, Cliente $cliente, Cita $cita)
+    {
+        abort_if($cita->cliente_id !== $cliente->id, 404);
+
+        $data = $request->validate([
+            'estado' => 'required|in:pendiente,confirmada,completada,cancelada',
+        ]);
+
+        $cita->update(['estado' => $data['estado']]);
+
+        return response()->json(['estado' => $cita->estado]);
     }
 }

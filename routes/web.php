@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\DescuentoController;
 use App\Http\Controllers\Admin\PaqueteController;
 use App\Http\Controllers\Admin\ContratoPaqueteController;
+use App\Http\Controllers\Admin\RecomendacionController;
+use App\Http\Controllers\RecomendacionPublicController;
 
 // Página pública
 Route::get('/', function () {
@@ -27,6 +29,13 @@ Route::get('/', function () {
 
 // Leads desde formulario público (sin auth)
 Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+
+// Formulario de recomendación (público, sin auth)
+Route::get('/r/{token}', [RecomendacionPublicController::class, 'show'])->name('recomendacion.form');
+Route::post('/r/{token}', [RecomendacionPublicController::class, 'store'])->name('recomendacion.store');
+Route::get('/r/{token}/gracias', function () {
+    return view('recomendacion.gracias');
+})->name('recomendacion.gracias');
 
 // Rutas de autenticación (solo para invitados)
 Route::middleware('guest')->group(function () {
@@ -64,6 +73,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
     Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::post('/clientes/{cliente}/visita', [ClienteController::class, 'storeCita'])->name('clientes.storeCita');
+    Route::patch('/clientes/{cliente}/citas/{cita}/estado', [ClienteController::class, 'updateCitaEstado'])->name('clientes.cita.estado');
+    Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
+    Route::delete('/recomendacion-links/{link}', [RecomendacionController::class, 'destroy'])->name('recomendacion.link.destroy');
     
     // Servicios
     Route::resource('servicios', \App\Http\Controllers\Admin\ServicioController::class);
