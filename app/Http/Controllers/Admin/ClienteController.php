@@ -14,6 +14,7 @@ use App\Models\Empleado;
 use App\Models\Paquete;
 use App\Models\Servicio;
 use App\Services\WppService;
+use App\Services\MaterialConsumptionService;
 use Illuminate\Http\Request;
 
 class ClienteController extends Controller
@@ -113,10 +114,37 @@ class ClienteController extends Controller
         $descVigentes   = DescuentoProgramado::vigentes()->get(['servicio_id', 'porcentaje']);
         $descGlobal     = (float) ($descVigentes->whereNull('servicio_id')->max('porcentaje') ?? 0);
 
-        $modalServiciosJson = $servicios->map(fn($s) => [
+        // Frecuencia real de cada servicio en citas completadas
+        $frecuencias = \DB::table('cita_servicios')
+            ->join('citas', 'cita_servicios.cita_id', '=', 'citas.id')
+            ->where('citas.estado', 'completada')
+            ->selectRaw('cita_servicios.servicio_id, COUNT(*) as total')
+            ->groupBy('cita_servicios.servicio_id')
+            ->pluck('total', 'servicio_id');
+
+        // Orden de popularidad predefinido (para cuando no hay historial aún)
+        $popularidadBase = [
+            'Manicura', 'Pedicura', 'Corte de Mujer', 'Lavado', 'Planchado o Bucles',
+            'Esmaltado Normal', 'Perfilado de Cejas', 'Depilación Axilas', 'Pintado en Gel',
+            'Corte de Varón', 'Depilación Facial', 'Retoque de Raíz', 'Semi-recogido',
+            'Depilación Bozo', 'Corte flequillo', 'Recogido', 'Laminado de Cejas',
+        ];
+        $popularidadIdx = array_flip($popularidadBase);
+
+        $serviciosOrdenados = $servicios->sortByDesc(function ($s) use ($frecuencias, $popularidadIdx) {
+            $real = (int) ($frecuencias[$s->id] ?? 0);
+            // Si hay datos reales los usa; si no, usa el índice base invertido como desempate
+            $base = isset($popularidadIdx[$s->nombre])
+                ? (count($popularidadIdx) - $popularidadIdx[$s->nombre])
+                : 0;
+            return $real * 1000 + $base;
+        })->values();
+
+        $modalServiciosJson = $serviciosOrdenados->map(fn($s) => [
             'id'        => $s->id,
             'nombre'    => $s->nombre,
             'precio'    => $s->precio,
+            'categoria' => $s->categoria,
             'descuento' => (float) ($descVigentes->where('servicio_id', $s->id)->max('porcentaje') ?? $descGlobal ?: 0),
         ])->values();
 
@@ -267,6 +295,10 @@ class ClienteController extends Controller
 
         if ($estadoAnterior !== $cita->estado) {
             app(WppService::class)->notificarSegunEstado($cita);
+
+            if ($cita->estado === 'completada') {
+                app(MaterialConsumptionService::class)->procesarCita($cita);
+            }
         }
 
         return response()->json(['estado' => $cita->estado]);

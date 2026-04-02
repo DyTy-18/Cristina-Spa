@@ -13,6 +13,7 @@ use App\Models\Campana;
 use App\Models\Paquete;
 use App\Models\Servicio;
 use App\Services\WppService;
+use App\Services\MaterialConsumptionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -52,6 +53,7 @@ class CitaController extends Controller
             'nombre'    => $s->nombre,
             'precio'    => $s->precio,
             'duracion'  => $s->duracion_minutos,
+            'categoria' => $s->categoria,
             'descuento' => $descuentosMapa[$s->id] ?? $descuentosMapa['__global'] ?? 0,
         ])->values();
 
@@ -193,6 +195,7 @@ class CitaController extends Controller
             'nombre'    => $s->nombre,
             'precio'    => $s->precio,
             'duracion'  => $s->duracion_minutos,
+            'categoria' => $s->categoria,
             'descuento' => $descuentosMapa[$s->id] ?? $descuentosMapa['__global'] ?? 0,
         ])->values();
 
@@ -262,6 +265,10 @@ class CitaController extends Controller
 
         if ($estadoAnterior !== $cita->estado) {
             app(WppService::class)->notificarSegunEstado($cita);
+
+            if ($cita->estado === 'completada') {
+                app(MaterialConsumptionService::class)->procesarCita($cita);
+            }
         }
 
         return redirect()->route('admin.citas.show', $cita)
