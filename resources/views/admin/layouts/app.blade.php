@@ -140,6 +140,9 @@
                         class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
                         <span class="nav-icon">📦</span>
                         <span>Inventario</span>
+                        @if(($alertasStockCount ?? 0) > 0)
+                            <span style="background:#f59e0b;color:#fff;border-radius:9999px;font-size:.62rem;font-weight:700;padding:.1rem .42rem;margin-left:auto;line-height:1.4;">{{ $alertasStockCount }}</span>
+                        @endif
                     </a>
                 @endif
             </nav>
