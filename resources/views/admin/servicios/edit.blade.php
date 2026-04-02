@@ -159,7 +159,7 @@
 <script>
 (function () {
     const SERVICIO_ID = {{ $servicio->id }};
-    const BASE_URL    = '/admin/servicios/' + SERVICIO_ID + '/materiales';
+    const BASE_URL    = '{{ route("admin.servicios.materiales.store", $servicio) }}';
     const CSRF        = '{{ csrf_token() }}';
 
     // State: list of materials loaded from PHP
@@ -196,7 +196,7 @@
             <td>${escHtml(m.producto.marca)}</td>
             <td>
                 <input type="number" class="form-control form-control-sm edit-cantidad"
-                       value="${m.cantidad}" min="0.01" step="0.01" style="width:90px;">
+                       value="${escHtml(m.cantidad)}" min="0.01" step="0.01" style="width:90px;">
             </td>
             <td>
                 <input type="text" class="form-control form-control-sm edit-unidad"
@@ -218,7 +218,7 @@
 
     function refreshProductoSelect() {
         const usedIds = new Set(materiales.map(m => m.producto.id));
-        document.querySelectorAll('#nuevo-producto-id option[value]').forEach(opt => {
+        document.querySelectorAll('#nuevo-producto-id option[value]:not([value=""])').forEach(opt => {
             opt.disabled = usedIds.has(parseInt(opt.value));
         });
     }
@@ -255,16 +255,26 @@
     function deleteRow(tr, m) {
         if (!confirm('¿Eliminar este material del servicio?')) return;
 
+        const errEl = tr.querySelector('.row-error');
+        errEl.style.display = 'none';
+
         fetch(`${BASE_URL}/${m.id}`, {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': CSRF },
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                materiales = materiales.filter(x => x.id !== m.id);
-                renderTable();
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) {
+                errEl.textContent = 'Error al eliminar.';
+                errEl.style.display = '';
+                return;
             }
+            materiales = materiales.filter(x => x.id !== m.id);
+            renderTable();
+        })
+        .catch(() => {
+            errEl.textContent = 'Error de conexión.';
+            errEl.style.display = '';
         });
     }
 
