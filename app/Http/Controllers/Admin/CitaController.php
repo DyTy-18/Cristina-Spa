@@ -12,6 +12,7 @@ use App\Models\Empleado;
 use App\Models\Campana;
 use App\Models\Paquete;
 use App\Models\Servicio;
+use App\Services\WppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -166,6 +167,8 @@ class CitaController extends Controller
         // Crear contrato de paquete si se solicitó
         $this->crearContratoSiCorresponde($request, $clienteId);
 
+        app(WppService::class)->notificarSegunEstado($cita);
+
         return redirect()->route('admin.citas.calendario')
             ->with('success', 'Cita registrada exitosamente.');
     }
@@ -233,6 +236,8 @@ class CitaController extends Controller
             return round($precio * (1 - $desc / 100), 2);
         });
 
+        $estadoAnterior = $cita->estado;
+
         $cita->update([
             'campana_id'   => $data['campana_id'] ?? null,
             'fecha'        => $data['fecha'],
@@ -253,6 +258,10 @@ class CitaController extends Controller
                 'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
                 'descuento_porcentaje' => $desc,
             ]);
+        }
+
+        if ($estadoAnterior !== $cita->estado) {
+            app(WppService::class)->notificarSegunEstado($cita);
         }
 
         return redirect()->route('admin.citas.show', $cita)

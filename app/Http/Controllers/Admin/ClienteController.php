@@ -13,6 +13,7 @@ use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
 use App\Models\Paquete;
 use App\Models\Servicio;
+use App\Services\WppService;
 use Illuminate\Http\Request;
 
 class ClienteController extends Controller
@@ -245,6 +246,8 @@ class ClienteController extends Controller
 
         $this->crearContratoSiCorresponde($request, $cliente->id);
 
+        app(WppService::class)->notificarSegunEstado($cita);
+
         return redirect()->route('admin.clientes.show', $cliente)
             ->with('success', $cuponReco
                 ? 'Visita registrada con cupón de recomendación aplicado (20% off).'
@@ -259,7 +262,12 @@ class ClienteController extends Controller
             'estado' => 'required|in:pendiente,confirmada,completada,cancelada',
         ]);
 
+        $estadoAnterior = $cita->estado;
         $cita->update(['estado' => $data['estado']]);
+
+        if ($estadoAnterior !== $cita->estado) {
+            app(WppService::class)->notificarSegunEstado($cita);
+        }
 
         return response()->json(['estado' => $cita->estado]);
     }
