@@ -9,7 +9,9 @@ class ConsumoMaterial extends Model
 {
     protected $table = 'consumos_material';
 
-    protected $fillable = ['servicio_material_id', 'cita_id'];
+    protected $fillable = ['servicio_material_id', 'cita_id', 'usos_reales'];
+
+    protected $casts = ['usos_reales' => 'integer'];
 
     public function servicioMaterial(): BelongsTo
     {

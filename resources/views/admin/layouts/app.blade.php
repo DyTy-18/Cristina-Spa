@@ -135,6 +135,14 @@
                     </a>
                 @endif
 
+                @if (auth()->user()->hasRole('estilista'))
+                    <a href="{{ route('admin.mis-citas') }}"
+                        class="nav-item {{ request()->routeIs('admin.mis-citas*') ? 'active' : '' }}">
+                        <span class="nav-icon">🗒️</span>
+                        <span>Mis Citas</span>
+                    </a>
+                @endif
+
                 @if (auth()->user()->hasPermissionTo('ver inventario'))
                     <a href="{{ route('admin.inventario.index') }}"
                         class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">

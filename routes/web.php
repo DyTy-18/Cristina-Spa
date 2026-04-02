@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\ContratoPaqueteController;
 use App\Http\Controllers\Admin\RecomendacionController;
 use App\Http\Controllers\RecomendacionPublicController;
 use App\Http\Controllers\Admin\AlertaStockController;
+use App\Http\Controllers\Admin\MisCitasController;
 
 // Página pública
 Route::get('/', function () {
@@ -192,9 +193,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
          ->name('alertas-stock.leer');
 
     // Mis Citas (para estilistas)
-    Route::get('/mis-citas', function () {
-        return view('admin.mis-citas.index');
-    })->name('mis-citas');
+    Route::get('/mis-citas', [MisCitasController::class, 'index'])->name('mis-citas');
+    Route::get('/mis-citas/{cita}/consumo', [MisCitasController::class, 'consumo'])->name('mis-citas.consumo');
+    Route::post('/mis-citas/{cita}/consumo', [MisCitasController::class, 'guardarConsumo'])->name('mis-citas.consumo.store');
 
     // Inventario (admin, cajero, finanzas)
     Route::middleware('permission:ver inventario')->prefix('inventario')->name('inventario.')->group(function () {

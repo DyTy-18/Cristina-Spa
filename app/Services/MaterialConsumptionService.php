@@ -65,6 +65,49 @@ class MaterialConsumptionService
         }
     }
 
+    public function procesarUsosExtra(ConsumoMaterial $consumo, int $usosExtra): void
+    {
+        $material = $consumo->servicioMaterial()->with('producto')->first();
+
+        if (!$material || !$material->producto) {
+            return;
+        }
+
+        $usosPorUnidad = max(1, (int) ($material->usos_por_unidad ?? 1));
+
+        for ($i = 0; $i < $usosExtra; $i++) {
+            ConsumoMaterial::create([
+                'servicio_material_id' => $consumo->servicio_material_id,
+                'cita_id'              => $consumo->cita_id,
+            ]);
+
+            $totalConsumos = ConsumoMaterial::where('servicio_material_id', $consumo->servicio_material_id)->count();
+
+            if ($totalConsumos % $usosPorUnidad === 0) {
+                Salida::create([
+                    'codigo_barras' => $material->producto->codigo_barras,
+                    'unidades'      => 1,
+                    'fecha'         => today(),
+                    'destino'       => 'consumo_servicio',
+                ]);
+
+                $stockActual = $this->calcularStock($material->producto->codigo_barras);
+
+                if ($stockActual <= $material->producto->stock_minimo) {
+                    $yaExiste = AlertaStock::where('producto_id', $material->producto_id)
+                                          ->where('leida', false)
+                                          ->exists();
+                    if (!$yaExiste) {
+                        AlertaStock::create([
+                            'producto_id'  => $material->producto_id,
+                            'stock_actual' => $stockActual,
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
     private function calcularStock(string $codigoBarras): int
     {
         $entradas = Entrada::where('codigo_barras', $codigoBarras)->sum('unidades');
