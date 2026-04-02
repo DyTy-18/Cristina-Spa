@@ -79,7 +79,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     
     // Servicios
     Route::resource('servicios', \App\Http\Controllers\Admin\ServicioController::class);
-    
+
+    // Materiales de servicio
+    Route::prefix('servicios/{servicio}/materiales')->name('servicios.materiales.')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'store'])->name('store');
+        Route::put('/{material}', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'update'])->name('update');
+        Route::delete('/{material}', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'destroy'])->name('destroy');
+    });
+
     // Campañas
     Route::middleware('permission:ver campanas')->group(function () {
         Route::get('/campanas', [CampanaController::class, 'index'])->name('campanas.index');
