@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AlertaStock;
 use App\Models\Entrada;
 use App\Models\Producto;
 use App\Models\Salida;
@@ -45,7 +46,9 @@ class InventarioController extends Controller
 
         [$marcas, $lineas] = $this->filterOptions($marca);
 
-        return view('admin.inventario.index', compact('stock', 'q', 'marca', 'linea', 'marcas', 'lineas'));
+        $alertas = AlertaStock::noLeidas()->with('producto')->latest()->get();
+
+        return view('admin.inventario.index', compact('stock', 'q', 'marca', 'linea', 'marcas', 'lineas', 'alertas'));
     }
 
     // ─── Productos ────────────────────────────────────────────────────────────

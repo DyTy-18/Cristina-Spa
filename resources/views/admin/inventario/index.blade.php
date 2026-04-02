@@ -4,6 +4,33 @@
 @section('page-title', 'Inventario')
 
 @section('content')
+@if($alertas->isNotEmpty())
+    <div style="margin-bottom:1.5rem;">
+        @foreach($alertas as $alerta)
+        <div id="alerta-{{ $alerta->id }}"
+             style="background:#fff8e1;border:1px solid #f59e0b;border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+            <div>
+                <strong>⚠️ {{ $alerta->producto->nombre }}</strong>
+                @if($alerta->producto->marca)
+                    <span style="color:#888;">({{ $alerta->producto->marca }})</span>
+                @endif
+                — Stock actual: <strong>{{ $alerta->stock_actual }}</strong> uds.
+                &nbsp;·&nbsp; Mínimo: {{ $alerta->producto->stock_minimo }}
+            </div>
+            <div style="display:flex;gap:.5rem;flex-shrink:0;">
+                <button type="button" class="btn btn-outline btn-sm"
+                        onclick="copiarMensajeWpp({{ json_encode($alerta->mensaje) }})">
+                    Copiar msg WPP
+                </button>
+                <button type="button" class="btn btn-outline btn-sm"
+                        onclick="marcarLeida({{ $alerta->id }})">
+                    Marcar leída
+                </button>
+            </div>
+        </div>
+        @endforeach
+    </div>
+@endif
     <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
         <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary">+ Registrar Entrada</a>
         <a href="{{ route('admin.inventario.salidas.create') }}" class="btn btn-accent">+ Registrar Salida</a>
@@ -106,3 +133,26 @@
         @endif
     </div>
 @endsection
+
+@push('scripts')
+<script>
+function copiarMensajeWpp(mensaje) {
+    navigator.clipboard.writeText(mensaje).then(function () {
+        alert('Mensaje copiado al portapapeles.');
+    });
+}
+function marcarLeida(id) {
+    fetch('/admin/alertas-stock/' + id + '/leer', {
+        method: 'PATCH',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            var el = document.getElementById('alerta-' + id);
+            if (el) el.remove();
+        }
+    });
+}
+</script>
+@endpush
