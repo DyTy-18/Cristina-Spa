@@ -41,6 +41,8 @@ class ServicioMaterialController extends Controller
 
     public function update(Request $request, Servicio $servicio, ServicioMaterial $material): JsonResponse
     {
+        abort_if($material->servicio_id !== $servicio->id, 404);
+
         $validated = $request->validate([
             'cantidad' => 'required|numeric|min:0.01',
             'unidad'   => 'required|string|max:30',
@@ -57,6 +59,8 @@ class ServicioMaterialController extends Controller
 
     public function destroy(Servicio $servicio, ServicioMaterial $material): JsonResponse
     {
+        abort_if($material->servicio_id !== $servicio->id, 404);
+
         $material->delete();
 
         return response()->json(['success' => true]);

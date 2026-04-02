@@ -7,7 +7,6 @@ use App\Models\Servicio;
 use App\Models\ServicioMaterial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ServicioMaterialTest extends TestCase
@@ -130,5 +129,57 @@ class ServicioMaterialTest extends TestCase
     {
         $this->postJson("/admin/servicios/{$this->servicio->id}/materiales", [])
             ->assertStatus(401);
+    }
+
+    public function test_cannot_update_material_belonging_to_different_servicio(): void
+    {
+        $otroServicio = Servicio::create([
+            'nombre' => 'Tinte',
+            'precio' => 80,
+            'duracion_minutos' => 120,
+            'activo' => true,
+        ]);
+
+        $material = ServicioMaterial::create([
+            'servicio_id' => $otroServicio->id,
+            'producto_id' => $this->producto->id,
+            'cantidad' => 10,
+            'unidad' => 'ml',
+        ]);
+
+        // Try to update material of otroServicio using $this->servicio in the URL
+        $response = $this->actingAs($this->admin)
+            ->putJson("/admin/servicios/{$this->servicio->id}/materiales/{$material->id}", [
+                'cantidad' => 50,
+                'unidad' => 'gr',
+            ]);
+
+        $response->assertStatus(404);
+    }
+
+    public function test_cannot_destroy_material_belonging_to_different_servicio(): void
+    {
+        $otroServicio = Servicio::create([
+            'nombre' => 'Tinte',
+            'precio' => 80,
+            'duracion_minutos' => 120,
+            'activo' => true,
+        ]);
+
+        $material = ServicioMaterial::create([
+            'servicio_id' => $otroServicio->id,
+            'producto_id' => $this->producto->id,
+            'cantidad' => 10,
+            'unidad' => 'ml',
+        ]);
+
+        // Try to delete material of otroServicio using $this->servicio in the URL
+        $response = $this->actingAs($this->admin)
+            ->deleteJson("/admin/servicios/{$this->servicio->id}/materiales/{$material->id}");
+
+        $response->assertStatus(404);
+
+        // Verify material still exists
+        $this->assertDatabaseHas('servicio_materiales', ['id' => $material->id]);
     }
 }
