@@ -50,7 +50,10 @@ class ServicioController extends Controller
      */
     public function edit(Servicio $servicio)
     {
-        return view('admin.servicios.edit', compact('servicio'));
+        $materiales = $servicio->materiales()->with('producto')->get();
+        $productos = \App\Models\Producto::orderBy('nombre')->get();
+
+        return view('admin.servicios.edit', compact('servicio', 'materiales', 'productos'));
     }
 
     /**
