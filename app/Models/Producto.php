@@ -30,4 +30,9 @@ class Producto extends Model
     {
         return $this->hasMany(Salida::class, 'codigo_barras', 'codigo_barras');
     }
+
+    public function servicioMateriales(): HasMany
+    {
+        return $this->hasMany(ServicioMaterial::class);
+    }
 }
