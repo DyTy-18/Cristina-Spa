@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PaqueteController;
 use App\Http\Controllers\Admin\ContratoPaqueteController;
 use App\Http\Controllers\Admin\RecomendacionController;
 use App\Http\Controllers\RecomendacionPublicController;
+use App\Http\Controllers\Admin\AlertaStockController;
 
 // Página pública
 Route::get('/', function () {
@@ -185,6 +186,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/leads', [AdminLeadController::class, 'index'])->name('leads.index');
         Route::put('/leads/{lead}', [AdminLeadController::class, 'update'])->name('leads.update');
     });
+
+    // Alertas de Stock
+    Route::patch('alertas-stock/{alerta}/leer', [AlertaStockController::class, 'leer'])
+         ->name('alertas-stock.leer');
 
     // Mis Citas (para estilistas)
     Route::get('/mis-citas', function () {
