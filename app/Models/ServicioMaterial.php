@@ -14,10 +14,12 @@ class ServicioMaterial extends Model
         'producto_id',
         'cantidad',
         'unidad',
+        'usos_por_unidad',
     ];
 
     protected $casts = [
-        'cantidad' => 'decimal:2',
+        'cantidad'        => 'decimal:2',
+        'usos_por_unidad' => 'integer',
     ];
 
     public function servicio(): BelongsTo
@@ -28,5 +30,10 @@ class ServicioMaterial extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class);
+    }
+
+    public function consumos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ConsumoMaterial::class);
     }
 }
