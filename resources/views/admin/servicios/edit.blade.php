@@ -45,20 +45,16 @@
                     <label class="form-label">Categoría</label>
                     <select class="form-control" name="categoria">
                         <option value="">Sin categoría</option>
-                        <option value="cortes" {{ old('categoria', $servicio->categoria) == 'cortes' ? 'selected' : '' }}>
-                            Cortes</option>
-                        <option value="coloracion"
-                            {{ old('categoria', $servicio->categoria) == 'coloracion' ? 'selected' : '' }}>Coloración
-                        </option>
-                        <option value="peinados"
-                            {{ old('categoria', $servicio->categoria) == 'peinados' ? 'selected' : '' }}>Peinados</option>
-                        <option value="tratamientos"
-                            {{ old('categoria', $servicio->categoria) == 'tratamientos' ? 'selected' : '' }}>Tratamientos
-                        </option>
-                        <option value="spa" {{ old('categoria', $servicio->categoria) == 'spa' ? 'selected' : '' }}>Spa
-                        </option>
-                        <option value="eventos"
-                            {{ old('categoria', $servicio->categoria) == 'eventos' ? 'selected' : '' }}>Eventos</option>
+                        <option value="peluqueria"   {{ old('categoria', $servicio->categoria) == 'peluqueria'   ? 'selected' : '' }}>Peluquería</option>
+                        <option value="peinados"     {{ old('categoria', $servicio->categoria) == 'peinados'     ? 'selected' : '' }}>Peinados</option>
+                        <option value="coloracion"   {{ old('categoria', $servicio->categoria) == 'coloracion'   ? 'selected' : '' }}>Coloración</option>
+                        <option value="alisado"      {{ old('categoria', $servicio->categoria) == 'alisado'      ? 'selected' : '' }}>Alisado u Ondulación</option>
+                        <option value="depilacion"   {{ old('categoria', $servicio->categoria) == 'depilacion'   ? 'selected' : '' }}>Depilado con Cera</option>
+                        <option value="maquillaje"   {{ old('categoria', $servicio->categoria) == 'maquillaje'   ? 'selected' : '' }}>Maquillaje, Cejas y Pestañas</option>
+                        <option value="pies_manos"   {{ old('categoria', $servicio->categoria) == 'pies_manos'   ? 'selected' : '' }}>Pies y Manos</option>
+                        <option value="extensiones"  {{ old('categoria', $servicio->categoria) == 'extensiones'  ? 'selected' : '' }}>Extensiones de Uñas</option>
+                        <option value="spa"          {{ old('categoria', $servicio->categoria) == 'spa'          ? 'selected' : '' }}>Spa</option>
+                        <option value="tratamientos" {{ old('categoria', $servicio->categoria) == 'tratamientos' ? 'selected' : '' }}>Tratamientos Capilares</option>
                     </select>
                 </div>
 
@@ -98,6 +94,7 @@
                         <th>Marca</th>
                         <th style="width:120px;">Cantidad</th>
                         <th style="width:100px;">Unidad</th>
+                        <th style="width:110px;">Usos/unidad</th>
                         <th style="width:140px;">Acciones</th>
                     </tr>
                 </thead>
@@ -144,6 +141,11 @@
                         </datalist>
                         <small id="add-error-unidad" style="color: var(--error-color); display:none;"></small>
                     </div>
+                    <div class="form-group" style="flex:1;">
+                        <label class="form-label">Usos/unidad</label>
+                        <input type="number" class="form-control" id="nuevo-usos" min="1" step="1" value="1" placeholder="ej: 10">
+                        <small id="add-error-usos" style="color: var(--error-color); display:none;"></small>
+                    </div>
                     <div class="form-group" style="flex:0; align-self: flex-end;">
                         <button type="button" class="btn btn-primary" id="btn-agregar-material">Agregar</button>
                     </div>
@@ -155,20 +157,23 @@
     </div>
 @endsection
 
+@php
+$materialesData = $materiales->map(fn($m) => [
+    'id'             => $m->id,
+    'producto'       => ['id' => $m->producto->id, 'nombre' => $m->producto->nombre, 'marca' => $m->producto->marca],
+    'cantidad'       => $m->cantidad,
+    'unidad'         => $m->unidad,
+    'usos_por_unidad'=> $m->usos_por_unidad,
+]);
+@endphp
 @push('scripts')
 <script>
 (function () {
-    const SERVICIO_ID = {{ $servicio->id }};
-    const BASE_URL    = '{{ route("admin.servicios.materiales.store", $servicio) }}';
-    const CSRF        = '{{ csrf_token() }}';
+    const BASE_URL = '{{ route("admin.servicios.materiales.store", $servicio) }}';
+    const CSRF     = '{{ csrf_token() }}';
 
     // State: list of materials loaded from PHP
-    let materiales = @json($materiales->map(fn($m) => [
-        'id'       => $m->id,
-        'producto' => ['id' => $m->producto->id, 'nombre' => $m->producto->nombre, 'marca' => $m->producto->marca],
-        'cantidad' => $m->cantidad,
-        'unidad'   => $m->unidad,
-    ]));
+    let materiales = @json($materialesData);
 
     // ── Render ────────────────────────────────────────────────
     function renderTable() {
@@ -203,6 +208,10 @@
                        value="${escHtml(m.unidad)}" list="unidades-list" style="width:80px;">
             </td>
             <td>
+                <input type="number" class="form-control form-control-sm edit-usos"
+                       value="${escHtml(m.usos_por_unidad)}" min="1" step="1" style="width:70px;">
+            </td>
+            <td>
                 <div class="actions">
                     <button type="button" class="btn btn-outline btn-sm btn-save">Guardar</button>
                     <button type="button" class="btn btn-danger btn-sm btn-delete">Eliminar</button>
@@ -225,15 +234,16 @@
 
     // ── Save inline edit ──────────────────────────────────────
     function saveRow(tr, m) {
-        const cantidad = tr.querySelector('.edit-cantidad').value;
-        const unidad   = tr.querySelector('.edit-unidad').value.trim();
-        const errEl    = tr.querySelector('.row-error');
+        const cantidad        = tr.querySelector('.edit-cantidad').value;
+        const unidad          = tr.querySelector('.edit-unidad').value.trim();
+        const usos_por_unidad = tr.querySelector('.edit-usos').value;
+        const errEl           = tr.querySelector('.row-error');
         errEl.style.display = 'none';
 
         fetch(`${BASE_URL}/${m.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ cantidad, unidad }),
+            body: JSON.stringify({ cantidad, unidad, usos_por_unidad }),
         })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
@@ -242,8 +252,9 @@
                 errEl.style.display = '';
                 return;
             }
-            m.cantidad = data.cantidad;
-            m.unidad   = data.unidad;
+            m.cantidad        = data.cantidad;
+            m.unidad          = data.unidad;
+            m.usos_por_unidad = data.usos_por_unidad;
         })
         .catch(() => {
             errEl.textContent = 'Error al guardar.';
@@ -280,26 +291,28 @@
 
     // ── Add new material ──────────────────────────────────────
     document.getElementById('btn-agregar-material').addEventListener('click', () => {
-        const productoId = document.getElementById('nuevo-producto-id').value;
-        const cantidad   = document.getElementById('nuevo-cantidad').value;
-        const unidad     = document.getElementById('nuevo-unidad').value.trim();
+        const productoId      = document.getElementById('nuevo-producto-id').value;
+        const cantidad        = document.getElementById('nuevo-cantidad').value;
+        const unidad          = document.getElementById('nuevo-unidad').value.trim();
+        const usos_por_unidad = document.getElementById('nuevo-usos').value;
 
         // Clear previous errors
-        ['add-error-producto', 'add-error-cantidad', 'add-error-unidad', 'add-general-error']
+        ['add-error-producto', 'add-error-cantidad', 'add-error-unidad', 'add-error-usos', 'add-general-error']
             .forEach(id => { const el = document.getElementById(id); el.style.display = 'none'; el.textContent = ''; });
 
         fetch(BASE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ producto_id: productoId, cantidad, unidad }),
+            body: JSON.stringify({ producto_id: productoId, cantidad, unidad, usos_por_unidad }),
         })
         .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
         .then(({ ok, data }) => {
             if (!ok) {
                 const errors = data.errors || {};
-                if (errors.producto_id) showError('add-error-producto', errors.producto_id[0]);
-                if (errors.cantidad)    showError('add-error-cantidad', errors.cantidad[0]);
-                if (errors.unidad)      showError('add-error-unidad', errors.unidad[0]);
+                if (errors.producto_id)     showError('add-error-producto', errors.producto_id[0]);
+                if (errors.cantidad)        showError('add-error-cantidad', errors.cantidad[0]);
+                if (errors.unidad)          showError('add-error-unidad', errors.unidad[0]);
+                if (errors.usos_por_unidad) showError('add-error-usos', errors.usos_por_unidad[0]);
                 if (!Object.keys(errors).length) showError('add-general-error', data.message || 'Error al agregar.');
                 return;
             }
@@ -308,6 +321,7 @@
             document.getElementById('nuevo-producto-id').value = '';
             document.getElementById('nuevo-cantidad').value = '';
             document.getElementById('nuevo-unidad').value = '';
+            document.getElementById('nuevo-usos').value = '1';
         })
         .catch(() => showError('add-general-error', 'Error de conexión.'));
     });
