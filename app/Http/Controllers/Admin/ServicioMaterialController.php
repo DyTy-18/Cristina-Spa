@@ -20,22 +20,24 @@ class ServicioMaterialController extends Controller
                 'exists:productos,id',
                 Rule::unique('servicio_materiales')->where('servicio_id', $servicio->id),
             ],
-            'cantidad' => 'required|numeric|min:0.01',
-            'unidad'   => 'required|string|max:30',
+            'cantidad'        => 'required|numeric|min:0.01',
+            'unidad'          => 'required|string|max:30',
+            'usos_por_unidad' => 'required|integer|min:1',
         ]);
 
         $material = $servicio->materiales()->create($validated);
         $material->load('producto');
 
         return response()->json([
-            'id'       => $material->id,
-            'producto' => [
+            'id'             => $material->id,
+            'producto'       => [
                 'id'     => $material->producto->id,
                 'nombre' => $material->producto->nombre,
                 'marca'  => $material->producto->marca,
             ],
-            'cantidad' => $material->cantidad,
-            'unidad'   => $material->unidad,
+            'cantidad'        => $material->cantidad,
+            'unidad'          => $material->unidad,
+            'usos_por_unidad' => $material->usos_por_unidad,
         ], 201);
     }
 
@@ -44,16 +46,18 @@ class ServicioMaterialController extends Controller
         abort_if($material->servicio_id !== $servicio->id, 404);
 
         $validated = $request->validate([
-            'cantidad' => 'required|numeric|min:0.01',
-            'unidad'   => 'required|string|max:30',
+            'cantidad'        => 'required|numeric|min:0.01',
+            'unidad'          => 'required|string|max:30',
+            'usos_por_unidad' => 'required|integer|min:1',
         ]);
 
         $material->update($validated);
 
         return response()->json([
-            'id'       => $material->id,
-            'cantidad' => $material->cantidad,
-            'unidad'   => $material->unidad,
+            'id'              => $material->id,
+            'cantidad'        => $material->cantidad,
+            'unidad'          => $material->unidad,
+            'usos_por_unidad' => $material->usos_por_unidad,
         ]);
     }
 
