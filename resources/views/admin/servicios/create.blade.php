@@ -22,7 +22,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Precio ($) *</label>
+                        <label class="form-label">Precio (Bs.) *</label>
                         <input type="number" class="form-control" name="precio" step="0.01" min="0"
                             value="{{ old('precio') }}" required>
                         @error('precio')

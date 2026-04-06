@@ -65,7 +65,7 @@ $catLabels = [
                                 <span class="badge badge-info">{{ ucfirst($servicio->categoria ?? 'General') }}</span>
                             </td>
                             <td>{{ $servicio->duracion_formateada }}</td>
-                            <td><strong>${{ number_format($servicio->precio, 2) }}</strong></td>
+                            <td><strong>Bs. {{ number_format($servicio->precio, 2) }}</strong></td>
                             <td>
                                 @if ($servicio->activo)
                                     <span class="badge badge-success">Activo</span>

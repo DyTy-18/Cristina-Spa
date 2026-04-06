@@ -275,28 +275,14 @@
                     </div>
                 </div>
 
-                <!-- 9. Catálogo Kérastase PDF -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>🛍️ Catálogo de Productos Kérastase</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="prod-brand-bar prod-brand-kerastase">
-                            <span class="prod-brand-name">Kérastase</span>
-                            <span class="prod-brand-sub">París · Línea Profesional</span>
-                        </div>
-                        <div class="catalogo-pdf-block">
-                            <p class="catalogo-pdf-desc">Descarga nuestro catálogo completo de productos Kérastase con precios actualizados a junio 2025.</p>
-                            <a href="{{ asset('pdf/CATALOGO KER JUNIO 2025.pdf') }}" target="_blank" download class="catalogo-pdf-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                Descargar Catálogo PDF
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
             </div><!-- /.accordion -->
+
+            <div class="catalogo-pdf-block">
+                <a href="{{ asset('pdf/CATALOGO KER JUNIO 2025.pdf') }}" target="_blank" download class="catalogo-pdf-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Descargar Catálogo Kérastase
+                </a>
+            </div>
         </div>
     </section>
 
