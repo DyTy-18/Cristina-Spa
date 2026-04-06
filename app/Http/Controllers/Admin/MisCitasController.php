@@ -20,20 +20,48 @@ class MisCitasController extends Controller
                 ->with('error', 'Tu usuario no tiene un empleado vinculado.');
         }
 
-        $citaServicios = CitaServicio::where('empleado_id', $empleado->id)
-            ->whereHas('cita', fn($q) => $q->whereDate('fecha', today()))
-            ->with('cita.cliente', 'servicio')
-            ->get();
+        // Citas de hoy
+        $citasHoy = $this->agruparCitas(
+            CitaServicio::where('empleado_id', $empleado->id)
+                ->whereHas('cita', fn($q) => $q->whereDate('fecha', today()))
+                ->with('cita.cliente', 'servicio')
+                ->get()
+        );
 
-        // Agrupar por cita_id
-        $citasHoy = $citaServicios->groupBy('cita_id')->map(function ($servicios) {
+        // Próximas citas (mañana en adelante, 14 días, solo confirmadas/pendientes)
+        $citasProximas = $this->agruparCitas(
+            CitaServicio::where('empleado_id', $empleado->id)
+                ->whereHas('cita', fn($q) => $q
+                    ->whereDate('fecha', '>', today())
+                    ->whereDate('fecha', '<=', today()->addDays(14))
+                    ->whereIn('estado', ['confirmada', 'pendiente']))
+                ->with('cita.cliente', 'servicio')
+                ->get()
+        )->sortBy(fn($item) => $item['cita']->fecha->format('Y-m-d') . $item['cita']->hora)->values();
+
+        // Stats rápidos
+        $stats = [
+            'hoy'       => $citasHoy->count(),
+            'proximas'  => $citasProximas->count(),
+            'mes'       => CitaServicio::where('empleado_id', $empleado->id)
+                ->whereHas('cita', fn($q) => $q
+                    ->whereMonth('fecha', now()->month)
+                    ->whereYear('fecha', now()->year)
+                    ->where('estado', 'completada'))
+                ->distinct('cita_id')->count('cita_id'),
+        ];
+
+        return view('admin.mis-citas.index', compact('citasHoy', 'citasProximas', 'stats', 'empleado'));
+    }
+
+    private function agruparCitas($citaServicios)
+    {
+        return $citaServicios->groupBy('cita_id')->map(function ($servicios) {
             return [
                 'cita'      => $servicios->first()->cita,
                 'servicios' => $servicios->pluck('servicio')->filter()->values(),
             ];
         })->values();
-
-        return view('admin.mis-citas.index', compact('citasHoy'));
     }
 
     public function consumo(Cita $cita)

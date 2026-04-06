@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\Empleado;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EmpleadoController extends Controller
 {
@@ -34,19 +36,45 @@ class EmpleadoController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'nombre'             => 'required|string|max:100',
             'apellido'           => 'nullable|string|max:100',
-            'telefono'           => 'nullable|string|max:20',
+            'telefono'           => 'nullable|string|max:20|unique:users,email',
             'cargo'              => 'required|string|max:50',
             'especialidad'       => 'nullable|string|max:150',
             'fecha_contratacion' => 'nullable|date',
             'activo'             => 'boolean',
+            'password'           => 'nullable|string|min:8',
+        ], [
+            'telefono.unique' => 'Ya existe un usuario con ese número de teléfono.',
         ]);
 
-        $data['activo'] = $request->boolean('activo', true);
+        $empleado = DB::transaction(function () use ($request) {
+            $empleado = Empleado::create([
+                'nombre'             => $request->nombre,
+                'apellido'           => $request->apellido,
+                'telefono'           => $request->telefono,
+                'cargo'              => $request->cargo,
+                'especialidad'       => $request->especialidad,
+                'fecha_contratacion' => $request->fecha_contratacion,
+                'activo'             => $request->boolean('activo', true),
+            ]);
 
-        $empleado = Empleado::create($data);
+            if ($request->filled('password') && $request->filled('telefono')) {
+                $user = User::create([
+                    'name'     => $empleado->nombre_completo,
+                    'email'    => $request->telefono, // teléfono como identificador de login
+                    'password' => $request->password,
+                ]);
+                $user->assignRole($this->rolParaCargo($request->cargo));
+                $empleado->update([
+                    'user_id'      => $user->id,
+                    'clave_acceso' => $request->password,
+                ]);
+            }
+
+            return $empleado;
+        });
 
         return redirect()->route('admin.empleados.show', $empleado)
             ->with('success', 'Empleado registrado exitosamente.');
@@ -54,6 +82,8 @@ class EmpleadoController extends Controller
 
     public function show(Empleado $empleado)
     {
+        $empleado->load('user');
+
         $citaIds = $empleado->citaServicios()->pluck('cita_id')->unique();
 
         $stats = [
@@ -76,26 +106,76 @@ class EmpleadoController extends Controller
 
     public function edit(Empleado $empleado)
     {
+        $empleado->load('user');
         return view('admin.empleados.edit', compact('empleado'));
     }
 
     public function update(Request $request, Empleado $empleado)
     {
-        $data = $request->validate([
+        $ignoreUserId = $empleado->user_id ?? 'NULL';
+
+        $request->validate([
             'nombre'             => 'required|string|max:100',
             'apellido'           => 'nullable|string|max:100',
-            'telefono'           => 'nullable|string|max:20',
+            'telefono'           => "nullable|string|max:20|unique:users,email,{$ignoreUserId}",
             'cargo'              => 'required|string|max:50',
             'especialidad'       => 'nullable|string|max:150',
             'fecha_contratacion' => 'nullable|date',
             'activo'             => 'boolean',
+            'password'           => 'nullable|string|min:8',
+        ], [
+            'telefono.unique' => 'Ya existe otro usuario con ese número de teléfono.',
         ]);
 
-        $data['activo'] = $request->boolean('activo');
+        DB::transaction(function () use ($request, $empleado) {
+            $empleado->update([
+                'nombre'             => $request->nombre,
+                'apellido'           => $request->apellido,
+                'telefono'           => $request->telefono,
+                'cargo'              => $request->cargo,
+                'especialidad'       => $request->especialidad,
+                'fecha_contratacion' => $request->fecha_contratacion,
+                'activo'             => $request->boolean('activo'),
+            ]);
 
-        $empleado->update($data);
+            $nombreCompleto = trim($request->nombre . ' ' . $request->apellido);
+
+            if ($empleado->user) {
+                // Sincronizar teléfono → email de login, actualizar nombre
+                $userUpdate = [
+                    'name'  => $nombreCompleto,
+                    'email' => $request->telefono ?? $empleado->user->email,
+                ];
+                if ($request->filled('password')) {
+                    $userUpdate['password'] = $request->password;
+                    $empleado->update(['clave_acceso' => $request->password]);
+                }
+                $empleado->user->update($userUpdate);
+            } elseif ($request->filled('password') && $request->filled('telefono')) {
+                // Crear usuario nuevo y vincularlo
+                $user = User::create([
+                    'name'     => $nombreCompleto,
+                    'email'    => $request->telefono,
+                    'password' => $request->password,
+                ]);
+                $user->assignRole($this->rolParaCargo($request->cargo));
+                $empleado->update([
+                    'user_id'      => $user->id,
+                    'clave_acceso' => $request->password,
+                ]);
+            }
+        });
 
         return redirect()->route('admin.empleados.show', $empleado)
             ->with('success', 'Empleado actualizado exitosamente.');
+    }
+
+    private function rolParaCargo(string $cargo): string
+    {
+        return match($cargo) {
+            'recepcionista' => 'secretario',
+            'cajera'        => 'cajero',
+            default         => 'estilista',
+        };
     }
 }

@@ -21,18 +21,22 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
             'password' => ['required'],
         ], [
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'Ingresa un email válido.',
             'password.required' => 'La contraseña es obligatoria.',
         ]);
 
+        if (!$request->filled('email') && !$request->filled('telefono')) {
+            return back()->withErrors(['credentials' => 'Ingresa tu correo o número de teléfono.'])->withInput();
+        }
+
         $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
+        // El teléfono se almacena como email en users — funciona el mismo Auth::attempt
+        $loginValue = $request->filled('telefono') ? $request->telefono : $request->email;
+
+        if (Auth::attempt(['email' => $loginValue, 'password' => $request->password], $remember)) {
             $request->session()->regenerate();
 
             // Redirigir según el rol del usuario
@@ -51,9 +55,10 @@ class AuthController extends Controller
             }
         }
 
+        $errorField = $request->filled('telefono') ? 'telefono' : 'email';
         return back()->withErrors([
-            'email' => 'Las credenciales no coinciden con nuestros registros.',
-        ])->onlyInput('email');
+            $errorField => 'Las credenciales no coinciden con nuestros registros.',
+        ])->withInput();
     }
 
     /**

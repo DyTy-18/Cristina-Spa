@@ -195,6 +195,21 @@
                             <span style="color:var(--error-color);font-size:0.78rem;display:block;margin-bottom:0.5rem;">{{ $message }}</span>
                         @enderror
 
+                        {{-- Filtro por categoría --}}
+                        <div class="pkg-cat-strip" id="srvCatStrip" style="margin-bottom:0.75rem;">
+                            <button type="button" class="pkg-cat-btn active" data-cat="" onclick="filterSrvCat(this, '')">Todas</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="peluqueria" onclick="filterSrvCat(this, 'peluqueria')">Peluquería</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="peinados" onclick="filterSrvCat(this, 'peinados')">Peinados</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="coloracion" onclick="filterSrvCat(this, 'coloracion')">Coloración</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="alisado" onclick="filterSrvCat(this, 'alisado')">Alisado</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="depilacion" onclick="filterSrvCat(this, 'depilacion')">Depilación</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="maquillaje" onclick="filterSrvCat(this, 'maquillaje')">Maquillaje</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="pies_manos" onclick="filterSrvCat(this, 'pies_manos')">Pies y Manos</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="extensiones" onclick="filterSrvCat(this, 'extensiones')">Extensiones</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="spa" onclick="filterSrvCat(this, 'spa')">Spa</button>
+                            <button type="button" class="pkg-cat-btn" data-cat="tratamientos" onclick="filterSrvCat(this, 'tratamientos')">Tratamientos</button>
+                        </div>
+
                         <div style="display:grid;grid-template-columns:1fr 100px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Servicio</span>
                             <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
@@ -419,9 +434,24 @@
     const serviciosSeleccionados = new Map();
 
     // ===== Sección Servicios =====
+    let srvCatFiltro = '';
+
+    function filterSrvCat(btn, cat) {
+        srvCatFiltro = cat;
+        document.querySelectorAll('#srvCatStrip .pkg-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#serviciosContainer .select-servicio').forEach(sel => {
+            const currentVal = sel.value;
+            sel.innerHTML = buildServicioOptions(currentVal);
+        });
+    }
+
     function buildServicioOptions(selected = '') {
+        const lista = srvCatFiltro
+            ? SERVICIOS.filter(s => s.categoria === srvCatFiltro)
+            : SERVICIOS;
         return '<option value="">— Seleccionar —</option>' +
-            SERVICIOS.map(s => `<option value="${s.id}" data-precio="${s.precio}" data-duracion="${s.duracion}"${s.id == selected ? ' selected' : ''}>${s.nombre}</option>`).join('');
+            lista.map(s => `<option value="${s.id}" data-precio="${s.precio}" data-duracion="${s.duracion}"${s.id == selected ? ' selected' : ''}>${s.nombre}</option>`).join('');
     }
 
     function onServicioChange(sel) {

@@ -1065,6 +1065,20 @@
 
                         {{-- Panel: Servicios --}}
                         <div id="mPanelServicios">
+                            {{-- Filtro por categoría --}}
+                            <div class="modal-pkg-cat-strip" id="scCatStrip" style="margin-bottom:0.6rem;">
+                                <button type="button" class="modal-pkg-cat-btn active" data-cat="" onclick="filterScCat(this, '')">Todas</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="peluqueria" onclick="filterScCat(this, 'peluqueria')">Peluquería</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="peinados" onclick="filterScCat(this, 'peinados')">Peinados</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="coloracion" onclick="filterScCat(this, 'coloracion')">Coloración</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="alisado" onclick="filterScCat(this, 'alisado')">Alisado</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="depilacion" onclick="filterScCat(this, 'depilacion')">Depilación</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="maquillaje" onclick="filterScCat(this, 'maquillaje')">Maquillaje</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="pies_manos" onclick="filterScCat(this, 'pies_manos')">Pies y Manos</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="extensiones" onclick="filterScCat(this, 'extensiones')">Extensiones</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="spa" onclick="filterScCat(this, 'spa')">Spa</button>
+                                <button type="button" class="modal-pkg-cat-btn" data-cat="tratamientos" onclick="filterScCat(this, 'tratamientos')">Tratamientos</button>
+                            </div>
                             <div id="servicioCardsGrid" class="servicio-cards-grid"></div>
                         <div id="scErrorMsg" style="display:none;color:var(--error-color);font-size:0.78rem;margin-top:0.4rem;">
                             Selecciona al menos un servicio para continuar.
@@ -1382,12 +1396,21 @@
     // ── State ─────────────────────────────────────────────────────────────────
     // Map<servicio_id (string) → { nombre, precio (string) }>
     const scSelected = new Map();
+    let scCatFiltro = '';
+
+    function filterScCat(btn, cat) {
+        scCatFiltro = cat;
+        document.querySelectorAll('#scCatStrip .modal-pkg-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderServicioCards();
+    }
 
     // ── Render cards ──────────────────────────────────────────────────────────
     function renderServicioCards() {
         const grid = document.getElementById('servicioCardsGrid');
         grid.innerHTML = '';
-        MODAL_SERVICIOS.forEach(s => {
+        const lista = scCatFiltro ? MODAL_SERVICIOS.filter(s => s.categoria === scCatFiltro) : MODAL_SERVICIOS;
+        lista.forEach(s => {
             const card = document.createElement('div');
             card.className = 'servicio-card' + (scSelected.has(String(s.id)) ? ' sel' : '');
             card.dataset.id       = s.id;

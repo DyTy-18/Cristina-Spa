@@ -3,11 +3,40 @@
 @section('title', 'Servicios')
 @section('page-title', 'Gestión de Servicios')
 
+@php
+$catLabels = [
+    'peluqueria'   => 'Peluquería',
+    'peinados'     => 'Peinados',
+    'coloracion'   => 'Coloración',
+    'alisado'      => 'Alisado u Ondulación',
+    'depilacion'   => 'Depilado con Cera',
+    'maquillaje'   => 'Maquillaje, Cejas y Pestañas',
+    'pies_manos'   => 'Pies y Manos',
+    'extensiones'  => 'Extensiones de Uñas',
+    'spa'          => 'Spa',
+    'tratamientos' => 'Tratamientos Capilares',
+];
+@endphp
+
 @section('content')
     <div class="table-container">
         <div class="table-header">
             <h3 class="table-title">Catálogo de Servicios</h3>
             <a href="{{ route('admin.servicios.create') }}" class="btn btn-primary">+ Nuevo Servicio</a>
+        </div>
+
+        {{-- Filtro por categoría --}}
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; padding: 0.75rem 0 1rem;">
+            <a href="{{ route('admin.servicios.index') }}"
+               class="btn btn-sm {{ !$categoriaFiltro ? 'btn-primary' : 'btn-outline' }}">
+                Todas
+            </a>
+            @foreach($categorias as $cat)
+                <a href="{{ route('admin.servicios.index', ['categoria' => $cat]) }}"
+                   class="btn btn-sm {{ $categoriaFiltro === $cat ? 'btn-primary' : 'btn-outline' }}">
+                    {{ $catLabels[$cat] ?? ucfirst($cat) }}
+                </a>
+            @endforeach
         </div>
 
         @if ($servicios->count() > 0)

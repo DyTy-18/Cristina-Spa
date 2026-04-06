@@ -194,6 +194,40 @@
             color: var(--secondary-color);
         }
 
+        .login-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            margin-bottom: 1.8rem;
+            gap: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 0.6rem 0.5rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: -1px;
+            font-weight: 300;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--accent-color);
+            font-weight: 400;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--secondary-color);
+        }
+
         .login-button {
             width: 100%;
             padding: 1rem 2rem;
@@ -308,27 +342,58 @@
 
             <h2 class="login-title">Iniciar Sesión</h2>
 
-            @if ($errors->any())
-                <div class="error-message">
-                    @foreach ($errors->all() as $error)
-                        {{ $error }}
-                    @endforeach
-                </div>
-            @endif
-
             <form method="POST" action="{{ route('login') }}">
                 @csrf
 
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}"
-                        placeholder="tu@email.com" required autofocus>
+                {{-- Tabs de tipo de acceso --}}
+                <div class="login-tabs">
+                    <button type="button" class="tab-btn active" id="tab-correo"
+                            onclick="setTab('correo')">Correo</button>
+                    <button type="button" class="tab-btn" id="tab-telefono"
+                            onclick="setTab('telefono')">Teléfono</button>
+                </div>
+
+                {{-- Sección correo (admin / secretario / cajero) --}}
+                <div id="section-correo">
+                    <div class="form-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="email" id="email" name="email"
+                               value="{{ old('email') }}"
+                               placeholder="tu@correo.com"
+                               autocomplete="email">
+                        @error('email')
+                            <div style="color:var(--error-color);font-size:0.82rem;margin-top:0.4rem;">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Sección teléfono (empleados / estilistas) --}}
+                <div id="section-telefono" style="display:none;">
+                    <div class="form-group">
+                        <label for="telefono">Número de teléfono</label>
+                        <input type="text" id="telefono" name="telefono"
+                               value="{{ old('telefono') }}"
+                               placeholder="Ej: 70000000"
+                               autocomplete="tel" inputmode="numeric">
+                        @error('telefono')
+                            <div style="color:var(--error-color);font-size:0.82rem;margin-top:0.4rem;">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Contraseña</label>
                     <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    @error('password')
+                        <div style="color:var(--error-color);font-size:0.82rem;margin-top:0.4rem;">{{ $message }}</div>
+                    @enderror
                 </div>
+
+                @error('credentials')
+                    <div style="background:rgba(201,48,44,0.08);border:1px solid rgba(201,48,44,0.25);color:var(--error-color);padding:0.7rem 1rem;margin-bottom:1rem;font-size:0.83rem;">
+                        {{ $message }}
+                    </div>
+                @enderror
 
                 <div class="form-options">
                     <label class="remember-me">
@@ -337,9 +402,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="login-button">
-                    Entrar
-                </button>
+                <button type="submit" class="login-button">Entrar</button>
             </form>
 
             <a href="{{ url('/') }}" class="back-home">
@@ -348,6 +411,31 @@
         </div>
         <div class="decorative-line"></div>
     </div>
+
+    <script>
+        function setTab(tab) {
+            const isTel = tab === 'telefono';
+            document.getElementById('section-correo').style.display   = isTel ? 'none' : 'block';
+            document.getElementById('section-telefono').style.display = isTel ? 'block' : 'none';
+            document.getElementById('tab-correo').classList.toggle('active', !isTel);
+            document.getElementById('tab-telefono').classList.toggle('active', isTel);
+            // Limpiar el campo inactivo para no enviarlo
+            if (isTel) {
+                document.getElementById('email').value = '';
+                document.getElementById('telefono').focus();
+            } else {
+                document.getElementById('telefono').value = '';
+                document.getElementById('email').focus();
+            }
+        }
+
+        // Si hubo error de validación, restaurar el tab correcto
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(old('telefono'))
+                setTab('telefono');
+            @endif
+        });
+    </script>
 </body>
 
 </html>

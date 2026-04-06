@@ -4,7 +4,7 @@
 
 @section('content')
     <!-- Campaign Popup Modal -->
-    <div id="campaign-popup" class="campaign-popup">
+    {{-- <div id="campaign-popup" class="campaign-popup">
         <div class="campaign-overlay"></div>
         <div class="campaign-modal">
             <button class="campaign-close" aria-label="Cerrar">×</button>
@@ -13,7 +13,7 @@
                     alt="Campaña Nuevo Look Para Cada Momento - Cristina Spa" class="campaign-image">
             </a>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Hero Section Premium -->
     <section id="inicio" class="hero">
@@ -35,47 +35,6 @@
         </div>
         <div class="scroll-indicator">
             <span></span>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section class="about">
-        <div class="container">
-            <div class="about-content">
-                <div class="about-text-content">
-                    <span class="section-label">Nuestra Historia</span>
-                    <h2 class="section-title">Excelencia en Belleza & Bienestar</h2>
-                    <p class="about-text">
-                        Con casi dos décadas de experiencia, Cristina Spa se ha consolidado
-                        como referente en la industria de la belleza en Bolivia. Nuestro
-                        equipo de profesionales altamente capacitados combina técnica,
-                        creatividad y pasión para ofrecer experiencias únicas.
-                    </p>
-                    <p class="about-text">
-                        Trabajamos con productos de gama alta como L'Oréal e INOA,
-                        garantizando resultados excepcionales que superan las expectativas
-                        de nuestros clientes más exigentes.
-                    </p>
-                    <div class="about-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">18+</span>
-                            <span class="stat-label">Años de Experiencia</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">3</span>
-                            <span class="stat-label">Sucursales</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">50+</span>
-                            <span class="stat-label">Profesionales</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                        alt="Cristina Spa Interior">
-                </div>
-            </div>
         </div>
     </section>
 
@@ -316,10 +275,10 @@
                     </div>
                 </div>
 
-                <!-- 9. Productos Kérastase -->
+                <!-- 9. Catálogo Kérastase PDF -->
                 <div class="accordion-item">
                     <button class="accordion-header">
-                        <span>🛍️ Productos Kérastase</span>
+                        <span>🛍️ Catálogo de Productos Kérastase</span>
                         <span class="accordion-icon">+</span>
                     </button>
                     <div class="accordion-content">
@@ -327,76 +286,12 @@
                             <span class="prod-brand-name">Kérastase</span>
                             <span class="prod-brand-sub">París · Línea Profesional</span>
                         </div>
-                        <div class="table-responsive">
-                            <table class="price-table prod-table">
-                                <thead>
-                                    <tr>
-                                        <th>Producto</th>
-                                        <th>Precio</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="prod-cat-row"><td colspan="2">Shampoos — Bains</td></tr>
-                                    <tr><td>Bain</td><td>420 Bs.</td></tr>
-                                    <tr><td>Bain Première</td><td>455 Bs.</td></tr>
-                                    <tr><td>Bain Chronologiste</td><td>495 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Acondicionadores — Fondants</td></tr>
-                                    <tr><td>Fondant</td><td>510 Bs.</td></tr>
-                                    <tr><td>Fondant Première</td><td>560 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Mascarillas</td></tr>
-                                    <tr><td>Máscara</td><td>720 Bs.</td></tr>
-                                    <tr><td>Máscara Première</td><td>790 Bs.</td></tr>
-                                    <tr><td>Máscara Chronologiste</td><td>820 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Tratamientos &amp; Finalizadores</td></tr>
-                                    <tr><td>Elixir Ultimate</td><td>755 Bs.</td></tr>
-                                    <tr><td>Texturizantes</td><td>710 Bs.</td></tr>
-                                    <tr><td>Light Serum</td><td>1.030 Bs.</td></tr>
-                                    <tr><td>Cure</td><td>1.260 Bs.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 10. Productos L'Oréal -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>🛍️ Productos L'Oréal — Serie Expert</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="prod-brand-bar prod-brand-loreal">
-                            <span class="prod-brand-name">L'Oréal Professionnel</span>
-                            <span class="prod-brand-sub">París · Serie Expert</span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="price-table prod-table">
-                                <thead>
-                                    <tr>
-                                        <th>Producto</th>
-                                        <th>Precio</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="prod-cat-row"><td colspan="2">Shampoos</td></tr>
-                                    <tr><td>Shampoo — 300 ml</td><td>315 Bs.</td></tr>
-                                    <tr><td>Shampoo Absolut Repair Molecular — 300 ml</td><td>340 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Acondicionadores</td></tr>
-                                    <tr><td>Acondicionador — 200 ml</td><td>345 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Mascarillas</td></tr>
-                                    <tr><td>Máscara — 250 ml</td><td>389 Bs.</td></tr>
-                                    <tr><td>Máscara Absolut Repair Molecular — 250 ml</td><td>430 Bs.</td></tr>
-
-                                    <tr class="prod-cat-row"><td colspan="2">Tratamientos &amp; Finalizadores</td></tr>
-                                    <tr><td>Spray 10 en 1 — 190 ml</td><td>350 Bs.</td></tr>
-                                    <tr><td>Aceite 10 en 1 — 190 ml</td><td>360 Bs.</td></tr>
-                                </tbody>
-                            </table>
+                        <div class="catalogo-pdf-block">
+                            <p class="catalogo-pdf-desc">Descarga nuestro catálogo completo de productos Kérastase con precios actualizados a junio 2025.</p>
+                            <a href="{{ asset('pdf/CATALOGO KER JUNIO 2025.pdf') }}" target="_blank" download class="catalogo-pdf-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Descargar Catálogo PDF
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -418,30 +313,29 @@
             <div class="pkg-tabs">
                 <button class="pkg-tab active" data-panel="pkg-novias">Novias</button>
                 <button class="pkg-tab" data-panel="pkg-quinceaneras">Quinceañeras</button>
-                <button class="pkg-tab" data-panel="pkg-eventos">Eventos</button>
+                <button class="pkg-tab" data-panel="pkg-otros">Otros</button>
             </div>
 
             <!-- ── NOVIAS ── -->
             <div class="pkg-panel active" id="pkg-novias">
                 <div class="packages-grid">
 
-                    <!-- Esmeralda -->
+                    <!-- Express -->
                     <div class="package-card pkg-esmeralda">
                         <div class="pkg-gem-badge" style="--gem: #50c878;">
                             <span class="pkg-gem-icon">◆</span>
-                            <span class="pkg-gem-label">Esmeralda</span>
+                            <span class="pkg-gem-label">Express</span>
                         </div>
                         <p class="pkg-tier-desc">Tu transformación esencial para el gran día</p>
-                        <div class="pkg-price">Desde <strong>450 Bs.</strong></div>
+                        <div class="pkg-price"><strong>Bs. 500.-</strong></div>
                         <div class="pkg-card-img">
-                            <img src="{{ asset('images/galeria/novia/novia_1.jpg') }}" alt="Paquete Novias Esmeralda">
+                            <img src="{{ asset('images/galeria/novia/novia_1.jpg') }}" alt="Paquete Novias Express">
                         </div>
                         <ul class="package-services">
-                            <li>Lavado y peinado profesional</li>
-                            <li>Maquillaje de novia básico</li>
-                            <li>Manicura simple</li>
-                            <li>Perfilado de cejas</li>
-                            <li>Tratamiento capilar express</li>
+                            <li>Peinado de Boda + Prueba</li>
+                            <li>Hidratación Capilar</li>
+                            <li>Depilación</li>
+                            <li>Pintado de uñas</li>
                         </ul>
                         <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
@@ -453,17 +347,16 @@
                             <span class="pkg-gem-label">Rubí</span>
                         </div>
                         <p class="pkg-tier-desc">La elección más elegida por nuestras novias</p>
-                        <div class="pkg-price">Desde <strong>850 Bs.</strong></div>
+                        <div class="pkg-price"><strong>Bs. 1.150.-</strong></div>
                         <div class="pkg-card-img">
                             <img src="{{ asset('images/galeria/novia/novia_2.jpg') }}" alt="Paquete Novias Rubí">
                         </div>
                         <ul class="package-services">
-                            <li>Todo lo del Esmeralda</li>
-                            <li>Maquillaje de gala con pestañas</li>
-                            <li>Manicura en gel + pedicura</li>
-                            <li>Tratamiento Kérastase</li>
-                            <li>Rizado de pestañas</li>
-                            <li>Sesión de prueba de look</li>
+                            <li>Peinado de Boda + Prueba</li>
+                            <li>Maquillaje de Boda + Prueba</li>
+                            <li>Pestañas de tira</li>
+                            <li>Depilación</li>
+                            <li>Manicure y Pedicura</li>
                         </ul>
                         <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
@@ -475,20 +368,21 @@
                             <span class="pkg-gem-label">Diamante</span>
                         </div>
                         <p class="pkg-tier-desc">La experiencia definitiva, sin límites</p>
-                        <div class="pkg-price"><strong>A consultar</strong></div>
+                        <div class="pkg-price"><strong>Bs. 1.700.-</strong></div>
                         <div class="pkg-card-img">
                             <img src="{{ asset('images/galeria/novia/novia_3.jpg') }}" alt="Paquete Novias Diamante">
                         </div>
                         <ul class="package-services">
-                            <li>Todo lo del Rubí</li>
-                            <li>Colorimetría o balayage premium</li>
-                            <li>Tratamiento de lujo Kérastase</li>
-                            <li>Spa facial completo</li>
-                            <li>Coordinación de imagen dedicada</li>
-                            <li>Servicio a domicilio disponible</li>
-                            <li>Productos Kérastase incluidos</li>
+                            <li>Peinado de Boda + Prueba</li>
+                            <li>Maquillaje de Boda + Prueba</li>
+                            <li>Pestañas de grupo</li>
+                            <li>Depilación</li>
+                            <li>Hidratación Capilar</li>
+                            <li>Limpieza Facial</li>
+                            <li>Spa de manos</li>
+                            <li>Spa de Pies</li>
                         </ul>
-                        <a href="#contacto" class="package-cta">Consultar</a>
+                        <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
 
                 </div>
@@ -501,19 +395,22 @@
                     <div class="package-card pkg-esmeralda">
                         <div class="pkg-gem-badge" style="--gem: #50c878;">
                             <span class="pkg-gem-icon">◆</span>
-                            <span class="pkg-gem-label">Esmeralda</span>
+                            <span class="pkg-gem-label">Express</span>
                         </div>
                         <p class="pkg-tier-desc">El inicio de tu noche de gala perfecta</p>
-                        <div class="pkg-price">Desde <strong>380 Bs.</strong></div>
+                        <div class="pkg-price"><strong>Bs. 693</strong></div>
                         <div class="pkg-card-img">
-                            <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_22.jpg') }}" alt="Paquete Quinceañeras Esmeralda">
+                            <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_22.jpg') }}" alt="Paquete Quinceañeras Express">
                         </div>
                         <ul class="package-services">
-                            <li>Lavado y peinado de gala</li>
-                            <li>Maquillaje básico de fiesta</li>
-                            <li>Manicura temática</li>
-                            <li>Perfilado de cejas</li>
-                            <li>Desmaquillado incluido</li>
+                            <li>Peinado</li>
+                            <li>Spa capilar</li>
+                            <li>Maquillaje</li>
+                            <li>Pestañas</li>
+                            <li>Depilación de axilas</li>
+                            <li>Depilación facial</li>
+                            <li>Manicura</li>
+                            <li>Pintado de uñas</li>
                         </ul>
                         <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
@@ -524,17 +421,21 @@
                             <span class="pkg-gem-label">Rubí</span>
                         </div>
                         <p class="pkg-tier-desc">La elección de las princesas de La Paz</p>
-                        <div class="pkg-price">Desde <strong>720 Bs.</strong></div>
+                        <div class="pkg-price"><strong>Bs. 1.035</strong></div>
                         <div class="pkg-card-img">
                             <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_32.jpg') }}" alt="Paquete Quinceañeras Rubí">
                         </div>
                         <ul class="package-services">
-                            <li>Todo lo del Esmeralda</li>
-                            <li>Maquillaje artístico con pestañas</li>
-                            <li>Manicura en gel + pedicura</li>
-                            <li>Tratamiento capilar L'Oréal</li>
-                            <li>Rizado o laminado de pestañas</li>
-                            <li>Prueba de look previa</li>
+                            <li>Peinado + Prueba</li>
+                            <li>Spa capilar</li>
+                            <li>Maquillaje</li>
+                            <li>Pestañas</li>
+                            <li>Depilación de axilas</li>
+                            <li>Depilación facial</li>
+                            <li>Hidratación facial</li>
+                            <li>Manicura</li>
+                            <li>Pedicura</li>
+                            <li>Pintado de uñas</li>
                         </ul>
                         <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
@@ -545,90 +446,51 @@
                             <span class="pkg-gem-label">Diamante</span>
                         </div>
                         <p class="pkg-tier-desc">Una noche que recordarás toda la vida</p>
-                        <div class="pkg-price"><strong>A consultar</strong></div>
+                        <div class="pkg-price"><strong>Bs. 1.530</strong></div>
                         <div class="pkg-card-img">
                             <img src="{{ asset('images/galeria/quinceañera/CRISTINA SPA FOTOS_33.jpg') }}" alt="Paquete Quinceañeras Diamante">
                         </div>
                         <ul class="package-services">
-                            <li>Todo lo del Rubí</li>
-                            <li>Colorimetría o mechas creativas</li>
-                            <li>Tratamiento Kérastase premium</li>
-                            <li>Spa facial y limpieza express</li>
-                            <li>Manicura soft gel con diseño</li>
-                            <li>Coordinación de imagen completa</li>
-                            <li>Servicio a domicilio disponible</li>
+                            <li>Peinado + Prueba</li>
+                            <li>Spa capilar</li>
+                            <li>Maquillaje + Prueba</li>
+                            <li>Pestañas</li>
+                            <li>Depilación de axilas</li>
+                            <li>Depilación facial</li>
+                            <li>Depilación de piernas</li>
+                            <li>Depilación de brazos</li>
+                            <li>Limpieza facial</li>
+                            <li>Manicura</li>
+                            <li>Tips de uñas</li>
+                            <li>Pedicura</li>
+                            <li>Pintado de uñas</li>
                         </ul>
-                        <a href="#contacto" class="package-cta">Consultar</a>
+                        <a href="#contacto" class="package-cta">Reservar</a>
                     </div>
 
                 </div>
             </div>
 
-            <!-- ── EVENTOS ── -->
-            <div class="pkg-panel" id="pkg-eventos">
-                <div class="packages-grid">
+            <!-- ── OTROS ── -->
+            <div class="pkg-panel" id="pkg-otros">
+                <div class="packages-grid" style="justify-content: center;">
 
                     <div class="package-card pkg-esmeralda">
-                        <div class="pkg-gem-badge" style="--gem: #50c878;">
+                        <div class="pkg-gem-badge" style="--gem: #f4a261;">
                             <span class="pkg-gem-icon">◆</span>
-                            <span class="pkg-gem-label">Esmeralda</span>
+                            <span class="pkg-gem-label">Relax Love</span>
                         </div>
-                        <p class="pkg-tier-desc">Imagen profesional para tu evento</p>
-                        <div class="pkg-price">Desde <strong>300 Bs.</strong></div>
+                        <p class="pkg-tier-desc">Un momento de bienestar para ti</p>
+                        <div class="pkg-price"><strong>Bs. 280</strong></div>
                         <div class="pkg-card-img">
-                            <img src="{{ asset('images/galeria/colorimetria/CRISTINA SPA FOTOS_23.jpg') }}" alt="Paquete Eventos Esmeralda">
+                            <img src="{{ asset('images/galeria/spa/spa_1.jpg') }}" alt="Paquete Relax Love">
                         </div>
                         <ul class="package-services">
-                            <li>Peinado de fiesta</li>
-                            <li>Maquillaje básico</li>
-                            <li>Manicura simple</li>
-                            <li>Asesoría de imagen express</li>
-                            <li>Atención en sucursal</li>
+                            <li>Lavado</li>
+                            <li>Hidratación</li>
+                            <li>Cepillado</li>
                         </ul>
                         <a href="#contacto" class="package-cta">Reservar</a>
-                    </div>
-
-                    <div class="package-card featured pkg-rubi">
-                        <div class="pkg-gem-badge" style="--gem: #c9a96e;">
-                            <span class="pkg-gem-icon">◆</span>
-                            <span class="pkg-gem-label">Rubí</span>
-                        </div>
-                        <p class="pkg-tier-desc">Para grupos y desfiles corporativos</p>
-                        <div class="pkg-price">Desde <strong>580 Bs.</strong></div>
-                        <div class="pkg-card-img">
-                            <img src="{{ asset('images/galeria/colorimetria/CRISTINA SPA FOTOS_25.jpg') }}" alt="Paquete Eventos Rubí">
-                        </div>
-                        <ul class="package-services">
-                            <li>Todo lo del Esmeralda</li>
-                            <li>Maquillaje artístico de evento</li>
-                            <li>Manicura + pedicura coordinada</li>
-                            <li>Equipo de 2 estilistas</li>
-                            <li>Coordinación de looks grupal</li>
-                            <li>Atención express sin cita previa</li>
-                        </ul>
-                        <a href="#contacto" class="package-cta">Reservar</a>
-                    </div>
-
-                    <div class="package-card pkg-diamante">
-                        <div class="pkg-gem-badge" style="--gem: #a8d8ea;">
-                            <span class="pkg-gem-icon">◆</span>
-                            <span class="pkg-gem-label">Diamante</span>
-                        </div>
-                        <p class="pkg-tier-desc">Experiencia VIP para desfiles y empresas</p>
-                        <div class="pkg-price"><strong>A consultar</strong></div>
-                        <div class="pkg-card-img">
-                            <img src="{{ asset('images/galeria/spa/spa_1.jpg') }}" alt="Paquete Eventos Diamante">
-                        </div>
-                        <ul class="package-services">
-                            <li>Todo lo del Rubí</li>
-                            <li>Equipo completo de estilistas</li>
-                            <li>Maquillaje artístico especializado</li>
-                            <li>Asesoría de imagen integral</li>
-                            <li>Servicio a domicilio o locación</li>
-                            <li>Coordinación logística incluida</li>
-                            <li>Productos de marca garantizados</li>
-                        </ul>
-                        <a href="#contacto" class="package-cta">Consultar</a>
                     </div>
 
                 </div>
@@ -817,10 +679,12 @@
 
     @php
     $categorias = [
+        // 1. Hair Studio — Color y Transformación
         [
             'id'      => 'colorimetria',
-            'nombre'  => 'Colorimetría',
-            'overlay' => 'Balayage Premium',
+            'nombre'  => 'Hair Studio',
+            'overlay' => 'Color & Transformación',
+            'tags'    => ['Balayage', 'Tiger Eye', 'Baby Lights', 'Alisado', 'Permanente'],
             'fotos'   => [
                 'CRISTINA SPA FOTOS_23.jpg',
                 'CRISTINA SPA FOTOS_24.jpg',
@@ -830,22 +694,12 @@
                 'CRISTINA SPA FOTOS_28.jpg',
             ],
         ],
-        [
-            'id'      => 'novia',
-            'nombre'  => 'Novia',
-            'overlay' => 'Peinado Nupcial',
-            'fotos'   => ['novia_1.jpg', 'novia_2.jpg', 'novia_3.jpg'],
-        ],
-        [
-            'id'      => 'spa',
-            'nombre'  => 'Spa',
-            'overlay' => 'Masaje Relajante',
-            'fotos'   => ['spa_1.jpg', 'spa_2.jpg', 'spa_3.jpg'],
-        ],
+        // 2. Estética Capilar — Corte y Tratamientos
         [
             'id'      => 'corte',
-            'nombre'  => 'Corte',
-            'overlay' => 'Corte Moderno',
+            'nombre'  => 'Estética Capilar',
+            'overlay' => 'Corte & Tratamientos',
+            'tags'    => ['Corte', 'Kérastase', 'Tratamiento 24K', 'Hidratación', 'Spa Capilar'],
             'fotos'   => [
                 'CRISTINA SPA FOTOS_2.jpg',
                 'CRISTINA SPA FOTOS_29.jpg',
@@ -855,16 +709,24 @@
                 'CRISTINA SPA FOTOS_4.jpg',
             ],
         ],
+        // 3. Nail Bar — Manos y Pies
         [
             'id'      => 'manicura',
-            'nombre'  => 'Manicura',
-            'overlay' => 'Nail Art Premium',
-            'fotos'   => ['manicura_1.jpg', 'manicura_2.jpg', 'manicura_3.jpg'],
+            'nombre'  => 'Nail Bar',
+            'overlay' => 'Manos & Pies',
+            'tags'    => ['Manicura', 'Pedicura', 'Soft Gel', 'Acrílico', 'Dipping', 'Tips'],
+            'fotos'   => [
+                'manicura_1.jpg',
+                'manicura_2.jpg',
+                'manicura_3.jpg',
+            ],
         ],
+        // 4. Mirada y Maquillaje
         [
             'id'      => 'quinceañera',
-            'nombre'  => 'Quinceañera',
-            'overlay' => 'Look de Gala',
+            'nombre'  => 'Mirada & Maquillaje',
+            'overlay' => 'Maquillaje de Fiesta & Eventos',
+            'tags'    => ['Maquillaje de Fiesta', 'Pestañas 3D / 6D', 'Laminado de Cejas', 'Rizado'],
             'fotos'   => [
                 'CRISTINA SPA FOTOS_22.jpg',
                 'CRISTINA SPA FOTOS_32.jpg',
@@ -878,6 +740,26 @@
                 'CRISTINA SPA FOTOS_40.jpg',
             ],
         ],
+        // 5. Skin Care & Wellness — Spa
+        [
+            'id'      => 'spa',
+            'nombre'  => 'Skin Care & Wellness',
+            'overlay' => 'Faciales & Masajes',
+            'tags'    => ['Limpieza Facial', 'Masajes', 'Exfoliación', 'Envolvimientos'],
+            'fotos'   => [
+                'spa_1.jpg',
+                'spa_2.jpg',
+                'spa_3.jpg',
+            ],
+        ],
+        // 6. Peinados de Evento
+        [
+            'id'      => 'novia',
+            'nombre'  => 'Peinados de Evento',
+            'overlay' => 'Novia · Quinceañera · Gala',
+            'tags'    => ['Peinado de Boda', 'Prueba de Look', 'Quinceañera', 'Gala', 'Recogidos'],
+            'fotos'   => ['novia_1.jpg', 'novia_2.jpg', 'novia_3.jpg'],
+        ],
     ];
     @endphp
 
@@ -887,13 +769,15 @@
             <div class="services-intro">
                 <span class="section-label">Nuestro Trabajo</span>
                 <h2 class="section-title section-title-center">Galería</h2>
-                <p>Una muestra de las transformaciones y momentos especiales que creamos cada día.</p>
+                <p>Hair Studio · Estética Capilar · Nail Bar · Maquillaje · Spa · Peinados de Evento</p>
             </div>
             <div class="gallery-grid">
                 @foreach($categorias as $cat)
                 @php
                     $urls = array_map(
-                        fn($f) => asset('images/galeria/' . $cat['id'] . '/' . rawurlencode($f)),
+                        fn($f) => str_starts_with($f, 'http')
+                            ? $f
+                            : asset('images/galeria/' . $cat['id'] . '/' . rawurlencode($f)),
                         $cat['fotos']
                     );
                 @endphp
@@ -902,13 +786,15 @@
                      data-overlay="{{ $cat['overlay'] }}"
                      data-images="{{ json_encode(array_values($urls), JSON_UNESCAPED_SLASHES) }}">
                     <img src="{{ $urls[0] }}" alt="{{ $cat['nombre'] }}" loading="lazy">
-                    <div class="gallery-overlay">
-                        <span>{{ $cat['overlay'] }}</span>
-                        <span class="gallery-count">{{ count($cat['fotos']) }} foto{{ count($cat['fotos']) > 1 ? 's' : '' }}</span>
+                    <div class="gallery-tags">
+                        @foreach($cat['tags'] as $tag)
+                            <span class="gallery-tag">{{ $tag }}</span>
+                        @endforeach
                     </div>
                     <div class="gallery-caption">
                         <span class="gallery-caption-label">{{ $cat['nombre'] }}</span>
                         <span class="gallery-caption-desc">{{ $cat['overlay'] }}</span>
+                        <span class="gallery-count">{{ count($cat['fotos']) }} foto{{ count($cat['fotos']) > 1 ? 's' : '' }}</span>
                     </div>
                     <div class="gallery-watermark">
                         <img src="{{ asset('images/logos/logo-cristina_spa.png') }}" alt="Cristina Spa">

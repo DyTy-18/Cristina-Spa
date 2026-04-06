@@ -138,12 +138,12 @@
             <div>
                 <div class="contrato-cliente">{{ $c->cliente->nombre_completo ?? ($c->cliente->nombre . ' ' . $c->cliente->apellido) }}</div>
                 <div class="contrato-paquete">
-                    @if($c->paquete->nivel)
+                    @if($c->paquete?->nivel)
                         <span style="background:{{ $c->paquete->nivel->color }};color:#fff;font-size:.58rem;font-weight:700;padding:.05rem .35rem;border-radius:2px;letter-spacing:.8px;text-transform:uppercase;">
                             {{ $c->paquete->nivel->nombre }}
                         </span>
                     @endif
-                    {{ $c->paquete->nombre }}
+                    {{ $c->paquete?->nombre ?? '(paquete eliminado)' }}
                     · Bs. {{ number_format($c->precio_total, 2) }}
                     · {{ $c->fecha_inicio->format('d/m/Y') }}
                 </div>

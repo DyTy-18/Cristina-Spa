@@ -74,6 +74,26 @@
                     </div>
                 </div>
 
+                <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border-color);">
+
+                <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;color:var(--text-color);">Acceso al sistema <span style="font-weight:300;color:var(--text-light);font-size:0.8rem;">(opcional)</span></h4>
+                <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:1rem;">
+                    El empleado iniciará sesión con su <strong>número de teléfono</strong> y esta contraseña.
+                    Requiere que el teléfono esté completado arriba.
+                </p>
+
+                <div class="form-group" style="max-width:340px;">
+                    <label class="form-label">Contraseña <span style="font-size:0.75rem;color:var(--text-light);">(mín. 8 caracteres)</span></label>
+                    <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
+                           placeholder="Contraseña de acceso">
+                    @error('password')
+                        <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
+                    @enderror
+                    @error('telefono')
+                        <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <div style="display:flex;gap:1rem;margin-top:0.5rem;">
                     <button type="submit" class="btn btn-primary">Registrar empleado</button>
                     <a href="{{ route('admin.empleados.index') }}" class="btn btn-outline">Cancelar</a>

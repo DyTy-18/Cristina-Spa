@@ -11,11 +11,22 @@ class ServicioController extends Controller
     /**
      * Listar todos los servicios
      */
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        $servicios = Servicio::orderBy('categoria')->orderBy('nombre')->get();
-        
-        return view('admin.servicios.index', compact('servicios'));
+        $categoriaFiltro = $request->query('categoria');
+
+        $query = Servicio::orderBy('categoria')->orderBy('nombre');
+        if ($categoriaFiltro) {
+            $query->where('categoria', $categoriaFiltro);
+        }
+
+        $servicios  = $query->get();
+        $categorias = Servicio::whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria');
+
+        return view('admin.servicios.index', compact('servicios', 'categorias', 'categoriaFiltro'));
     }
 
     /**

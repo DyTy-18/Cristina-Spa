@@ -29,6 +29,7 @@ class Empleado extends Model
         'fecha_contratacion',
         'activo',
         'user_id',
+        'clave_acceso',
     ];
 
     protected $casts = [

@@ -104,6 +104,23 @@
                 <span class="employee-detail-item" style="color:{{ $empleado->activo ? 'var(--success-color)' : 'var(--text-light)' }}">
                     ● {{ $empleado->activo ? 'Activo' : 'Inactivo' }}
                 </span>
+                @if($empleado->user)
+                    <span class="employee-detail-item" style="color:var(--success-color);">
+                        🔑 Login: {{ $empleado->telefono }}
+                        @role('admin')
+                            @if($empleado->clave_acceso)
+                                &nbsp;·&nbsp;
+                                <span style="color:var(--text-light);">Clave:
+                                    <code style="background:#e8e4df;padding:0.1rem 0.35rem;border-radius:3px;font-size:0.82rem;color:var(--text-color);">{{ $empleado->clave_acceso }}</code>
+                                </span>
+                            @endif
+                        @endrole
+                    </span>
+                @else
+                    <span class="employee-detail-item" style="color:var(--text-light);">
+                        🔒 Sin acceso al sistema
+                    </span>
+                @endif
             </div>
         </div>
     </div>

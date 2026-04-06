@@ -29,6 +29,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::get('/nosotros', function () {
+    return view('nosotros');
+})->name('nosotros');
+
 // Leads desde formulario público (sin auth)
 Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
 

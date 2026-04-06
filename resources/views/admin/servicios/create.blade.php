@@ -43,14 +43,16 @@
                     <label class="form-label">Categoría</label>
                     <select class="form-control" name="categoria">
                         <option value="">Sin categoría</option>
-                        <option value="cortes" {{ old('categoria') == 'cortes' ? 'selected' : '' }}>Cortes</option>
-                        <option value="coloracion" {{ old('categoria') == 'coloracion' ? 'selected' : '' }}>Coloración
-                        </option>
-                        <option value="peinados" {{ old('categoria') == 'peinados' ? 'selected' : '' }}>Peinados</option>
-                        <option value="tratamientos" {{ old('categoria') == 'tratamientos' ? 'selected' : '' }}>
-                            Tratamientos</option>
-                        <option value="spa" {{ old('categoria') == 'spa' ? 'selected' : '' }}>Spa</option>
-                        <option value="eventos" {{ old('categoria') == 'eventos' ? 'selected' : '' }}>Eventos</option>
+                        <option value="peluqueria"   {{ old('categoria') == 'peluqueria'   ? 'selected' : '' }}>Peluquería</option>
+                        <option value="peinados"     {{ old('categoria') == 'peinados'     ? 'selected' : '' }}>Peinados</option>
+                        <option value="coloracion"   {{ old('categoria') == 'coloracion'   ? 'selected' : '' }}>Coloración</option>
+                        <option value="alisado"      {{ old('categoria') == 'alisado'      ? 'selected' : '' }}>Alisado u Ondulación</option>
+                        <option value="depilacion"   {{ old('categoria') == 'depilacion'   ? 'selected' : '' }}>Depilado con Cera</option>
+                        <option value="maquillaje"   {{ old('categoria') == 'maquillaje'   ? 'selected' : '' }}>Maquillaje, Cejas y Pestañas</option>
+                        <option value="pies_manos"   {{ old('categoria') == 'pies_manos'   ? 'selected' : '' }}>Pies y Manos</option>
+                        <option value="extensiones"  {{ old('categoria') == 'extensiones'  ? 'selected' : '' }}>Extensiones de Uñas</option>
+                        <option value="spa"          {{ old('categoria') == 'spa'          ? 'selected' : '' }}>Spa</option>
+                        <option value="tratamientos" {{ old('categoria') == 'tratamientos' ? 'selected' : '' }}>Tratamientos Capilares</option>
                     </select>
                 </div>
 

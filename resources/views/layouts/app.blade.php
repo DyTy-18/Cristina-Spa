@@ -104,6 +104,7 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="#inicio">Inicio</a></li>
+                <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
                 <li><a href="#servicios">Servicios</a></li>
                 <li><a href="#sucursales">Sucursales</a></li>
                 <li><a href="#galeria">Galería</a></li>

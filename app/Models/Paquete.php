@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Paquete extends Model
 {
-    protected $fillable = ['nombre', 'categoria', 'nivel_id', 'descripcion', 'descuento_general', 'activo'];
+    protected $fillable = ['nombre', 'categoria', 'nivel_id', 'descripcion', 'descuento_general', 'precio_fijo', 'activo'];
 
     protected $casts = [
         'activo'            => 'boolean',
         'descuento_general' => 'float',
+        'precio_fijo'       => 'float',
     ];
 
     public function nivel(): BelongsTo
@@ -40,6 +41,10 @@ class Paquete extends Model
      */
     public function getPrecioTotalAttribute(): float
     {
+        if ($this->precio_fijo !== null) {
+            return (float) $this->precio_fijo;
+        }
+
         $descGeneral = (float) ($this->descuento_general ?? 0);
 
         return $this->servicios->sum(function ($s) use ($descGeneral) {

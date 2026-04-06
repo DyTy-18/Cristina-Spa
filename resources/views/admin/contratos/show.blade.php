@@ -196,12 +196,12 @@
         </div>
         <div class="ch-sub">
             <span>
-                @if($contrato->paquete->nivel)
+                @if($contrato->paquete?->nivel)
                 <span style="background:{{ $contrato->paquete->nivel->color }};color:#fff;font-size:.6rem;font-weight:700;padding:.05rem .35rem;border-radius:2px;letter-spacing:.8px;text-transform:uppercase;">
                     {{ $contrato->paquete->nivel->nombre }}
                 </span>
                 @endif
-                {{ $contrato->paquete->nombre }}
+                {{ $contrato->paquete?->nombre ?? '(paquete eliminado)' }}
             </span>
             <span>📅 {{ $contrato->fecha_inicio->format('d/m/Y') }}</span>
             <span>💰 Total: Bs. {{ number_format($contrato->precio_total, 2) }}</span>
