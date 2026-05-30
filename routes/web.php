@@ -68,6 +68,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/citas/calendario', [CitaController::class, 'calendario'])->name('citas.calendario');
     Route::get('/citas/calendario/datos', [CitaController::class, 'calendarDatos'])->name('citas.calendarDatos');
     Route::get('/citas/{cita}', [CitaController::class, 'show'])->name('citas.show');
+    Route::get('/citas/{cita}/informe', [CitaController::class, 'informe'])->name('citas.informe');
     Route::get('/citas/{cita}/editar', [CitaController::class, 'edit'])->name('citas.edit');
     Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
     
@@ -81,6 +82,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/clientes/{cliente}/visita', [ClienteController::class, 'storeCita'])->name('clientes.storeCita');
     Route::patch('/clientes/{cliente}/citas/{cita}/estado', [ClienteController::class, 'updateCitaEstado'])->name('clientes.cita.estado');
     Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
+    Route::get('/clientes/ocultos', [ClienteController::class, 'ocultos'])->name('clientes.ocultos');
+    Route::post('/clientes/{cliente}/ocultar', [ClienteController::class, 'toggleOculto'])->name('clientes.toggleOculto');
     Route::delete('/recomendacion-links/{link}', [RecomendacionController::class, 'destroy'])->name('recomendacion.link.destroy');
     
     // Servicios
@@ -143,6 +146,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::put('/roles/{rol}', [RolController::class, 'update'])->name('roles.update');
 
         Route::get('/logs', [ActivityLogController::class, 'index'])->name('logs.index');
+        Route::get('/logs/exportar-pdf', [ActivityLogController::class, 'exportPdf'])->name('logs.export-pdf');
     });
     
     // Paquetes de servicios (solo admin)

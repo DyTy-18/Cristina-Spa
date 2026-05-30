@@ -351,6 +351,9 @@
                     <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-accent" style="text-align:center;justify-content:center;">
                         Editar cita
                     </a>
+                    <a href="{{ route('admin.citas.informe', $cita) }}" class="btn btn-outline btn-sm" style="text-align:center;display:block;">
+                        📋 Ver informe
+                    </a>
                     <a href="{{ route('admin.citas.calendario') }}" class="btn btn-outline btn-sm" style="text-align:center;display:block;">
                         Ver calendario
                     </a>

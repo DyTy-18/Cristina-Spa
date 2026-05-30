@@ -790,7 +790,7 @@
     {{-- Period filter --}}
     <div class="period-tabs">
         @php
-            $tabs = ['todo' => 'Todo el historial', 'anio' => 'Este año', 'trimestre' => 'Último trimestre', 'mes' => 'Este mes'];
+            $tabs = ['recientes' => 'Últimas 4', 'todo' => 'Todo el historial', 'anio' => 'Este año', 'trimestre' => 'Último trimestre', 'mes' => 'Este mes'];
         @endphp
         @foreach($tabs as $key => $label)
             <a href="{{ route('admin.clientes.show', [$cliente, 'periodo' => $key]) }}"
@@ -1143,8 +1143,8 @@
                     <div class="form-group">
                         <label class="form-label">Estado <span style="color:var(--error-color)">*</span></label>
                         <select name="estado" class="form-control" required>
-                            <option value="completada" selected>Completada</option>
-                            <option value="confirmada">Confirmada</option>
+                            <option value="completada">Completada</option>
+                            <option value="confirmada" selected>Confirmada</option>
                             <option value="pendiente">Pendiente</option>
                             <option value="cancelada">Cancelada</option>
                         </select>

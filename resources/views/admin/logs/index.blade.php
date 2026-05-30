@@ -45,12 +45,17 @@
                 </div>
 
                 <div class="filter-group">
-                    <label>Fecha</label>
-                    <input type="date" name="fecha" class="filter-date" value="{{ request('fecha') }}">
+                    <label>Desde</label>
+                    <input type="date" name="fecha_desde" class="filter-date" value="{{ request('fecha_desde') }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Hasta</label>
+                    <input type="date" name="fecha_hasta" class="filter-date" value="{{ request('fecha_hasta') }}">
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-                @if (request()->hasAny(['log_name', 'event', 'causer_id', 'fecha']))
+                @if (request()->hasAny(['log_name', 'event', 'causer_id', 'fecha_desde', 'fecha_hasta']))
                     <a href="{{ route('admin.logs.index') }}" class="btn btn-outline btn-sm">Limpiar</a>
                 @endif
             </form>
@@ -60,6 +65,18 @@
             <h3 class="table-title" style="font-size:1rem">
                 {{ $logs->total() }} {{ $logs->total() === 1 ? 'registro' : 'registros' }}
             </h3>
+            <a href="{{ route('admin.logs.export-pdf', request()->query()) }}"
+               class="btn btn-outline btn-sm"
+               style="display:flex;align-items:center;gap:.4rem"
+               target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6M9 13h6M9 9h1"/>
+                </svg>
+                Exportar PDF
+            </a>
         </div>
 
         <table class="data-table">

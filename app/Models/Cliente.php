@@ -29,6 +29,7 @@ class Cliente extends Model
         'direccion',
         'notas',
         'user_id',
+        'oculto',
     ];
 
     protected $casts = [

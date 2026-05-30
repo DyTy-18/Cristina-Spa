@@ -27,10 +27,41 @@ class ClienteController extends Controller
             ->withSum(['citas as total_gastado' => fn($q) => $q->where('estado', 'completada')], 'precio_final')
             ->withMax(['citas as ultima_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
             ->withMin(['citas as primera_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
+            ->where('oculto', false)
             ->orderBy('apellido')
             ->get();
 
-        return view('admin.clientes.index', compact('clientes'));
+        $esAdmin = auth()->user()->hasRole('admin');
+        $totalOcultos = $esAdmin ? Cliente::where('oculto', true)->count() : 0;
+
+        return view('admin.clientes.index', compact('clientes', 'esAdmin', 'totalOcultos'));
+    }
+
+    public function ocultos()
+    {
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        $clientes = Cliente::withCount('citas')
+            ->withCount(['citas as citas_completadas_count' => fn($q) => $q->where('estado', 'completada')])
+            ->withSum(['citas as total_gastado' => fn($q) => $q->where('estado', 'completada')], 'precio_final')
+            ->withMax(['citas as ultima_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
+            ->withMin(['citas as primera_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
+            ->where('oculto', true)
+            ->orderBy('apellido')
+            ->get();
+
+        return view('admin.clientes.ocultos', compact('clientes'));
+    }
+
+    public function toggleOculto(Cliente $cliente)
+    {
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        $cliente->update(['oculto' => !$cliente->oculto]);
+
+        $mensaje = $cliente->oculto ? 'Cliente ocultado.' : 'Cliente restaurado.';
+
+        return redirect()->back()->with('success', $mensaje);
     }
 
     public function create()
@@ -58,7 +89,7 @@ class ClienteController extends Controller
 
     public function show(Request $request, Cliente $cliente)
     {
-        $periodo = $request->get('periodo', 'todo');
+        $periodo = $request->get('periodo', 'recientes');
 
         $query = $cliente->citas()
             ->with(['citaServicios.servicio', 'citaServicios.empleado'])
@@ -74,6 +105,9 @@ class ClienteController extends Controller
                 break;
             case 'anio':
                 $query->whereYear('fecha', now()->year);
+                break;
+            case 'recientes':
+                $query->limit(4);
                 break;
         }
 

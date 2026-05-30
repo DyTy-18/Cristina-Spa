@@ -337,4 +337,20 @@ class CitaController extends Controller
 
         return response()->json($events);
     }
+
+    public function informe(Cita $cita)
+    {
+        $cita->load([
+            'cliente',
+            'citaServicios.servicio.materiales.producto',
+            'citaServicios.empleado',
+        ]);
+
+        // Consumos registrados para esta cita, agrupados por servicio_material_id
+        $consumos = \App\Models\ConsumoMaterial::where('cita_id', $cita->id)
+            ->get()
+            ->keyBy('servicio_material_id');
+
+        return view('admin.citas.informe', compact('cita', 'consumos'));
+    }
 }

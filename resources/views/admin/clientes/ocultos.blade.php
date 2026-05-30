@@ -1,40 +1,29 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Clientes')
-@section('page-title', 'Clientes')
+@section('title', 'Clientes Ocultos')
+@section('page-title', 'Clientes Ocultos')
 
 @section('content')
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Todos los Clientes</h3>
-            <div style="display:flex;align-items:center;gap:1rem;">
-                <span class="stat-label">{{ $clientes->count() }} registrados</span>
-                @if($esAdmin && $totalOcultos > 0)
-                    <a href="{{ route('admin.clientes.ocultos') }}" class="btn btn-sm btn-outline" style="color:var(--text-light);">
-                        Ocultos ({{ $totalOcultos }})
-                    </a>
-                @endif
-                <a href="{{ route('admin.clientes.create') }}" class="btn btn-primary btn-sm">+ Nuevo Cliente</a>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+                <a href="{{ route('admin.clientes.index') }}" style="color:var(--text-light);font-size:0.85rem;">← Volver a clientes</a>
+                <h3 class="table-title" style="margin:0;">Clientes Ocultos</h3>
             </div>
+            <span class="stat-label">{{ $clientes->count() }} ocultos</span>
         </div>
+
+        @if(session('success'))
+            <div class="alert alert-success" style="margin-bottom:1rem;">{{ session('success') }}</div>
+        @endif
 
         @if($clientes->isEmpty())
             <div class="empty-state">
-                <div class="empty-state-icon">👥</div>
-                <p class="empty-state-text">Aún no hay clientes registrados</p>
+                <div class="empty-state-icon">👁</div>
+                <p class="empty-state-text">No hay clientes ocultos</p>
             </div>
         @else
-            <div class="table-filter">
-                <input
-                    type="text"
-                    id="searchInput"
-                    class="search-input"
-                    placeholder="Buscar por nombre, email o teléfono..."
-                    autocomplete="off"
-                >
-            </div>
-
-            <table class="data-table" id="clientesTable">
+            <table class="data-table" id="clientesOcultosTable">
                 <thead>
                     <tr>
                         <th>Cliente</th>
@@ -48,7 +37,7 @@
                 </thead>
                 <tbody>
                     @foreach($clientes as $cliente)
-                        <tr class="cliente-row">
+                        <tr>
                             <td>
                                 <div style="font-weight:400;">{{ $cliente->nombre_completo }}</div>
                                 @if($cliente->fecha_nacimiento)
@@ -87,21 +76,15 @@
                                     <a href="{{ route('admin.clientes.show', $cliente) }}" class="btn btn-sm btn-outline">
                                         Historial
                                     </a>
-                                    <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-accent">
-                                        Editar
-                                    </a>
-                                    @if($esAdmin)
-                                        <form method="POST" action="{{ route('admin.clientes.toggleOculto', $cliente) }}" style="display:inline;">
-                                            @csrf
-                                            <button
-                                                type="submit"
-                                                class="btn btn-sm btn-outline"
-                                                style="color:var(--text-light);"
-                                                >
-                                                Ocultar
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <form method="POST" action="{{ route('admin.clientes.toggleOculto', $cliente) }}" style="display:inline;">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-accent"
+                                        >
+                                            Restaurar
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -111,14 +94,3 @@
         @endif
     </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.getElementById('searchInput')?.addEventListener('input', function () {
-        const term = this.value.toLowerCase();
-        document.querySelectorAll('#clientesTable .cliente-row').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
-        });
-    });
-</script>
-@endpush

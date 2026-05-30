@@ -15,11 +15,13 @@ class ServicioMaterial extends Model
         'cantidad',
         'unidad',
         'usos_por_unidad',
+        'total_usos_procesados',
     ];
 
     protected $casts = [
-        'cantidad'        => 'decimal:2',
-        'usos_por_unidad' => 'integer',
+        'cantidad'               => 'decimal:2',
+        'usos_por_unidad'        => 'integer',
+        'total_usos_procesados'  => 'integer',
     ];
 
     public function servicio(): BelongsTo

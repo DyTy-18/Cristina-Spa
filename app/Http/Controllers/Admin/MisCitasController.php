@@ -86,14 +86,32 @@ class MisCitasController extends Controller
             ->with('servicio.materiales.producto')
             ->get();
 
-        // Consumos ya registrados indexados por servicio_material_id
+        // ONE consumo per (cita, servicio_material) — keyed by servicio_material_id
         $consumosExistentes = ConsumoMaterial::where('cita_id', $cita->id)
             ->get()
-            ->groupBy('servicio_material_id');
+            ->keyBy('servicio_material_id');
 
         $cita->load('cliente');
 
-        return view('admin.mis-citas.consumo', compact('cita', 'citaServicios', 'consumosExistentes'));
+        // Stock actual y usos restantes por material_id para mostrar en vista
+        $service = app(MaterialConsumptionService::class);
+        $stockPorProducto  = [];
+        $usosRestantesPorMaterial = [];
+
+        foreach ($citaServicios as $cs) {
+            foreach ($cs->servicio?->materiales ?? [] as $material) {
+                if ($material->producto && !isset($stockPorProducto[$material->producto_id])) {
+                    $stockPorProducto[$material->producto_id] = $service->calcularStock(
+                        $material->producto->codigo_barras
+                    );
+                }
+                $usosRestantesPorMaterial[$material->id] = $service->calcularUsosRestantesEnUnidad($material);
+            }
+        }
+
+        return view('admin.mis-citas.consumo', compact(
+            'cita', 'citaServicios', 'consumosExistentes', 'stockPorProducto', 'usosRestantesPorMaterial'
+        ));
     }
 
     public function guardarConsumo(Request $request, Cita $cita)
@@ -115,24 +133,47 @@ class MisCitasController extends Controller
         $request->validate([
             'materiales'                 => 'required|array',
             'materiales.*.consumo_id'    => 'required|integer|exists:consumos_material,id',
-            'materiales.*.usos_reales'   => 'required|integer|min:1',
+            'materiales.*.usos_reales'   => 'required|integer|min:0',
         ]);
 
         $service = app(MaterialConsumptionService::class);
 
+        // ── Paso 1: validar stock solo cuando hay incremento ──────────────────
+        $erroresStock = [];
+        $items = [];
+
         foreach ($request->materiales as $item) {
-            $consumo = ConsumoMaterial::findOrFail($item['consumo_id']);
+            $consumo    = ConsumoMaterial::with('servicioMaterial.producto')->findOrFail($item['consumo_id']);
             $usosNuevos = (int) $item['usos_reales'];
+            $usosViejos = $consumo->usos_reales ?? 1;
 
-            // Calcular cuántos usos extra se agregan respecto a lo ya reportado
-            $usosYaReportados = $consumo->usos_reales ?? 1;
-            $usosExtra = $usosNuevos - $usosYaReportados;
+            if ($usosNuevos > $usosViejos) {
+                $material     = $consumo->servicioMaterial;
+                $salidasExtra = $service->calcularSalidasExtra($material, $usosViejos, $usosNuevos);
 
-            $consumo->update(['usos_reales' => $usosNuevos]);
+                if ($salidasExtra > 0) {
+                    $stock = $service->calcularStock($material->producto->codigo_barras);
 
-            if ($usosExtra > 0) {
-                $service->procesarUsosExtra($consumo, $usosExtra);
+                    if ($stock < $salidasExtra) {
+                        $nombre = $material->producto->nombre;
+                        $erroresStock[] = "Stock insuficiente para <strong>{$nombre}</strong>: "
+                            . "disponible {$stock} unid., se necesitan {$salidasExtra}.";
+                        continue;
+                    }
+                }
             }
+            // Bajar a 0 = no se usó el material (reversa automática si había salidas)
+
+            $items[] = ['consumo' => $consumo, 'usosNuevos' => $usosNuevos];
+        }
+
+        if (!empty($erroresStock)) {
+            return back()->with('stock_errors', $erroresStock);
+        }
+
+        // ── Paso 2: aplicar cambios ───────────────────────────────────────────
+        foreach ($items as $item) {
+            $service->actualizarUsos($item['consumo'], $item['usosNuevos']);
         }
 
         return redirect()->route('admin.mis-citas')
