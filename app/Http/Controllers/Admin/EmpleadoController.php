@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\Empleado;
+use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,8 @@ class EmpleadoController extends Controller
 
     public function create()
     {
-        return view('admin.empleados.create');
+        $sucursales = Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.empleados.create', compact('sucursales'));
     }
 
     public function store(Request $request)
@@ -76,13 +78,16 @@ class EmpleadoController extends Controller
             return $empleado;
         });
 
+        // Asignar sucursales seleccionadas
+        $empleado->sucursales()->sync($request->input('sucursales', []));
+
         return redirect()->route('admin.empleados.show', $empleado)
             ->with('success', 'Empleado registrado exitosamente.');
     }
 
     public function show(Empleado $empleado)
     {
-        $empleado->load('user');
+        $empleado->load('user', 'sucursales');
 
         $citaIds = $empleado->citaServicios()->pluck('cita_id')->unique();
 
@@ -106,8 +111,9 @@ class EmpleadoController extends Controller
 
     public function edit(Empleado $empleado)
     {
-        $empleado->load('user');
-        return view('admin.empleados.edit', compact('empleado'));
+        $empleado->load('user', 'sucursales');
+        $sucursales = Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.empleados.edit', compact('empleado', 'sucursales'));
     }
 
     public function update(Request $request, Empleado $empleado)
@@ -165,6 +171,9 @@ class EmpleadoController extends Controller
                 ]);
             }
         });
+
+        // Sincronizar sucursales
+        $empleado->sucursales()->sync($request->input('sucursales', []));
 
         return redirect()->route('admin.empleados.show', $empleado)
             ->with('success', 'Empleado actualizado exitosamente.');

@@ -30,6 +30,7 @@ class Cliente extends Model
         'notas',
         'user_id',
         'oculto',
+        'sucursal_id',
     ];
 
     protected $casts = [
@@ -47,6 +48,11 @@ class Cliente extends Model
     /**
      * Citas del cliente
      */
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
+    }
+
     public function citas()
     {
         return $this->hasMany(Cita::class);

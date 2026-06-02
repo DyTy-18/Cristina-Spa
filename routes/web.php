@@ -23,6 +23,8 @@ use App\Http\Controllers\Admin\RecomendacionController;
 use App\Http\Controllers\RecomendacionPublicController;
 use App\Http\Controllers\Admin\AlertaStockController;
 use App\Http\Controllers\Admin\MisCitasController;
+use App\Http\Controllers\Admin\SucursalController;
+use App\Http\Controllers\Admin\MigracionSucursalController;
 
 // Página pública
 Route::get('/', function () {
@@ -55,7 +57,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 // Rutas protegidas para admin
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
@@ -204,6 +206,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/mis-citas', [MisCitasController::class, 'index'])->name('mis-citas');
     Route::get('/mis-citas/{cita}/consumo', [MisCitasController::class, 'consumo'])->name('mis-citas.consumo');
     Route::post('/mis-citas/{cita}/consumo', [MisCitasController::class, 'guardarConsumo'])->name('mis-citas.consumo.store');
+
+    // Sucursales (solo admin)
+    Route::middleware('role:admin')->prefix('sucursales')->name('sucursales.')->group(function () {
+        Route::get('/', [SucursalController::class, 'index'])->name('index');
+        Route::get('/crear', [SucursalController::class, 'create'])->name('create');
+        Route::post('/', [SucursalController::class, 'store'])->name('store');
+        Route::get('/{sucursal}/editar', [SucursalController::class, 'edit'])->name('edit');
+        Route::put('/{sucursal}', [SucursalController::class, 'update'])->name('update');
+        Route::get('/migracion', [MigracionSucursalController::class, 'index'])->name('migracion');
+        Route::post('/migracion', [MigracionSucursalController::class, 'procesar'])->name('migracion.procesar');
+    });
+    Route::post('/sucursal/cambiar', [SucursalController::class, 'cambiar'])->name('sucursal.cambiar');
 
     // Inventario (admin, cajero, finanzas)
     Route::middleware('permission:ver inventario')->prefix('inventario')->name('inventario.')->group(function () {

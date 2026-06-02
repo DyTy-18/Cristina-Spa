@@ -40,6 +40,11 @@
 
                     <div class="form-group">
                         <label class="form-label">Rol *</label>
+                        @if($esEncargado)
+                            <p style="font-size:0.75rem;color:var(--text-light);margin-bottom:0.4rem;">
+                                Como encargado puedes asignar: Secretario, Cajero o Estilista.
+                            </p>
+                        @endif
                         <select name="role" class="form-control" required>
                             <option value="">— Seleccionar rol —</option>
                             @foreach ($roles as $role)
@@ -50,6 +55,24 @@
                         </select>
                         @error('role')<span style="color:var(--error-color);font-size:.8rem">{{ $message }}</span>@enderror
                     </div>
+
+                    @if(!$esEncargado && isset($sucursales) && $sucursales->isNotEmpty())
+                        <div class="form-group">
+                            <label class="form-label">Sucursal</label>
+                            <select name="sucursal_id" class="form-control">
+                                <option value="">— Sin sucursal asignada —</option>
+                                @foreach($sucursales as $s)
+                                    <option value="{{ $s->id }}" {{ old('sucursal_id') == $s->id ? 'selected' : '' }}>
+                                        {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p style="font-size:0.72rem;color:var(--text-light);margin-top:0.25rem;">
+                                Define qué sucursal puede ver este usuario. Requerido para todos los roles excepto admin.
+                            </p>
+                            @error('sucursal_id')<span style="color:var(--error-color);font-size:.8rem">{{ $message }}</span>@enderror
+                        </div>
+                    @endif
 
                     <div style="display:flex;gap:1rem;margin-top:1rem">
                         <button type="submit" class="btn btn-primary">Crear Usuario</button>

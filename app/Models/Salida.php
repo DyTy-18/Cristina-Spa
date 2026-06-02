@@ -9,6 +9,7 @@ class Salida extends Model
 {
     protected $fillable = [
         'codigo_barras',
+        'sucursal_id',
         'unidades',
         'fecha',
         'destino',

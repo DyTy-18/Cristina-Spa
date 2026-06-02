@@ -44,7 +44,10 @@
 
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Stock Actual</h3>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <h3 class="table-title">Stock Actual</h3>
+                @include('admin.partials.sucursal_badge')
+            </div>
             <span style="font-size:0.8rem; color:#888;">Entradas &minus; Salidas por producto</span>
         </div>
 

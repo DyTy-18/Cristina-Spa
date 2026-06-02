@@ -55,6 +55,11 @@ class Empleado extends Model
         return $this->hasMany(ComisionEmpleado::class);
     }
 
+    public function sucursales()
+    {
+        return $this->belongsToMany(Sucursal::class, 'empleado_sucursal');
+    }
+
     /**
      * Nombre completo del empleado
      */

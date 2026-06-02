@@ -6,7 +6,10 @@
 @section('content')
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Todos los Empleados</h3>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <h3 class="table-title">Todos los Empleados</h3>
+                @include('admin.partials.sucursal_badge')
+            </div>
             <div style="display:flex;align-items:center;gap:1rem;">
                 <span class="stat-label">{{ $empleados->count() }} registrados</span>
                 @if(auth()->user()->hasRole('admin'))

@@ -22,6 +22,7 @@ class Cita extends Model
 
     protected $fillable = [
         'cliente_id',
+        'sucursal_id',
         'campana_id',
         'fecha',
         'hora',
@@ -39,6 +40,11 @@ class Cita extends Model
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function campana()

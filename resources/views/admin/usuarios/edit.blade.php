@@ -43,6 +43,22 @@
                         @error('role')<span style="color:var(--error-color);font-size:.8rem">{{ $message }}</span>@enderror
                     </div>
 
+                    @if(!$esEncargado && isset($sucursales) && $sucursales->isNotEmpty())
+                        <div class="form-group">
+                            <label class="form-label">Sucursal</label>
+                            <select name="sucursal_id" class="form-control">
+                                <option value="">— Sin sucursal asignada —</option>
+                                @foreach($sucursales as $s)
+                                    <option value="{{ $s->id }}"
+                                        {{ old('sucursal_id', $usuario->sucursal_id) == $s->id ? 'selected' : '' }}>
+                                        {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('sucursal_id')<span style="color:var(--error-color);font-size:.8rem">{{ $message }}</span>@enderror
+                        </div>
+                    @endif
+
                     <div style="border-top:1px solid rgba(0,0,0,.06);padding-top:1.5rem;margin-top:.5rem">
                         <p style="font-size:.8rem;color:var(--text-light);margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">
                             Cambiar contraseña (dejar vacío para mantener la actual)

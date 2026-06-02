@@ -62,6 +62,7 @@ class CitaController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
+        $sucursales  = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
         $paquetes    = Paquete::where('activo', true)->with(['nivel', 'servicios'])->orderBy('categoria')->orderBy('nombre')->get();
         $paquetesJson = $paquetes->map(fn($p) => [
             'id'       => $p->id,
@@ -82,7 +83,7 @@ class CitaController extends Controller
 
         return view('admin.citas.create', compact(
             'clientesRaw', 'clientesJson', 'servicios', 'empleados', 'campanas',
-            'serviciosJson', 'empleadosJson', 'paquetesJson'
+            'serviciosJson', 'empleadosJson', 'paquetesJson', 'sucursales'
         ));
     }
 
@@ -119,10 +120,11 @@ class CitaController extends Controller
 
         if ($clienteTipo === 'nuevo') {
             $cliente = Cliente::create([
-                'nombre'   => $data['nuevo_nombre'],
-                'apellido' => $data['nuevo_apellido'] ?? null,
-                'telefono' => $data['nuevo_telefono'],
-                'email'    => $data['nuevo_email'] ?? null,
+                'nombre'      => $data['nuevo_nombre'],
+                'apellido'    => $data['nuevo_apellido'] ?? null,
+                'telefono'    => $data['nuevo_telefono'],
+                'email'       => $data['nuevo_email'] ?? null,
+                'sucursal_id' => session('sucursal_activa_id') ?? auth()->user()->sucursal_id,
             ]);
             $clienteId = $cliente->id;
         } else {
@@ -145,8 +147,13 @@ class CitaController extends Controller
             return round($precio * (1 - $desc / 100), 2);
         });
 
+        $sucursalId = session('sucursal_activa_id')
+            ?? $request->integer('sucursal_id')
+            ?: auth()->user()->sucursal_id;
+
         $cita = Cita::create([
             'cliente_id'   => $clienteId,
+            'sucursal_id'  => $sucursalId,
             'campana_id'   => $data['campana_id'] ?? null,
             'fecha'        => $data['fecha'],
             'hora'         => $data['hora'],
@@ -285,7 +292,10 @@ class CitaController extends Controller
         $start = $request->get('start');
         $end   = $request->get('end');
 
+        $sid = session('sucursal_activa_id');
+
         $citas = Cita::with(['cliente', 'citaServicios.servicio', 'citaServicios.empleado'])
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->when($start, fn($q) => $q->whereDate('fecha', '>=', Carbon::parse($start)->toDateString()))
             ->when($end,   fn($q) => $q->whereDate('fecha', '<=', Carbon::parse($end)->toDateString()))
             ->get();

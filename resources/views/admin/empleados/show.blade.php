@@ -122,6 +122,15 @@
                     </span>
                 @endif
             </div>
+            @if($empleado->sucursales->isNotEmpty())
+                <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
+                    @foreach($empleado->sucursales as $s)
+                        <span style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:20px;background:#f3f4f6;color:#4b5563;border:1px solid #e5e7eb;">
+                            🏢 {{ $s->nombre }}
+                        </span>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 

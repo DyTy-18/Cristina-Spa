@@ -334,6 +334,7 @@
 
     <form action="{{ route('admin.citas.store') }}" method="POST" id="formCita">
         @csrf
+        @include('admin.partials.sucursal_selector')
         <input type="hidden" name="cliente_tipo" id="clienteTipo" value="{{ old('cliente_tipo', 'existente') }}">
 
         <div class="create-layout">

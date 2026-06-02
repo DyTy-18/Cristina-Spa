@@ -6,7 +6,10 @@
 @section('content')
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Historial de Salidas</h3>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <h3 class="table-title">Historial de Salidas</h3>
+                @include('admin.partials.sucursal_badge')
+            </div>
             <div style="display:flex; gap:0.5rem;">
                 <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline btn-sm">Ver Stock</a>
                 <a href="{{ route('admin.inventario.salidas.create') }}" class="btn btn-primary btn-sm">+ Registrar Salida</a>

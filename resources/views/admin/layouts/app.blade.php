@@ -126,6 +126,14 @@
                         </a>
                     @endif
 
+                    @if (auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.sucursales.index') }}"
+                            class="nav-item {{ request()->routeIs('admin.sucursales.*') ? 'active' : '' }}">
+                            <span class="nav-icon">🏢</span>
+                            <span>Sucursales</span>
+                        </a>
+                    @endif
+
                     @if (auth()->user()->hasPermissionTo('gestionar usuarios'))
                         <a href="{{ route('admin.usuarios.index') }}"
                             class="nav-item {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
@@ -182,6 +190,34 @@
                     <h2 class="page-title">@yield('page-title', 'Dashboard')</h2>
                 </div>
                 <div class="header-right">
+                    {{-- Selector de sucursal --}}
+                    @if(isset($sucursalActiva))
+                        @if(auth()->user()->hasRole('admin') && isset($sucursales) && $sucursales->count() > 0)
+                            <form method="POST" action="{{ route('admin.sucursal.cambiar') }}" id="sucursalForm"
+                                  style="display:inline-flex;align-items:center;gap:0.4rem;">
+                                @csrf
+                                <span style="font-size:0.72rem;color:var(--text-light);white-space:nowrap;">Sucursal:</span>
+                                <select name="sucursal_id" onchange="document.getElementById('sucursalForm').submit()"
+                                        style="font-size:0.78rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-color,#fff);color:var(--text-color);cursor:pointer;max-width:210px;">
+                                    {{-- Opción global: todas las sucursales --}}
+                                    <option value="" {{ ($modoGlobal ?? false) ? 'selected' : '' }}>
+                                        🌐 Todas las sucursales
+                                    </option>
+                                    @foreach($sucursales as $s)
+                                        <option value="{{ $s->id }}"
+                                            {{ (!($modoGlobal ?? false) && $sucursalActiva && $s->id == $sucursalActiva->id) ? 'selected' : '' }}>
+                                            {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        @elseif(isset($sucursalActiva) && $sucursalActiva)
+                            <span style="font-size:0.78rem;color:var(--text-light);padding:0.25rem 0.6rem;border:1px solid var(--border-color);border-radius:6px;white-space:nowrap;">
+                                🏢 {{ $sucursalActiva->nombre }}
+                            </span>
+                        @endif
+                    @endif
+
                     <a href="{{ route('home') }}" class="btn-view-site" target="_blank">
                         Ver Sitio ↗
                     </a>

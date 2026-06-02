@@ -10,8 +10,9 @@
     </div>
 
     <div class="card" style="max-width:720px;">
-        <div class="card-header">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
             <h3 class="card-title">Registrar Cliente</h3>
+            @include('admin.partials.sucursal_badge')
         </div>
         <div class="card-body">
             <form action="{{ route('admin.clientes.store') }}" method="POST">

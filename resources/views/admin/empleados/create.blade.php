@@ -10,8 +10,9 @@
     </div>
 
     <div class="card" style="max-width:720px;">
-        <div class="card-header">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
             <h3 class="card-title">Registrar Empleado</h3>
+            @include('admin.partials.sucursal_badge')
         </div>
         <div class="card-body">
             <form action="{{ route('admin.empleados.store') }}" method="POST">
@@ -71,6 +72,22 @@
                                {{ old('activo', '1') ? 'checked' : '' }}
                                style="width:auto;margin:0;">
                         <label for="activo" class="form-label" style="margin:0;cursor:pointer;">Empleado activo</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sucursales donde trabaja</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.25rem;">
+                        @foreach($sucursales as $sucursal)
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;
+                                          padding:0.3rem 0.75rem;border:1px solid var(--border-color);border-radius:20px;
+                                          background:{{ in_array($sucursal->id, old('sucursales', [])) ? 'var(--accent-color,#c9a96e)' : '#fff' }};">
+                                <input type="checkbox" name="sucursales[]" value="{{ $sucursal->id }}"
+                                       {{ in_array($sucursal->id, old('sucursales', [])) ? 'checked' : '' }}
+                                       style="width:auto;margin:0;">
+                                {{ $sucursal->es_principal ? '★ ' : '' }}{{ $sucursal->nombre }}
+                            </label>
+                        @endforeach
                     </div>
                 </div>
 

@@ -22,16 +22,27 @@ class InventarioController extends Controller
         $q     = $request->input('q');
         $marca = $request->input('marca');
         $linea = $request->input('linea');
+        $sid    = session('sucursal_activa_id');
+        $sidSql = $sid ? " AND sucursal_id = {$sid}" : '';
 
         $query = DB::table('productos as p')
             ->select([
                 'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.costo', 'p.stock_minimo',
-                DB::raw('(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras) AS total_entradas'),
-                DB::raw('(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras) AS total_salidas'),
-                DB::raw('(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras)
-                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras) AS stock_actual'),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql}) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql}) AS total_salidas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql})
+                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql}) AS stock_actual"),
             ])
             ->orderBy('p.nombre');
+
+        // Sucursal específica: solo mostrar productos con actividad en esa sucursal
+        if ($sid) {
+            $query->whereRaw(
+                "EXISTS (SELECT 1 FROM entradas WHERE entradas.codigo_barras = p.codigo_barras AND entradas.sucursal_id = ?)
+                 OR EXISTS (SELECT 1 FROM salidas WHERE salidas.codigo_barras = p.codigo_barras AND salidas.sucursal_id = ?)",
+                [$sid, $sid]
+            );
+        }
 
         if ($q) {
             $query->where(function ($qb) use ($q) {
@@ -131,7 +142,10 @@ class InventarioController extends Controller
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
 
+        $sid = session('sucursal_activa_id');
+
         $query = Entrada::with('producto')
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->orderByDesc('fecha')
             ->orderByDesc('id');
 
@@ -162,8 +176,9 @@ class InventarioController extends Controller
 
     public function createEntrada()
     {
-        $productos = Producto::orderBy('nombre')->get();
-        return view('admin.inventario.entradas.create', compact('productos'));
+        $productos  = Producto::orderBy('nombre')->get();
+        $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.inventario.entradas.create', compact('productos', 'sucursales'));
     }
 
     public function storeEntrada(Request $request)
@@ -174,7 +189,8 @@ class InventarioController extends Controller
             'fecha'         => 'required|date',
         ]);
 
-        Entrada::create($validated);
+        $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
+        Entrada::create(array_merge($validated, ['sucursal_id' => $sid]));
 
         return redirect()->route('admin.inventario.entradas')
             ->with('success', 'Entrada registrada correctamente.');
@@ -191,7 +207,10 @@ class InventarioController extends Controller
         $hasta   = $request->input('hasta');
         $destino = $request->input('destino');
 
+        $sid = session('sucursal_activa_id');
+
         $query = Salida::with('producto')
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->orderByDesc('fecha')
             ->orderByDesc('id');
 
@@ -223,8 +242,9 @@ class InventarioController extends Controller
 
     public function createSalida()
     {
-        $productos = Producto::orderBy('nombre')->get();
-        return view('admin.inventario.salidas.create', compact('productos'));
+        $productos  = Producto::orderBy('nombre')->get();
+        $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.inventario.salidas.create', compact('productos', 'sucursales'));
     }
 
     public function storeSalida(Request $request)
@@ -236,7 +256,8 @@ class InventarioController extends Controller
             'destino'       => 'nullable|string|max:255',
         ]);
 
-        Salida::create($validated);
+        $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
+        Salida::create(array_merge($validated, ['sucursal_id' => $sid]));
 
         return redirect()->route('admin.inventario.salidas')
             ->with('success', 'Salida registrada correctamente.');
@@ -253,17 +274,19 @@ class InventarioController extends Controller
 
         [$desde, $hasta] = $this->temporadaRango($temporada, $año);
 
+        $sid       = session('sucursal_activa_id');
+        $sidFilter = $sid ? " AND sucursal_id = {$sid}" : '';
         $entFiltro = $desde ? " AND fecha BETWEEN '{$desde}' AND '{$hasta}'" : '';
         $salFiltro = $desde ? " AND fecha BETWEEN '{$desde}' AND '{$hasta}'" : '';
 
         $query = DB::table('productos as p')
             ->select([
                 'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.stock_minimo',
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$entFiltro}) AS total_entradas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$salFiltro}) AS total_salidas"),
-                DB::raw('(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras)
-                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras) AS stock_actual'),
-                DB::raw('(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras) AS ultima_salida'),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidFilter}{$entFiltro}) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidFilter}{$salFiltro}) AS total_salidas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidFilter})
+                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidFilter}) AS stock_actual"),
+                DB::raw("(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras{$sidFilter}) AS ultima_salida"),
             ])
             ->orderBy('p.nombre');
 
@@ -422,6 +445,7 @@ class InventarioController extends Controller
 
         $stats         = ['productos_nuevos' => 0, 'entradas' => 0, 'salidas' => 0, 'errores' => []];
         $fechaRegistro = $request->input('fecha_registro');
+        $sucursalId    = session('sucursal_activa_id');
 
         // Paso 1: extraer costos de INVENTARIO
         $costos = [];
@@ -455,7 +479,7 @@ class InventarioController extends Controller
                 }
 
                 if ($unidades > 0) {
-                    Entrada::create(['codigo_barras' => $codigo, 'unidades' => $unidades, 'fecha' => $fechaRegistro]);
+                    Entrada::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fechaRegistro]);
                     $stats['entradas']++;
                 }
             }
@@ -486,7 +510,7 @@ class InventarioController extends Controller
                     ]
                 );
 
-                Entrada::create(['codigo_barras' => $codigo, 'unidades' => $unidades, 'fecha' => $fecha]);
+                Entrada::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fecha]);
                 $stats['entradas']++;
             }
         }
@@ -517,7 +541,7 @@ class InventarioController extends Controller
                     ]
                 );
 
-                Salida::create(['codigo_barras' => $codigo, 'unidades' => $unidades, 'fecha' => $fecha, 'destino' => $destino]);
+                Salida::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fecha, 'destino' => $destino]);
                 $stats['salidas']++;
             }
         }

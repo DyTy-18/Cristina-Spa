@@ -84,6 +84,22 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">Sucursales donde trabaja</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.25rem;">
+                        @foreach($sucursales as $sucursal)
+                            @php $asignada = in_array($sucursal->id, old('sucursales', $empleado->sucursales->pluck('id')->toArray())); @endphp
+                            <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;
+                                          padding:0.3rem 0.75rem;border:1px solid var(--border-color);border-radius:20px;">
+                                <input type="checkbox" name="sucursales[]" value="{{ $sucursal->id }}"
+                                       {{ $asignada ? 'checked' : '' }}
+                                       style="width:auto;margin:0;">
+                                {{ $sucursal->es_principal ? '★ ' : '' }}{{ $sucursal->nombre }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
                 <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border-color);">
 
                 <h4 style="font-size:0.9rem;font-weight:600;margin-bottom:1rem;color:var(--text-color);">Acceso al sistema</h4>

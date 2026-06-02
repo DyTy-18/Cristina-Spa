@@ -31,6 +31,7 @@
 
             <form action="{{ route('admin.inventario.salidas.store') }}" method="POST">
                 @csrf
+                @include('admin.partials.sucursal_selector')
 
                 {{-- ── Filtros de producto (solo cliente, no afectan el POST) ── --}}
                 <div class="form-group">
