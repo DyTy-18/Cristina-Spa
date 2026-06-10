@@ -579,6 +579,15 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Tipo de pago</label>
+                            <select name="tipo_pago" class="form-control">
+                                <option value="">— Sin especificar —</option>
+                                <option value="efectivo" {{ old('tipo_pago') === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
+                                <option value="tarjeta"  {{ old('tipo_pago') === 'tarjeta'  ? 'selected' : '' }}>Tarjeta</option>
+                                <option value="qr"       {{ old('tipo_pago') === 'qr'       ? 'selected' : '' }}>QR</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Notas</label>
                             <textarea name="notas" class="form-control" rows="2"
                                       placeholder="Preferencias del cliente, observaciones...">{{ old('notas') }}</textarea>

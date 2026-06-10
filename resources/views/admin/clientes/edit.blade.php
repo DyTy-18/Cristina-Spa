@@ -46,7 +46,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Teléfono <span style="color:var(--error-color)">*</span></label>
+                        <label class="form-label">Teléfono</label>
                         <input type="text" name="telefono" class="form-control @error('telefono') is-invalid @enderror"
                                value="{{ old('telefono', $cliente->telefono) }}">
                         @error('telefono')
@@ -80,6 +80,23 @@
                     <label class="form-label">Notas internas</label>
                     <textarea name="notas" class="form-control" rows="3"
                               placeholder="Preferencias, alergias, observaciones...">{{ old('notas', $cliente->notas) }}</textarea>
+                </div>
+
+                <div class="form-group" style="border:1px solid var(--border-color);border-radius:var(--radius);padding:1rem;background:var(--bg-secondary,#fafafa);">
+                    <label class="form-label" style="font-weight:600;margin-bottom:0.25rem;">
+                        Cliente exclusiva
+                        <span style="font-size:0.75rem;font-weight:400;color:var(--text-light);margin-left:0.4rem;">(opcional)</span>
+                    </label>
+                    <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.75rem;">Si esta clienta es atendida únicamente por una profesional, selecciónala aquí.</p>
+                    <select name="empleado_exclusivo_id" class="form-control">
+                        <option value="">— Sin profesional exclusiva —</option>
+                        @foreach($empleados as $emp)
+                            <option value="{{ $emp->id }}" {{ old('empleado_exclusivo_id', $cliente->empleado_exclusivo_id) == $emp->id ? 'selected' : '' }}>
+                                {{ $emp->nombre }} {{ $emp->apellido }}
+                                @if($emp->especialidad) — {{ $emp->especialidad }} @endif
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div style="display:flex;gap:1rem;margin-top:0.5rem;">

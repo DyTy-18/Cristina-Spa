@@ -28,6 +28,7 @@ class Cita extends Model
         'hora',
         'estado',
         'precio_final',
+        'tipo_pago',
         'notas',
     ];
 

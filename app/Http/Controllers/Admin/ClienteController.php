@@ -20,28 +20,36 @@ use Illuminate\Http\Request;
 class ClienteController extends Controller
 {
     use CreaContratoPaquete;
-    public function index()
+    public function index(Request $request)
     {
-        $sid = session('sucursal_activa_id');
+        $sid     = session('sucursal_activa_id');
+        $ordenar = $request->get('ordenar', 'recientes');
 
-        $clientes = Cliente::withCount(['citas' => fn($q) => $q->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
+        $query = Cliente::withCount(['citas' => fn($q) => $q->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
             ->withCount(['citas as citas_completadas_count' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
+            ->withCount(['citas as citas_ultimos_3meses' => fn($q) => $q->where('estado', 'completada')->where('fecha', '>=', now()->subMonths(3))->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
             ->withSum(['citas as total_gastado' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'precio_final')
             ->withMax(['citas as ultima_visita' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'fecha')
             ->withMin(['citas as primera_visita' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'fecha')
             ->when($sid, fn($q) => $q->where(function ($q2) use ($sid) {
-                // Aparece si fue registrado en esta sucursal O tiene citas aquí
                 $q2->where('sucursal_id', $sid)
                    ->orWhereHas('citas', fn($q3) => $q3->where('sucursal_id', $sid));
             }))
-            ->where('oculto', false)
-            ->orderBy('apellido')
-            ->get();
+            ->where('oculto', false);
+
+        match ($ordenar) {
+            'frecuentes'  => $query->orderByDesc('citas_ultimos_3meses')->orderByDesc('citas_completadas_count'),
+            'gasto'       => $query->orderByDesc('total_gastado'),
+            'alfabetico'  => $query->orderBy('apellido')->orderBy('nombre'),
+            default       => $query->orderByDesc('created_at'),   // recientes
+        };
+
+        $clientes = $query->get();
 
         $esAdmin = auth()->user()->hasRole('admin');
         $totalOcultos = $esAdmin ? Cliente::where('oculto', true)->count() : 0;
 
-        return view('admin.clientes.index', compact('clientes', 'esAdmin', 'totalOcultos'));
+        return view('admin.clientes.index', compact('clientes', 'esAdmin', 'totalOcultos', 'ordenar'));
     }
 
     public function ocultos()
@@ -73,19 +81,21 @@ class ClienteController extends Controller
 
     public function create()
     {
-        return view('admin.clientes.create');
+        $empleados = Empleado::where('activo', true)->orderBy('nombre')->get();
+        return view('admin.clientes.create', compact('empleados'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nombre'           => 'required|string|max:100',
-            'apellido'         => 'nullable|string|max:100',
-            'email'            => 'nullable|email|unique:clientes,email',
-            'telefono'         => 'required|string|max:20',
-            'fecha_nacimiento' => 'nullable|date',
-            'direccion'        => 'nullable|string|max:255',
-            'notas'            => 'nullable|string',
+            'nombre'                => 'required|string|max:100',
+            'apellido'              => 'nullable|string|max:100',
+            'email'                 => 'nullable|email|unique:clientes,email',
+            'telefono'              => 'nullable|string|max:20',
+            'fecha_nacimiento'      => 'nullable|date',
+            'direccion'             => 'nullable|string|max:255',
+            'notas'                 => 'nullable|string',
+            'empleado_exclusivo_id' => 'nullable|exists:empleados,id',
         ]);
 
         $cliente = Cliente::create(array_merge($data, [
@@ -226,19 +236,21 @@ class ClienteController extends Controller
 
     public function edit(Cliente $cliente)
     {
-        return view('admin.clientes.edit', compact('cliente'));
+        $empleados = Empleado::where('activo', true)->orderBy('nombre')->get();
+        return view('admin.clientes.edit', compact('cliente', 'empleados'));
     }
 
     public function update(Request $request, Cliente $cliente)
     {
         $data = $request->validate([
-            'nombre'           => 'required|string|max:100',
-            'apellido'         => 'nullable|string|max:100',
-            'email'            => 'nullable|email|unique:clientes,email,' . $cliente->id,
-            'telefono'         => 'required|string|max:20',
-            'fecha_nacimiento' => 'nullable|date',
-            'direccion'        => 'nullable|string|max:255',
-            'notas'            => 'nullable|string',
+            'nombre'                => 'required|string|max:100',
+            'apellido'              => 'nullable|string|max:100',
+            'email'                 => 'nullable|email|unique:clientes,email,' . $cliente->id,
+            'telefono'              => 'nullable|string|max:20',
+            'fecha_nacimiento'      => 'nullable|date',
+            'direccion'             => 'nullable|string|max:255',
+            'notas'                 => 'nullable|string',
+            'empleado_exclusivo_id' => 'nullable|exists:empleados,id',
         ]);
 
         $cliente->update($data);
@@ -253,6 +265,7 @@ class ClienteController extends Controller
             'fecha'                         => 'required|date',
             'hora'                          => 'required',
             'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
+            'tipo_pago'                     => 'nullable|in:efectivo,tarjeta,qr',
             'notas'                         => 'nullable|string',
             'servicios'                     => 'required|array|min:1',
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
@@ -287,6 +300,7 @@ class ClienteController extends Controller
             'hora'         => $data['hora'],
             'estado'       => $data['estado'],
             'precio_final' => $precioTotal ?: null,
+            'tipo_pago'    => $data['tipo_pago'] ?? null,
             'notas'        => $data['notas'] ?? null,
         ]);
 

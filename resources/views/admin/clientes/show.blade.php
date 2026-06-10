@@ -1151,6 +1151,16 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label">Tipo de pago</label>
+                        <select name="tipo_pago" class="form-control">
+                            <option value="">— Sin especificar —</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="qr">QR</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label">Notas de la visita</label>
                         <textarea name="notas" class="form-control" rows="2"
                                   placeholder="Observaciones, preferencias del cliente..."></textarea>

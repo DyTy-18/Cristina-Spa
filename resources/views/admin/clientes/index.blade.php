@@ -7,7 +7,13 @@
     <div class="table-container">
         <div class="table-header">
             <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                <h3 class="table-title">Todos los Clientes</h3>
+                <h3 class="table-title">
+                    @if($ordenar === 'frecuentes') Clientes más frecuentes
+                    @elseif($ordenar === 'gasto') Clientes por gasto
+                    @elseif($ordenar === 'alfabetico') Clientes (A–Z)
+                    @else Últimos clientes
+                    @endif
+                </h3>
                 @include('admin.partials.sucursal_badge')
             </div>
             <div style="display:flex;align-items:center;gap:1rem;">
@@ -19,6 +25,25 @@
                 @endif
                 <a href="{{ route('admin.clientes.create') }}" class="btn btn-primary btn-sm">+ Nuevo Cliente</a>
             </div>
+        </div>
+
+        {{-- Filtros de orden --}}
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+            @php
+                $filtros = [
+                    'recientes'  => 'Últimos agregados',
+                    'frecuentes' => 'Más frecuentes (3 meses)',
+                    'gasto'      => 'Mayor gasto',
+                    'alfabetico' => 'A – Z',
+                ];
+            @endphp
+            @foreach($filtros as $valor => $etiqueta)
+                <a href="{{ route('admin.clientes.index', ['ordenar' => $valor]) }}"
+                   class="btn btn-sm {{ $ordenar === $valor ? 'btn-primary' : 'btn-outline' }}"
+                   style="{{ $ordenar !== $valor ? 'color:var(--text-light);' : '' }}">
+                    {{ $etiqueta }}
+                </a>
+            @endforeach
         </div>
 
         @if($clientes->isEmpty())
@@ -43,6 +68,9 @@
                         <th>Cliente</th>
                         <th>Contacto</th>
                         <th>Visitas completadas</th>
+                        @if($ordenar === 'frecuentes')
+                            <th>Últimos 3 meses</th>
+                        @endif
                         <th>Total gastado</th>
                         <th>Primera visita</th>
                         <th>Última visita</th>
@@ -74,6 +102,18 @@
                                     </span>
                                 @endif
                             </td>
+                            @if($ordenar === 'frecuentes')
+                                <td>
+                                    @if($cliente->citas_ultimos_3meses > 0)
+                                        <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--accent-color);">
+                                            {{ $cliente->citas_ultimos_3meses }}
+                                        </span>
+                                        <span style="font-size:0.75rem;color:var(--text-light);"> visitas</span>
+                                    @else
+                                        <span style="color:var(--text-light);font-size:0.85rem;">—</span>
+                                    @endif
+                                </td>
+                            @endif
                             <td>
                                 <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--secondary-color);">
                                     Bs. {{ number_format($cliente->total_gastado ?? 0, 2) }}

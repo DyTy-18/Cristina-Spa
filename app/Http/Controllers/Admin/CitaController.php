@@ -33,6 +33,25 @@ class CitaController extends Controller
             ->toArray();
     }
 
+    public function index(Request $request)
+    {
+        $sid = session('sucursal_activa_id');
+
+        $query = Cita::with(['cliente', 'citaServicios.servicio', 'citaServicios.empleado', 'sucursal'])
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->when($request->filled('estado'), fn($q) => $q->where('estado', $request->estado))
+            ->when($request->filled('buscar'), function ($q) use ($request) {
+                $b = '%' . $request->buscar . '%';
+                $q->whereHas('cliente', fn($c) => $c->where('nombre', 'like', $b)->orWhere('apellido', 'like', $b));
+            })
+            ->orderByDesc('fecha')
+            ->orderByDesc('hora');
+
+        $citas = $query->paginate(25)->withQueryString();
+
+        return view('admin.citas.index', compact('citas'));
+    }
+
     public function create()
     {
         $clientesRaw = Cliente::orderBy('apellido')->orderBy('nombre')->get(['id', 'nombre', 'apellido', 'telefono']);
@@ -96,6 +115,7 @@ class CitaController extends Controller
             'fecha'                         => 'required|date',
             'hora'                          => 'required',
             'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
+            'tipo_pago'                     => 'nullable|in:efectivo,tarjeta,qr',
             'notas'                         => 'nullable|string',
             'campana_id'                    => 'nullable|exists:campanas,id',
             'servicios'                     => 'required|array|min:1',
@@ -159,6 +179,7 @@ class CitaController extends Controller
             'hora'         => $data['hora'],
             'estado'       => $data['estado'],
             'precio_final' => $precioTotal ?: null,
+            'tipo_pago'    => $data['tipo_pago'] ?? null,
             'notas'        => $data['notas'] ?? null,
         ]);
 
@@ -346,6 +367,37 @@ class CitaController extends Controller
         });
 
         return response()->json($events);
+    }
+
+    public function verificarEdicion(Request $request, Cita $cita)
+    {
+        $request->validate(['password' => 'required|string']);
+
+        if ($request->password !== config('app.edit_completada_password')) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.'])->with('verificar_cita_id', $cita->id);
+        }
+
+        return redirect()->route('admin.citas.edit', $cita);
+    }
+
+    public function updateEstado(Request $request, Cita $cita)
+    {
+        $data = $request->validate([
+            'estado' => 'required|in:pendiente,confirmada,completada,cancelada',
+        ]);
+
+        $estadoAnterior = $cita->estado;
+        $cita->update(['estado' => $data['estado']]);
+
+        if ($estadoAnterior !== $cita->estado) {
+            app(WppService::class)->notificarSegunEstado($cita);
+
+            if ($cita->estado === 'completada') {
+                app(MaterialConsumptionService::class)->procesarCita($cita);
+            }
+        }
+
+        return back()->with('success', 'Estado actualizado.');
     }
 
     public function informe(Cita $cita)

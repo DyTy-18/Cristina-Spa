@@ -25,6 +25,8 @@ use App\Http\Controllers\Admin\AlertaStockController;
 use App\Http\Controllers\Admin\MisCitasController;
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\MigracionSucursalController;
+use App\Http\Controllers\Admin\IngresosController;
+use App\Http\Controllers\Admin\GastosController;
 
 // Página pública
 Route::get('/', function () {
@@ -60,11 +62,23 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Ingresos
+    Route::middleware('role:admin')->get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
+
+    // Gastos
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/gastos', [GastosController::class, 'index'])->name('gastos.index');
+        Route::get('/gastos/servicios-empleado', [GastosController::class, 'serviciosEmpleado'])->name('gastos.serviciosEmpleado');
+        Route::post('/gastos/verificar-password', [GastosController::class, 'verificarPassword'])->name('gastos.verificarPassword');
+        Route::post('/gastos/gasto', [GastosController::class, 'storeGasto'])->name('gastos.storeGasto');
+        Route::delete('/gastos/gasto/{gasto}', [GastosController::class, 'destroyGasto'])->name('gastos.destroyGasto');
+        Route::post('/gastos/pago', [GastosController::class, 'storePago'])->name('gastos.storePago');
+        Route::delete('/gastos/pago/{pago}', [GastosController::class, 'destroyPago'])->name('gastos.destroyPago');
+    });
     
     // Citas
-    Route::get('/citas', function () {
-        return view('admin.citas.index');
-    })->name('citas.index');
+    Route::get('/citas', [CitaController::class, 'index'])->name('citas.index');
     Route::get('/citas/crear', [CitaController::class, 'create'])->name('citas.create');
     Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');
     Route::get('/citas/calendario', [CitaController::class, 'calendario'])->name('citas.calendario');
@@ -73,6 +87,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::get('/citas/{cita}/informe', [CitaController::class, 'informe'])->name('citas.informe');
     Route::get('/citas/{cita}/editar', [CitaController::class, 'edit'])->name('citas.edit');
     Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
+    Route::patch('/citas/{cita}/estado', [CitaController::class, 'updateEstado'])->name('citas.estado');
+    Route::post('/citas/{cita}/verificar-edicion', [CitaController::class, 'verificarEdicion'])->name('citas.verificarEdicion');
     
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');

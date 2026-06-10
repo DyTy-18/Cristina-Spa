@@ -31,6 +31,7 @@ class Cliente extends Model
         'user_id',
         'oculto',
         'sucursal_id',
+        'empleado_exclusivo_id',
     ];
 
     protected $casts = [
@@ -51,6 +52,11 @@ class Cliente extends Model
     public function sucursal()
     {
         return $this->belongsTo(Sucursal::class);
+    }
+
+    public function empleadoExclusivo()
+    {
+        return $this->belongsTo(Empleado::class, 'empleado_exclusivo_id');
     }
 
     public function citas()

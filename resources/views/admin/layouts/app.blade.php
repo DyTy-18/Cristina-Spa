@@ -39,6 +39,19 @@
                         <span>Dashboard</span>
                     </a>
 
+                    @if (auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.ingresos.index') }}"
+                            class="nav-item {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
+                            <span class="nav-icon">💵</span>
+                            <span>Ingresos</span>
+                        </a>
+                        <a href="{{ route('admin.gastos.index') }}"
+                            class="nav-item {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
+                            <span class="nav-icon">🧾</span>
+                            <span>Gastos</span>
+                        </a>
+                    @endif
+
                     @if (auth()->user()->hasAnyPermission(['ver citas', 'crear citas']))
                         <a href="{{ route('admin.citas.index') }}"
                             class="nav-item {{ request()->routeIs('admin.citas.index', 'admin.citas.create') ? 'active' : '' }}">

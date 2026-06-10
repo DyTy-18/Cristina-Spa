@@ -41,6 +41,8 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'edit_completada_password' => env('EDIT_COMPLETADA_PASSWORD', 'admin1234'),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
