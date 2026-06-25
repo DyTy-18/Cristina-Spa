@@ -97,7 +97,7 @@ class SucursalController extends Controller
 
     public function cambiar(Request $request)
     {
-        abort_unless(auth()->user()->hasRole('admin'), 403);
+        abort_unless(auth()->user()->hasRole(['admin', 'developer']), 403);
 
         $request->validate(['sucursal_id' => 'nullable|exists:sucursales,id']);
 

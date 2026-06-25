@@ -213,7 +213,7 @@
                 <div class="header-right">
                     {{-- Selector de sucursal --}}
                     @if(isset($sucursalActiva))
-                        @if(auth()->user()->hasRole('admin') && isset($sucursales) && $sucursales->count() > 0)
+                        @if(auth()->user()->hasRole(['admin', 'developer']) && isset($sucursales) && $sucursales->count() > 0)
                             <form method="POST" action="{{ route('admin.sucursal.cambiar') }}" id="sucursalForm"
                                   style="display:inline-flex;align-items:center;gap:0.4rem;">
                                 @csrf

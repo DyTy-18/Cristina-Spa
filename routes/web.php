@@ -229,7 +229,7 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::post('/mis-citas/{cita}/consumo', [MisCitasController::class, 'guardarConsumo'])->name('mis-citas.consumo.store');
 
     // Sucursales (solo admin)
-    Route::middleware('role:admin')->prefix('sucursales')->name('sucursales.')->group(function () {
+    Route::middleware('role:admin|developer')->prefix('sucursales')->name('sucursales.')->group(function () {
         Route::get('/', [SucursalController::class, 'index'])->name('index');
         Route::get('/crear', [SucursalController::class, 'create'])->name('create');
         Route::post('/', [SucursalController::class, 'store'])->name('store');
