@@ -344,6 +344,23 @@ class ClienteController extends Controller
                 : 'Visita registrada exitosamente.');
     }
 
+    public function destroy(Cliente $cliente)
+    {
+        abort_unless(auth()->user()->hasRole('developer'), 403);
+
+        \DB::transaction(function () use ($cliente) {
+            foreach ($cliente->citas as $cita) {
+                $cita->citaServicios()->delete();
+                $cita->delete();
+            }
+            $cliente->recomendacionLinks()->delete();
+            $cliente->delete();
+        });
+
+        return redirect()->route('admin.clientes.index')
+            ->with('success', 'Cliente eliminado permanentemente.');
+    }
+
     public function updateCitaEstado(Request $request, Cliente $cliente, Cita $cita)
     {
         abort_if($cita->cliente_id !== $cliente->id, 404);

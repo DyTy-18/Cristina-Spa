@@ -102,6 +102,7 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
     Route::get('/clientes/ocultos', [ClienteController::class, 'ocultos'])->name('clientes.ocultos');
     Route::post('/clientes/{cliente}/ocultar', [ClienteController::class, 'toggleOculto'])->name('clientes.toggleOculto');
+    Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     Route::delete('/recomendacion-links/{link}', [RecomendacionController::class, 'destroy'])->name('recomendacion.link.destroy');
     
     // Servicios

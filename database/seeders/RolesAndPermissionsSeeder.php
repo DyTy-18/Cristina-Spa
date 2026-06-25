@@ -159,6 +159,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'cancelar citas'
         ]);
 
+        // DEVELOPER - Acceso técnico total, incluyendo eliminación permanente de registros
+        $developer = Role::create(['name' => 'developer']);
+        $developer->givePermissionTo(Permission::all());
+
         // Re-asignar rol admin al usuario admin si existe
         $adminUser = \App\Models\User::where('email', 'admin@cristinaspa.com')->first();
         if ($adminUser && !$adminUser->hasRole('admin')) {

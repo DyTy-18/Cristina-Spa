@@ -3,6 +3,28 @@
 @section('title', 'Clientes')
 @section('page-title', 'Clientes')
 
+@push('styles')
+<style>
+    /* Modal confirmación eliminar */
+    .del-overlay {
+        display: none; position: fixed; inset: 0; z-index: 9000;
+        background: rgba(0,0,0,0.45); align-items: center; justify-content: center;
+    }
+    .del-overlay.open { display: flex; }
+    .del-modal {
+        background: var(--white); padding: 2rem 2.25rem; max-width: 420px; width: 90%;
+        border-top: 4px solid var(--error-color);
+    }
+    .del-modal h4 {
+        font-family: 'Cormorant Garamond', serif; font-size: 1.3rem;
+        color: var(--primary-color); margin-bottom: 0.6rem; letter-spacing: 1px;
+    }
+    .del-modal p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem; line-height: 1.6; }
+    .del-modal strong { color: var(--primary-color); }
+    .del-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+</style>
+@endpush
+
 @section('content')
     <div class="table-container">
         <div class="table-header">
@@ -145,6 +167,15 @@
                                             </button>
                                         </form>
                                     @endif
+                                    @if(auth()->user()->hasRole('developer'))
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="abrirConfirmDelete({{ $cliente->id }}, '{{ addslashes($cliente->nombre_completo) }}')"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -155,6 +186,29 @@
     </div>
 @endsection
 
+@if(auth()->user()->hasRole('developer'))
+{{-- Modal de confirmación eliminar cliente --}}
+<div class="del-overlay" id="delOverlay">
+    <div class="del-modal">
+        <h4>Eliminar cliente</h4>
+        <p>
+            ¿Estás seguro de que deseas eliminar permanentemente a
+            <strong id="delNombre"></strong>?
+            <br>
+            Esta acción borrará también todas sus citas y no se puede deshacer.
+        </p>
+        <div class="del-modal-actions">
+            <button type="button" class="btn btn-outline" onclick="cerrarConfirmDelete()">Cancelar</button>
+            <form id="delForm" method="POST" style="display:inline;">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 <script>
     document.getElementById('searchInput')?.addEventListener('input', function () {
@@ -162,6 +216,20 @@
         document.querySelectorAll('#clientesTable .cliente-row').forEach(row => {
             row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
         });
+    });
+
+    function abrirConfirmDelete(id, nombre) {
+        document.getElementById('delNombre').textContent = nombre;
+        document.getElementById('delForm').action = '/admin/clientes/' + id;
+        document.getElementById('delOverlay').classList.add('open');
+    }
+
+    function cerrarConfirmDelete() {
+        document.getElementById('delOverlay').classList.remove('open');
+    }
+
+    document.getElementById('delOverlay')?.addEventListener('click', function (e) {
+        if (e.target === this) cerrarConfirmDelete();
     });
 </script>
 @endpush
