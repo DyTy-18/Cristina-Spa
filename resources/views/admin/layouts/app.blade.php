@@ -125,9 +125,17 @@
                             <span>Comisiones</span>
                         </a>
                         <a href="{{ route('admin.reportes.comisiones') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
+                            class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.comisiones*') ? 'active' : '' }}">
                             <span class="nav-icon">📈</span>
                             <span>Reporte comisiones</span>
+                        </a>
+                    @endif
+
+                    @if (auth()->user()->hasPermissionTo('ver reportes'))
+                        <a href="{{ route('admin.reportes.clientes') }}"
+                            class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.clientes*') ? 'active' : '' }}">
+                            <span class="nav-icon">📋</span>
+                            <span>Reporte clientes</span>
                         </a>
                     @endif
 

@@ -40,6 +40,15 @@
         <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline btn-sm">Catálogo</a>
         <a href="{{ route('admin.inventario.importar') }}" class="btn btn-outline btn-sm">Importar Excel</a>
         <a href="{{ route('admin.inventario.analisis') }}" class="btn btn-outline btn-sm">📊 Análisis</a>
+
+        <form method="POST" action="{{ route('admin.inventario.limpiar') }}" style="margin-left:auto;"
+              onsubmit="return confirm('¿Eliminar TODOS los datos de inventario? Esta acción no se puede deshacer.')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;">
+                🗑 Limpiar inventario
+            </button>
+        </form>
     </div>
 
     <div class="table-container">

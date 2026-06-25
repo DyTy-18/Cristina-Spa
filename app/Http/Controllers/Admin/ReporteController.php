@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exports\ClientesExport;
 use App\Exports\ComisionesExport;
+use App\Models\Cita;
 use App\Models\CitaServicio;
+use App\Models\Cliente;
 use App\Models\Empleado;
+use App\Models\Servicio;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -138,5 +142,129 @@ class ReporteController extends Controller
             new ComisionesExport($data['porEmpleado'], $desde, $hasta),
             'comisiones-' . $desde . '-a-' . $hasta . '.xlsx'
         );
+    }
+
+    // ══════════════════════════════════════════
+    //  REPORTE DE CLIENTES
+    // ══════════════════════════════════════════
+
+    private function calcularClientesReporte(
+        ?string $desde,
+        ?string $hasta,
+        array   $servicioIds,
+        ?string $conTelefono,
+        ?string $conEmail,
+        ?string $conFechaNac
+    ): array {
+        $clientes = Cliente::where('oculto', false)
+            ->when($conTelefono === 'si', fn($q) => $q->whereNotNull('telefono')->where('telefono', '!=', ''))
+            ->when($conTelefono === 'no', fn($q) => $q->where(fn($q2) => $q2->whereNull('telefono')->orWhere('telefono', '')))
+            ->when($conEmail === 'si', fn($q) => $q->whereNotNull('email')->where('email', '!=', ''))
+            ->when($conEmail === 'no', fn($q) => $q->where(fn($q2) => $q2->whereNull('email')->orWhere('email', '')))
+            ->when($conFechaNac === 'si', fn($q) => $q->whereNotNull('fecha_nacimiento'))
+            ->when($conFechaNac === 'no', fn($q) => $q->whereNull('fecha_nacimiento'))
+            ->when($desde || $hasta || $servicioIds, fn($q) =>
+                $q->whereHas('citas', fn($q2) => $q2
+                    ->where('estado', 'completada')
+                    ->when($desde, fn($q3) => $q3->where('fecha', '>=', $desde))
+                    ->when($hasta, fn($q3) => $q3->where('fecha', '<=', $hasta))
+                    ->when($servicioIds, fn($q3) => $q3->whereHas('citaServicios', fn($q4) => $q4->whereIn('servicio_id', $servicioIds)))
+                )
+            )
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->get();
+
+        $clienteIds = $clientes->pluck('id');
+
+        $citas = Cita::whereIn('cliente_id', $clienteIds)
+            ->where('estado', 'completada')
+            ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
+            ->when($servicioIds, fn($q) => $q->whereHas('citaServicios', fn($q2) => $q2->whereIn('servicio_id', $servicioIds)))
+            ->with(['citaServicios.servicio'])
+            ->get();
+
+        $citasPorCliente = $citas->groupBy('cliente_id');
+
+        $filas = $clientes->map(function ($cliente) use ($citasPorCliente) {
+            $citasCliente = $citasPorCliente->get($cliente->id, collect());
+            $serviciosUsados = $citasCliente
+                ->flatMap(fn($c) => $c->citaServicios->map(fn($cs) => $cs->servicio?->nombre))
+                ->filter()->unique()->sort()->values();
+
+            return [
+                'cliente'        => $cliente,
+                'visitas'        => $citasCliente->count(),
+                'total_gastado'  => (float) $citasCliente->sum('precio_final'),
+                'primera_visita' => $citasCliente->min('fecha'),
+                'ultima_visita'  => $citasCliente->max('fecha'),
+                'servicios'      => $serviciosUsados,
+            ];
+        });
+
+        return [
+            'filas'   => $filas,
+            'totales' => [
+                'clientes'      => $clientes->count(),
+                'con_telefono'  => $clientes->filter(fn($c) => !empty($c->telefono))->count(),
+                'con_email'     => $clientes->filter(fn($c) => !empty($c->email))->count(),
+                'con_fecha_nac' => $clientes->filter(fn($c) => $c->fecha_nacimiento)->count(),
+                'total_gastado' => $filas->sum('total_gastado'),
+                'total_visitas' => $filas->sum('visitas'),
+            ],
+        ];
+    }
+
+    public function clientes(Request $request)
+    {
+        $desde       = $request->get('desde') ?: null;
+        $hasta       = $request->get('hasta') ?: null;
+        $servicioIds = array_values(array_filter(array_map('intval', (array) $request->get('servicios', []))));
+        $conTelefono = $request->get('con_telefono') ?: null;
+        $conEmail    = $request->get('con_email') ?: null;
+        $conFechaNac = $request->get('con_fecha_nacimiento') ?: null;
+
+        $servicios = Servicio::orderBy('nombre')->get(['id', 'nombre']);
+        $data      = $this->calcularClientesReporte($desde, $hasta, $servicioIds, $conTelefono, $conEmail, $conFechaNac);
+
+        return view('admin.reportes.clientes', array_merge($data, compact(
+            'desde', 'hasta', 'servicioIds', 'servicios', 'conTelefono', 'conEmail', 'conFechaNac'
+        )));
+    }
+
+    public function clientesPdf(Request $request)
+    {
+        $desde       = $request->get('desde') ?: null;
+        $hasta       = $request->get('hasta') ?: null;
+        $servicioIds = array_values(array_filter(array_map('intval', (array) $request->get('servicios', []))));
+        $conTelefono = $request->get('con_telefono') ?: null;
+        $conEmail    = $request->get('con_email') ?: null;
+        $conFechaNac = $request->get('con_fecha_nacimiento') ?: null;
+
+        $data = $this->calcularClientesReporte($desde, $hasta, $servicioIds, $conTelefono, $conEmail, $conFechaNac);
+
+        $pdf = Pdf::loadView('admin.reportes.clientes-pdf', array_merge($data, compact('desde', 'hasta')))
+            ->setPaper('a4', 'landscape');
+
+        $nombre = 'reporte-clientes' . ($desde ? '-' . $desde . '-a-' . $hasta : '') . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    public function clientesExcel(Request $request)
+    {
+        $desde       = $request->get('desde') ?: null;
+        $hasta       = $request->get('hasta') ?: null;
+        $servicioIds = array_values(array_filter(array_map('intval', (array) $request->get('servicios', []))));
+        $conTelefono = $request->get('con_telefono') ?: null;
+        $conEmail    = $request->get('con_email') ?: null;
+        $conFechaNac = $request->get('con_fecha_nacimiento') ?: null;
+
+        $data = $this->calcularClientesReporte($desde, $hasta, $servicioIds, $conTelefono, $conEmail, $conFechaNac);
+
+        $nombre = 'reporte-clientes' . ($desde ? '-' . $desde . '-a-' . $hasta : '') . '.xlsx';
+
+        return Excel::download(new ClientesExport($data['filas'], $desde, $hasta), $nombre);
     }
 }

@@ -595,4 +595,17 @@ class InventarioController extends Controller
         }
         return \Carbon\Carbon::parse($str)->format('Y-m-d');
     }
+
+    public function limpiar()
+    {
+        DB::table('consumos_material')->delete();
+        DB::table('alertas_stock')->delete();
+        DB::table('salidas')->delete();
+        DB::table('entradas')->delete();
+        DB::table('servicio_materiales')->delete();
+        DB::table('productos')->delete();
+
+        return redirect()->route('admin.inventario.index')
+            ->with('success', 'Todos los datos de inventario han sido eliminados.');
+    }
 }

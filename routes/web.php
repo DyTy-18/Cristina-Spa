@@ -140,6 +140,10 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::get('/reportes/comisiones', [ReporteController::class, 'comisiones'])->name('reportes.comisiones');
         Route::get('/reportes/comisiones/pdf', [ReporteController::class, 'comisionesPdf'])->name('reportes.comisiones.pdf');
         Route::get('/reportes/comisiones/excel', [ReporteController::class, 'comisionesExcel'])->name('reportes.comisiones.excel');
+
+        Route::get('/reportes/clientes', [ReporteController::class, 'clientes'])->name('reportes.clientes');
+        Route::get('/reportes/clientes/pdf', [ReporteController::class, 'clientesPdf'])->name('reportes.clientes.pdf');
+        Route::get('/reportes/clientes/excel', [ReporteController::class, 'clientesExcel'])->name('reportes.clientes.excel');
     });
 
     // Empleados
@@ -257,6 +261,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
 
         Route::get('/importar', [InventarioController::class, 'showImport'])->name('importar');
         Route::post('/importar', [InventarioController::class, 'import'])->name('importar.store');
+
+        Route::delete('/limpiar', [InventarioController::class, 'limpiar'])->name('limpiar');
     });
 });
 
