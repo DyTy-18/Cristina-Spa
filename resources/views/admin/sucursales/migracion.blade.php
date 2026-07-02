@@ -24,6 +24,9 @@
                 @if(isset($res['citas']))
                     <li>{{ $res['citas'] }} cita(s) reasignada(s)</li>
                 @endif
+                @if(isset($res['clientes']))
+                    <li>{{ $res['clientes'] }} cliente(s) asignado(s) a la sucursal destino</li>
+                @endif
                 @if(isset($res['inventario']))
                     <li>{{ $res['inventario']['entradas'] }} entrada(s) y {{ $res['inventario']['salidas'] }} salida(s) de inventario reasignadas</li>
                 @endif
@@ -53,6 +56,9 @@
                             <select name="origen_id" class="form-control @error('origen_id') is-invalid @enderror" required
                                     onchange="actualizarDestino()">
                                 <option value="">— Seleccionar —</option>
+                                <option value="sin_asignar" {{ old('origen_id', $data['origen_id'] ?? '') === 'sin_asignar' ? 'selected' : '' }}>
+                                    🌐 Sin sucursal asignada (datos previos a la migración)
+                                </option>
                                 @foreach($sucursales as $s)
                                     <option value="{{ $s->id }}"
                                         {{ old('origen_id', $data['origen_id'] ?? '') == $s->id ? 'selected' : '' }}>
@@ -96,6 +102,19 @@
                         </label>
 
                         <label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.65rem 0.85rem;border:1px solid var(--border-color);border-radius:6px;margin-bottom:0.5rem;cursor:pointer;">
+                            <input type="checkbox" name="migrar[]" value="clientes"
+                                   {{ in_array('clientes', $migrarSel) ? 'checked' : '' }}
+                                   style="width:auto;margin:0.15rem 0 0;"
+                                   onchange="toggleFechas()">
+                            <div>
+                                <div style="font-size:0.85rem;font-weight:500;">👥 Clientes</div>
+                                <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.1rem;">
+                                    Asigna los clientes del origen a la sucursal destino. Acepta filtro por fecha de registro.
+                                </div>
+                            </div>
+                        </label>
+
+                        <label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.65rem 0.85rem;border:1px solid var(--border-color);border-radius:6px;margin-bottom:0.5rem;cursor:pointer;">
                             <input type="checkbox" name="migrar[]" value="citas"
                                    {{ in_array('citas', $migrarSel) ? 'checked' : '' }}
                                    style="width:auto;margin:0.15rem 0 0;"
@@ -122,7 +141,7 @@
                         </label>
                     </div>
 
-                    <div id="seccionFechas" style="{{ (in_array('citas', $migrarSel) || in_array('inventario', $migrarSel)) ? '' : 'display:none;' }}">
+                    <div id="seccionFechas" style="{{ (in_array('citas', $migrarSel) || in_array('clientes', $migrarSel) || in_array('inventario', $migrarSel)) ? '' : 'display:none;' }}">
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Desde (fecha)</label>
@@ -163,7 +182,7 @@
                     </div>
                     <div class="card-body">
                         <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:1rem;">
-                            De <strong>{{ $origen->nombre }}</strong> → <strong>{{ $destino->nombre }}</strong>
+                            De <strong>{{ $sinAsignar ? 'Sin sucursal asignada' : $origen->nombre }}</strong> → <strong>{{ $destino->nombre }}</strong>
                             @if(!empty($data['fecha_desde']) || !empty($data['fecha_hasta']))
                                 <br><span style="font-size:0.78rem;">
                                     Fechas: {{ $data['fecha_desde'] ?? '—' }} al {{ $data['fecha_hasta'] ?? '—' }}
@@ -189,6 +208,15 @@
                             </div>
                         @endif
 
+                        @if(isset($preview['clientes']))
+                            <div style="display:flex;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border-color);">
+                                <span style="font-size:0.85rem;">👥 Clientes a asignar</span>
+                                <strong style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:{{ $preview['clientes'] > 0 ? 'var(--accent-color)' : 'var(--text-light)' }}">
+                                    {{ $preview['clientes'] }}
+                                </strong>
+                            </div>
+                        @endif
+
                         @if(isset($preview['inventario']))
                             <div style="padding:0.75rem 0;">
                                 <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
@@ -207,7 +235,7 @@
                         @endif
 
                         @php
-                            $total = ($preview['empleados'] ?? 0) + ($preview['citas'] ?? 0)
+                            $total = ($preview['empleados'] ?? 0) + ($preview['citas'] ?? 0) + ($preview['clientes'] ?? 0)
                                    + ($preview['inventario']['entradas'] ?? 0) + ($preview['inventario']['salidas'] ?? 0);
                         @endphp
 
@@ -232,9 +260,10 @@
 @push('scripts')
 <script>
 function toggleFechas() {
-    const citasChecked = document.querySelector('input[value="citas"]').checked;
-    const invChecked   = document.querySelector('input[value="inventario"]').checked;
-    document.getElementById('seccionFechas').style.display = (citasChecked || invChecked) ? '' : 'none';
+    const citasChecked    = document.querySelector('input[value="citas"]').checked;
+    const clientesChecked = document.querySelector('input[value="clientes"]').checked;
+    const invChecked      = document.querySelector('input[value="inventario"]').checked;
+    document.getElementById('seccionFechas').style.display = (citasChecked || clientesChecked || invChecked) ? '' : 'none';
 }
 
 function actualizarDestino() {

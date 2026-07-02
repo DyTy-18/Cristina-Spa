@@ -90,7 +90,10 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
     Route::patch('/citas/{cita}/estado', [CitaController::class, 'updateEstado'])->name('citas.estado');
     Route::post('/citas/{cita}/verificar-edicion', [CitaController::class, 'verificarEdicion'])->name('citas.verificarEdicion');
-    
+    Route::middleware('role:admin|encargado|developer')->group(function () {
+        Route::delete('/citas/{cita}', [CitaController::class, 'destroy'])->name('citas.destroy');
+    });
+
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
@@ -103,7 +106,9 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
     Route::get('/clientes/ocultos', [ClienteController::class, 'ocultos'])->name('clientes.ocultos');
     Route::post('/clientes/{cliente}/ocultar', [ClienteController::class, 'toggleOculto'])->name('clientes.toggleOculto');
-    Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    Route::middleware('role:admin|encargado|developer')->group(function () {
+        Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    });
     Route::delete('/recomendacion-links/{link}', [RecomendacionController::class, 'destroy'])->name('recomendacion.link.destroy');
     
     // Servicios

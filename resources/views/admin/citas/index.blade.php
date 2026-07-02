@@ -240,6 +240,14 @@
                                            style="padding:0.25rem 0.6rem;font-size:0.8rem;"
                                            title="Editar">Editar</a>
                                     @endif
+
+                                    @hasanyrole('admin|encargado|developer')
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                                onclick="abrirModalEliminarCita('{{ route('admin.citas.destroy', $cita) }}')"
+                                                title="Eliminar (requiere contraseña)">Eliminar</button>
+                                    @endhasanyrole
                                 </div>
                             </td>
                         </tr>
@@ -299,6 +307,30 @@
         </form>
     </div>
 </div>
+
+@hasanyrole('admin|encargado|developer')
+{{-- Modal contraseña para eliminar cita --}}
+<div class="modal-overlay" id="modalEliminarCita">
+    <div class="modal-box">
+        <h4>Eliminar cita</h4>
+        <p>Esta acción no se puede deshacer. Ingresa la contraseña de administrador para continuar.</p>
+        <form id="formEliminarCita" method="POST">
+            @csrf @method('DELETE')
+            <input type="password" name="password" id="modalEliminarCitaPassword"
+                   placeholder="Contraseña" autocomplete="current-password" required>
+            <div class="modal-error" id="modalEliminarCitaError">
+                @if($errors->has('password') && session('confirmar_eliminar_cita_id'))
+                    {{ $errors->first('password') }}
+                @endif
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminarCita()">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endhasanyrole
 @endsection
 
 @push('scripts')
@@ -327,7 +359,10 @@ document.getElementById('modalEditar').addEventListener('click', function (e) {
 });
 
 document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') cerrarModal();
+    if (e.key === 'Escape') {
+        cerrarModal();
+        cerrarModalEliminarCita();
+    }
 });
 
 @if(session('verificar_cita_id'))
@@ -336,6 +371,31 @@ document.addEventListener('keydown', function (e) {
         const url = '{{ route('admin.citas.verificarEdicion', session('verificar_cita_id')) }}';
         abrirModalEditar(url);
         document.getElementById('modalError').textContent = '{{ $errors->first('password') }}';
+    });
+@endif
+
+function abrirModalEliminarCita(actionUrl) {
+    const modal = document.getElementById('modalEliminarCita');
+    document.getElementById('formEliminarCita').action = actionUrl;
+    document.getElementById('modalEliminarCitaPassword').value = '';
+    document.getElementById('modalEliminarCitaError').textContent = '';
+    modal.classList.add('active');
+    setTimeout(() => document.getElementById('modalEliminarCitaPassword').focus(), 50);
+}
+
+function cerrarModalEliminarCita() {
+    document.getElementById('modalEliminarCita').classList.remove('active');
+}
+
+document.getElementById('modalEliminarCita')?.addEventListener('click', function (e) {
+    if (e.target === this) cerrarModalEliminarCita();
+});
+
+@if(session('confirmar_eliminar_cita_id'))
+    document.addEventListener('DOMContentLoaded', function () {
+        const url = '{{ route('admin.citas.destroy', session('confirmar_eliminar_cita_id')) }}';
+        abrirModalEliminarCita(url);
+        document.getElementById('modalEliminarCitaError').textContent = '{{ $errors->first('password') }}';
     });
 @endif
 </script>

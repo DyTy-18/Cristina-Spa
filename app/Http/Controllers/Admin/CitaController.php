@@ -401,6 +401,22 @@ class CitaController extends Controller
         return back()->with('success', 'Estado actualizado.');
     }
 
+    public function destroy(Request $request, Cita $cita)
+    {
+        $request->validate(['password' => 'required|string'], [
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        if ($request->password !== config('app.edit_completada_password')) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.'])->with('confirmar_eliminar_cita_id', $cita->id);
+        }
+
+        $cita->citaServicios()->delete();
+        $cita->delete();
+
+        return redirect()->route('admin.citas.index')->with('success', 'Cita eliminada.');
+    }
+
     public function informe(Cita $cita)
     {
         $cita->load([

@@ -347,9 +347,15 @@ class ClienteController extends Controller
                 : 'Visita registrada exitosamente.');
     }
 
-    public function destroy(Cliente $cliente)
+    public function destroy(Request $request, Cliente $cliente)
     {
-        abort_unless(auth()->user()->hasRole('developer'), 403);
+        $request->validate(['password' => 'required|string'], [
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        if ($request->password !== config('app.edit_completada_password')) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.'])->with('confirmar_eliminar_cliente_id', $cliente->id);
+        }
 
         \DB::transaction(function () use ($cliente) {
             foreach ($cliente->citas as $cita) {

@@ -165,7 +165,7 @@
                                     <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-accent">
                                         Editar
                                     </a>
-                                    @if($esAdmin)
+                                    {{-- @if($esAdmin)
                                         <form method="POST" action="{{ route('admin.clientes.toggleOculto', $cliente) }}" style="display:inline;">
                                             @csrf
                                             <button
@@ -176,8 +176,8 @@
                                                 Ocultar
                                             </button>
                                         </form>
-                                    @endif
-                                    @if(auth()->user()->hasRole('developer'))
+                                    @endif --}}
+                                    @hasanyrole('admin|encargado|developer')
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-danger"
@@ -196,7 +196,7 @@
     </div>
 @endsection
 
-@if(auth()->user()->hasRole('developer'))
+@hasanyrole('admin|encargado|developer')
 {{-- Modal de confirmación eliminar cliente --}}
 <div class="del-overlay" id="delOverlay">
     <div class="del-modal">
@@ -205,19 +205,27 @@
             ¿Estás seguro de que deseas eliminar permanentemente a
             <strong id="delNombre"></strong>?
             <br>
-            Esta acción borrará también todas sus citas y no se puede deshacer.
+            Esta acción borrará también todas sus citas y no se puede deshacer. Ingresa la contraseña de administrador para continuar.
         </p>
-        <div class="del-modal-actions">
-            <button type="button" class="btn btn-outline" onclick="cerrarConfirmDelete()">Cancelar</button>
-            <form id="delForm" method="POST" style="display:inline;">
-                @csrf
-                @method('DELETE')
+        <form id="delForm" method="POST" style="display:block;">
+            @csrf
+            @method('DELETE')
+            <input type="password" name="password" id="delPassword"
+                   placeholder="Contraseña" autocomplete="current-password" required
+                   style="width:100%;height:40px;padding:0 0.75rem;border:1px solid rgba(0,0,0,0.18);border-radius:4px;font-size:0.9rem;outline:none;margin-bottom:0.5rem;box-sizing:border-box;">
+            <div class="modal-error" id="delPasswordError" style="font-size:0.8rem;color:#842029;margin-bottom:0.75rem;min-height:1rem;">
+                @if($errors->has('password') && session('confirmar_eliminar_cliente_id'))
+                    {{ $errors->first('password') }}
+                @endif
+            </div>
+            <div class="del-modal-actions">
+                <button type="button" class="btn btn-outline" onclick="cerrarConfirmDelete()">Cancelar</button>
                 <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
-@endif
+@endhasanyrole
 
 @push('scripts')
 <script>
@@ -231,7 +239,10 @@
     function abrirConfirmDelete(id, nombre) {
         document.getElementById('delNombre').textContent = nombre;
         document.getElementById('delForm').action = '/admin/clientes/' + id;
+        document.getElementById('delPassword').value = '';
+        document.getElementById('delPasswordError').textContent = '';
         document.getElementById('delOverlay').classList.add('open');
+        setTimeout(() => document.getElementById('delPassword').focus(), 50);
     }
 
     function cerrarConfirmDelete() {
@@ -241,5 +252,12 @@
     document.getElementById('delOverlay')?.addEventListener('click', function (e) {
         if (e.target === this) cerrarConfirmDelete();
     });
+
+    @if(session('confirmar_eliminar_cliente_id'))
+        document.addEventListener('DOMContentLoaded', function () {
+            abrirConfirmDelete({{ session('confirmar_eliminar_cliente_id') }}, 'este cliente');
+            document.getElementById('delPasswordError').textContent = '{{ $errors->first('password') }}';
+        });
+    @endif
 </script>
 @endpush
