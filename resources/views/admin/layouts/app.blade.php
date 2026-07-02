@@ -31,6 +31,52 @@
                         <span class="nav-icon">🗒️</span>
                         <span>Mis Citas</span>
                     </a>
+                @elseif (auth()->user()->hasRole('cristina'))
+                    {{-- Cristina: resumen + módulos individuales + reportes --}}
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <span class="nav-icon">📊</span>
+                        <span>Resumen General</span>
+                    </a>
+
+                    <a href="{{ route('admin.citas.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.citas.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📅</span>
+                        <span>Citas</span>
+                    </a>
+
+                    <a href="{{ route('admin.clientes.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.clientes.*') ? 'active' : '' }}">
+                        <span class="nav-icon">👥</span>
+                        <span>Clientes</span>
+                    </a>
+
+                    <div class="nav-item" style="cursor:default;">
+                        <span class="nav-icon">💰</span>
+                        <span>Finanzas</span>
+                    </div>
+                    <a href="{{ route('admin.ingresos.index') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
+                        <span class="nav-icon">💵</span>
+                        <span>Ingresos</span>
+                    </a>
+                    <a href="{{ route('admin.gastos.index') }}"
+                        class="nav-item nav-subitem {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
+                        <span class="nav-icon">🧾</span>
+                        <span>Gastos</span>
+                    </a>
+
+                    <a href="{{ route('admin.inventario.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📦</span>
+                        <span>Inventario</span>
+                    </a>
+
+                    <a href="{{ route('admin.reportes.index') }}"
+                        class="nav-item {{ request()->routeIs('admin.reportes.*') ? 'active' : '' }}">
+                        <span class="nav-icon">📈</span>
+                        <span>Reportes</span>
+                    </a>
                 @else
                     {{-- Resto de roles --}}
                     <a href="{{ route('admin.dashboard') }}"
@@ -39,14 +85,18 @@
                         <span>Dashboard</span>
                     </a>
 
-                    @if (auth()->user()->hasRole('admin'))
+                    @if (auth()->user()->hasAnyRole(['admin', 'encargado']))
+                        <div class="nav-item" style="cursor:default;">
+                            <span class="nav-icon">💰</span>
+                            <span>Finanzas</span>
+                        </div>
                         <a href="{{ route('admin.ingresos.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
+                            class="nav-item nav-subitem {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
                             <span class="nav-icon">💵</span>
                             <span>Ingresos</span>
                         </a>
                         <a href="{{ route('admin.gastos.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
+                            class="nav-item nav-subitem {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
                             <span class="nav-icon">🧾</span>
                             <span>Gastos</span>
                         </a>
@@ -212,31 +262,28 @@
                 </div>
                 <div class="header-right">
                     {{-- Selector de sucursal --}}
-                    @if(isset($sucursalActiva))
-                        @if(auth()->user()->hasRole(['admin', 'developer']) && isset($sucursales) && $sucursales->count() > 0)
-                            <form method="POST" action="{{ route('admin.sucursal.cambiar') }}" id="sucursalForm"
-                                  style="display:inline-flex;align-items:center;gap:0.4rem;">
-                                @csrf
-                                <span style="font-size:0.72rem;color:var(--text-light);white-space:nowrap;">Sucursal:</span>
-                                <select name="sucursal_id" onchange="document.getElementById('sucursalForm').submit()"
-                                        style="font-size:0.78rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-color,#fff);color:var(--text-color);cursor:pointer;max-width:210px;">
-                                    {{-- Opción global: todas las sucursales --}}
-                                    <option value="" {{ ($modoGlobal ?? false) ? 'selected' : '' }}>
-                                        🌐 Todas las sucursales
+                    @if(auth()->user()->hasRole(['admin', 'developer', 'cristina']) && isset($sucursales) && $sucursales->count() > 0)
+                        <form method="POST" action="{{ route('admin.sucursal.cambiar') }}" id="sucursalForm"
+                              style="display:inline-flex;align-items:center;gap:0.4rem;">
+                            @csrf
+                            <span style="font-size:0.72rem;color:var(--text-light);white-space:nowrap;">Sucursal:</span>
+                            <select name="sucursal_id" onchange="document.getElementById('sucursalForm').submit()"
+                                    style="font-size:0.78rem;padding:0.25rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-color,#fff);color:var(--text-color);cursor:pointer;max-width:210px;">
+                                <option value="" {{ ($modoGlobal ?? false) ? 'selected' : '' }}>
+                                    🌐 Todas las sucursales
+                                </option>
+                                @foreach($sucursales as $s)
+                                    <option value="{{ $s->id }}"
+                                        {{ (!($modoGlobal ?? false) && $sucursalActiva && $s->id == $sucursalActiva->id) ? 'selected' : '' }}>
+                                        {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
                                     </option>
-                                    @foreach($sucursales as $s)
-                                        <option value="{{ $s->id }}"
-                                            {{ (!($modoGlobal ?? false) && $sucursalActiva && $s->id == $sucursalActiva->id) ? 'selected' : '' }}>
-                                            {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </form>
-                        @elseif(isset($sucursalActiva) && $sucursalActiva)
-                            <span style="font-size:0.78rem;color:var(--text-light);padding:0.25rem 0.6rem;border:1px solid var(--border-color);border-radius:6px;white-space:nowrap;">
-                                🏢 {{ $sucursalActiva->nombre }}
-                            </span>
-                        @endif
+                                @endforeach
+                            </select>
+                        </form>
+                    @elseif($sucursalActiva)
+                        <span style="font-size:0.78rem;color:var(--text-light);padding:0.25rem 0.6rem;border:1px solid var(--border-color);border-radius:6px;white-space:nowrap;">
+                            🏢 {{ $sucursalActiva->nombre }}
+                        </span>
                     @endif
 
                     <a href="{{ route('home') }}" class="btn-view-site" target="_blank">

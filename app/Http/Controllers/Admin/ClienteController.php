@@ -22,19 +22,15 @@ class ClienteController extends Controller
     use CreaContratoPaquete;
     public function index(Request $request)
     {
-        $sid     = session('sucursal_activa_id');
         $ordenar = $request->get('ordenar', 'recientes');
 
-        $query = Cliente::withCount(['citas' => fn($q) => $q->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
-            ->withCount(['citas as citas_completadas_count' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
-            ->withCount(['citas as citas_ultimos_3meses' => fn($q) => $q->where('estado', 'completada')->where('fecha', '>=', now()->subMonths(3))->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))])
-            ->withSum(['citas as total_gastado' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'precio_final')
-            ->withMax(['citas as ultima_visita' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'fecha')
-            ->withMin(['citas as primera_visita' => fn($q) => $q->where('estado', 'completada')->when($sid, fn($q2) => $q2->where('sucursal_id', $sid))], 'fecha')
-            ->when($sid, fn($q) => $q->where(function ($q2) use ($sid) {
-                $q2->where('sucursal_id', $sid)
-                   ->orWhereHas('citas', fn($q3) => $q3->where('sucursal_id', $sid));
-            }))
+        $query = Cliente::with('sucursal')
+            ->withCount('citas')
+            ->withCount(['citas as citas_completadas_count' => fn($q) => $q->where('estado', 'completada')])
+            ->withCount(['citas as citas_ultimos_3meses' => fn($q) => $q->where('estado', 'completada')->where('fecha', '>=', now()->subMonths(3))])
+            ->withSum(['citas as total_gastado' => fn($q) => $q->where('estado', 'completada')], 'precio_final')
+            ->withMax(['citas as ultima_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
+            ->withMin(['citas as primera_visita' => fn($q) => $q->where('estado', 'completada')], 'fecha')
             ->where('oculto', false);
 
         match ($ordenar) {
@@ -108,12 +104,10 @@ class ClienteController extends Controller
 
     public function show(Request $request, Cliente $cliente)
     {
-        $sid     = session('sucursal_activa_id');
         $periodo = $request->get('periodo', 'recientes');
 
         $query = $cliente->citas()
-            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
-            ->with(['citaServicios.servicio', 'citaServicios.empleado'])
+            ->with(['citaServicios.servicio', 'citaServicios.empleado', 'sucursal'])
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc');
 
@@ -134,13 +128,11 @@ class ClienteController extends Controller
 
         $citas = $query->get();
 
-        // KPIs acotados a la sucursal activa
-        $citasCompletadas = $cliente->citas()
-            ->where('estado', 'completada')
-            ->when($sid, fn($q) => $q->where('sucursal_id', $sid));
+        // KPIs globales (todas las sucursales)
+        $citasCompletadas = $cliente->citas()->where('estado', 'completada');
 
         $stats = [
-            'total_citas'       => $cliente->citas()->when($sid, fn($q) => $q->where('sucursal_id', $sid))->count(),
+            'total_citas'       => $cliente->citas()->count(),
             'citas_completadas' => $citasCompletadas->count(),
             'total_gastado'     => $citasCompletadas->sum('precio_final'),
             'ultima_visita'     => $citasCompletadas->max('fecha'),
@@ -148,9 +140,13 @@ class ClienteController extends Controller
             'total_mes'         => (clone $citasCompletadas)->whereMonth('fecha', now()->month)->whereYear('fecha', now()->year)->sum('precio_final'),
         ];
 
+        // Sucursales que el cliente ha visitado (citas completadas)
+        $sucursalesVisitadas = \App\Models\Sucursal::whereIn('id',
+            $cliente->citas()->where('estado', 'completada')->whereNotNull('sucursal_id')->pluck('sucursal_id')->unique()
+        )->orderBy('nombre')->get();
+
         $ultimaCitaCompletada = $cliente->citas()
             ->where('estado', 'completada')
-            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->with('citaServicios.servicio')
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc')
@@ -230,7 +226,8 @@ class ClienteController extends Controller
 
         return view('admin.clientes.show', compact(
             'cliente', 'citas', 'citasPorMes', 'stats', 'ultimoServicio', 'periodo',
-            'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson', 'paquetesJson'
+            'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson', 'paquetesJson',
+            'sucursalesVisitadas'
         ));
     }
 
@@ -275,7 +272,12 @@ class ClienteController extends Controller
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
             'campana_id'                    => 'nullable|exists:campanas,id',
+            'sucursal_id'                   => 'nullable|exists:sucursales,id',
         ], $this->contratoValidationRules()));
+
+        $sucursalId = $request->integer('sucursal_id')
+            ?: session('sucursal_activa_id')
+            ?? auth()->user()->sucursal_id;
 
         $serviciosBase = Servicio::whereIn('id', collect($data['servicios'])->pluck('servicio_id'))->pluck('precio', 'id');
 
@@ -295,6 +297,7 @@ class ClienteController extends Controller
 
         $cita = Cita::create([
             'cliente_id'   => $cliente->id,
+            'sucursal_id'  => $sucursalId,
             'campana_id'   => $data['campana_id'] ?? null,
             'fecha'        => $data['fecha'],
             'hora'         => $data['hora'],

@@ -63,13 +63,14 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Ingresos
-    Route::middleware('role:admin')->get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
-
-    // Gastos
-    Route::middleware('role:admin')->group(function () {
+    // Finanzas: Ingresos y Gastos (admin + encargado)
+    Route::middleware('role:admin|encargado|cristina')->group(function () {
+        Route::get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
         Route::get('/gastos', [GastosController::class, 'index'])->name('gastos.index');
         Route::get('/gastos/servicios-empleado', [GastosController::class, 'serviciosEmpleado'])->name('gastos.serviciosEmpleado');
+    });
+
+    Route::middleware('role:admin|encargado')->group(function () {
         Route::post('/gastos/verificar-password', [GastosController::class, 'verificarPassword'])->name('gastos.verificarPassword');
         Route::post('/gastos/gasto', [GastosController::class, 'storeGasto'])->name('gastos.storeGasto');
         Route::delete('/gastos/gasto/{gasto}', [GastosController::class, 'destroyGasto'])->name('gastos.destroyGasto');
@@ -138,6 +139,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
 
     // Reportes
     Route::middleware('permission:ver reportes')->group(function () {
+        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+
         Route::get('/reportes/comisiones', [ReporteController::class, 'comisiones'])->name('reportes.comisiones');
         Route::get('/reportes/comisiones/pdf', [ReporteController::class, 'comisionesPdf'])->name('reportes.comisiones.pdf');
         Route::get('/reportes/comisiones/excel', [ReporteController::class, 'comisionesExcel'])->name('reportes.comisiones.excel');
@@ -145,6 +148,14 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::get('/reportes/clientes', [ReporteController::class, 'clientes'])->name('reportes.clientes');
         Route::get('/reportes/clientes/pdf', [ReporteController::class, 'clientesPdf'])->name('reportes.clientes.pdf');
         Route::get('/reportes/clientes/excel', [ReporteController::class, 'clientesExcel'])->name('reportes.clientes.excel');
+
+        Route::get('/reportes/citas', [ReporteController::class, 'citas'])->name('reportes.citas');
+        Route::get('/reportes/citas/pdf', [ReporteController::class, 'citasPdf'])->name('reportes.citas.pdf');
+        Route::get('/reportes/citas/excel', [ReporteController::class, 'citasExcel'])->name('reportes.citas.excel');
+
+        Route::get('/reportes/finanzas', [ReporteController::class, 'finanzas'])->name('reportes.finanzas');
+        Route::get('/reportes/finanzas/pdf', [ReporteController::class, 'finanzasPdf'])->name('reportes.finanzas.pdf');
+        Route::get('/reportes/finanzas/excel', [ReporteController::class, 'finanzasExcel'])->name('reportes.finanzas.excel');
     });
 
     // Empleados
@@ -235,6 +246,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/', [SucursalController::class, 'store'])->name('store');
         Route::get('/{sucursal}/editar', [SucursalController::class, 'edit'])->name('edit');
         Route::put('/{sucursal}', [SucursalController::class, 'update'])->name('update');
+        Route::post('/{sucursal}/encargado', [SucursalController::class, 'asignarEncargado'])->name('encargado.asignar');
+        Route::delete('/{sucursal}/encargado', [SucursalController::class, 'quitarEncargado'])->name('encargado.quitar');
         Route::get('/migracion', [MigracionSucursalController::class, 'index'])->name('migracion');
         Route::post('/migracion', [MigracionSucursalController::class, 'procesar'])->name('migracion.procesar');
     });

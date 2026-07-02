@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exports\CitasExport;
 use App\Exports\ClientesExport;
 use App\Exports\ComisionesExport;
+use App\Exports\FinanzasExport;
 use App\Models\Cita;
 use App\Models\CitaServicio;
 use App\Models\Cliente;
 use App\Models\Empleado;
+use App\Models\Gasto;
+use App\Models\PagoSueldo;
 use App\Models\Servicio;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -266,5 +270,138 @@ class ReporteController extends Controller
         $nombre = 'reporte-clientes' . ($desde ? '-' . $desde . '-a-' . $hasta : '') . '.xlsx';
 
         return Excel::download(new ClientesExport($data['filas'], $desde, $hasta), $nombre);
+    }
+
+    // ══════════════════════════════════════════
+    //  ÍNDICE DE REPORTES
+    // ══════════════════════════════════════════
+
+    public function index()
+    {
+        return view('admin.reportes.index');
+    }
+
+    // ══════════════════════════════════════════
+    //  REPORTE DE CITAS
+    // ══════════════════════════════════════════
+
+    private function calcularCitas(?string $desde, ?string $hasta): array
+    {
+        $sid = session('sucursal_activa_id');
+
+        $citas = Cita::with(['cliente', 'citaServicios.servicio', 'sucursal'])
+            ->where('estado', 'completada')
+            ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->orderBy('fecha')
+            ->orderBy('hora')
+            ->get();
+
+        return [
+            'citas'         => $citas,
+            'totalIngresos' => (float) $citas->sum('precio_final'),
+            'totalCitas'    => $citas->count(),
+        ];
+    }
+
+    public function citas(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularCitas($desde, $hasta);
+
+        return view('admin.reportes.citas', array_merge($data, compact('desde', 'hasta')));
+    }
+
+    public function citasPdf(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularCitas($desde, $hasta);
+
+        $pdf = Pdf::loadView('admin.reportes.citas-pdf', array_merge($data, compact('desde', 'hasta')))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('reporte-citas-' . $desde . '-a-' . $hasta . '.pdf');
+    }
+
+    public function citasExcel(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularCitas($desde, $hasta);
+
+        return Excel::download(
+            new CitasExport($data['citas'], $desde, $hasta),
+            'reporte-citas-' . $desde . '-a-' . $hasta . '.xlsx'
+        );
+    }
+
+    // ══════════════════════════════════════════
+    //  REPORTE DE FINANZAS (Ingresos vs Gastos)
+    // ══════════════════════════════════════════
+
+    private function calcularFinanzas(?string $desde, ?string $hasta): array
+    {
+        $sid = session('sucursal_activa_id');
+
+        $ingresosCitas = (float) Cita::where('estado', 'completada')
+            ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->sum('precio_final');
+
+        $gastos = Gasto::when($desde, fn($q) => $q->where('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->orderBy('fecha')
+            ->get();
+
+        $pagos = PagoSueldo::with('empleado')
+            ->when($desde, fn($q) => $q->where('fecha_pago', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha_pago', '<=', $hasta))
+            ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->orderBy('fecha_pago')
+            ->get();
+
+        $totalGastos = (float) $gastos->sum('monto');
+        $totalPagos  = (float) $pagos->sum('monto');
+        $neto        = $ingresosCitas - $totalGastos - $totalPagos;
+
+        return compact('ingresosCitas', 'gastos', 'pagos', 'totalGastos', 'totalPagos', 'neto');
+    }
+
+    public function finanzas(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularFinanzas($desde, $hasta);
+
+        return view('admin.reportes.finanzas', array_merge($data, compact('desde', 'hasta')));
+    }
+
+    public function finanzasPdf(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularFinanzas($desde, $hasta);
+
+        $pdf = Pdf::loadView('admin.reportes.finanzas-pdf', array_merge($data, compact('desde', 'hasta')))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('reporte-finanzas-' . $desde . '-a-' . $hasta . '.pdf');
+    }
+
+    public function finanzasExcel(Request $request)
+    {
+        $desde = $request->get('desde', now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
+        $data  = $this->calcularFinanzas($desde, $hasta);
+
+        return Excel::download(
+            new FinanzasExport($data, $desde, $hasta),
+            'reporte-finanzas-' . $desde . '-a-' . $hasta . '.xlsx'
+        );
     }
 }

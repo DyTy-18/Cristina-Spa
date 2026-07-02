@@ -159,14 +159,51 @@ class RolesAndPermissionsSeeder extends Seeder
             'cancelar citas'
         ]);
 
+        // ENCARGADO - Acceso total pero solo dentro de su sucursal asignada
+        $encargado = Role::create(['name' => 'encargado']);
+        $encargado->givePermissionTo([
+            'ver citas', 'crear citas', 'editar citas', 'confirmar citas', 'cancelar citas',
+            'ver clientes', 'crear clientes', 'editar clientes', 'ver historial clientes',
+            'ver servicios',
+            'ver empleados', 'crear empleados', 'editar empleados',
+            'ver inventario', 'gestionar inventario',
+            'ver caja', 'registrar pagos', 'ver ventas',
+            'ver campanas',
+            'ver comisiones',
+            'ver reportes',
+            'gestionar usuarios',
+        ]);
+
         // DEVELOPER - Acceso técnico total, incluyendo eliminación permanente de registros
         $developer = Role::create(['name' => 'developer']);
         $developer->givePermissionTo(Permission::all());
+
+        // CRISTINA - Supervisora general: solo lectura de todos los módulos clave + reportes
+        $cristinaRol = Role::create(['name' => 'cristina']);
+        $cristinaRol->givePermissionTo([
+            'ver citas',
+            'ver clientes', 'ver historial clientes',
+            'ver inventario',
+            'ver caja', 'ver ventas',
+            'ver empleados',
+            'ver comisiones',
+            'ver reportes', 'exportar reportes',
+        ]);
 
         // Re-asignar rol admin al usuario admin si existe
         $adminUser = \App\Models\User::where('email', 'admin@cristinaspa.com')->first();
         if ($adminUser && !$adminUser->hasRole('admin')) {
             $adminUser->assignRole('admin');
         }
+
+        // Crear usuario Cristina Mamani si no existe
+        $cristinaUser = \App\Models\User::firstOrCreate(
+            ['email' => 'cristina@cristinaspa.com'],
+            [
+                'name'     => 'Cristina Mamani',
+                'password' => \Illuminate\Support\Facades\Hash::make('Cristina2026'),
+            ]
+        );
+        $cristinaUser->syncRoles(['cristina']);
     }
 }

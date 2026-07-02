@@ -27,7 +27,7 @@
                         <th>Sucursal</th>
                         <th>Dirección</th>
                         <th>Teléfono</th>
-                        <th>Email</th>
+                        <th>Encargado</th>
                         <th>Tipo</th>
                         <th>Estado</th>
                         <th></th>
@@ -50,8 +50,13 @@
                             <td style="font-size:0.85rem;">
                                 {{ $sucursal->telefono ?? '—' }}
                             </td>
-                            <td style="font-size:0.85rem;">
-                                {{ $sucursal->email ?? '—' }}
+                            <td>
+                                @if($sucursal->encargado)
+                                    <div style="font-size:0.85rem;font-weight:500;">{{ $sucursal->encargado->name }}</div>
+                                    <div style="font-size:0.75rem;color:var(--text-light);">{{ $sucursal->encargado->email }}</div>
+                                @else
+                                    <span style="font-size:0.8rem;color:var(--text-light);">Sin encargado</span>
+                                @endif
                             </td>
                             <td>
                                 @if($sucursal->es_principal)

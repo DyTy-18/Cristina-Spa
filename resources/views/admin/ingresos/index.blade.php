@@ -212,6 +212,9 @@
 {{-- ===== Barra superior: tabs + filtro tipo pago ===== --}}
 <div class="ingresos-top-bar">
 
+    {{-- Selector de sucursal --}}
+    @include('admin.partials.sucursal_badge')
+
     {{-- Tabs de período --}}
     <div class="periodo-tabs">
         @foreach(['diario'=>'Diario','mensual'=>'Mensual','trimestral'=>'Trimestral','rango'=>'Por rango'] as $p => $label)

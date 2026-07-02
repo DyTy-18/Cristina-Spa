@@ -115,6 +115,7 @@ class CitaController extends Controller
             'fecha'                         => 'required|date',
             'hora'                          => 'required',
             'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
+            'sucursal_id'                   => 'nullable|exists:sucursales,id',
             'tipo_pago'                     => 'nullable|in:efectivo,tarjeta,qr',
             'notas'                         => 'nullable|string',
             'campana_id'                    => 'nullable|exists:campanas,id',
@@ -167,9 +168,9 @@ class CitaController extends Controller
             return round($precio * (1 - $desc / 100), 2);
         });
 
-        $sucursalId = session('sucursal_activa_id')
-            ?? $request->integer('sucursal_id')
-            ?: auth()->user()->sucursal_id;
+        $sucursalId = $request->integer('sucursal_id')
+            ?: session('sucursal_activa_id')
+            ?? auth()->user()->sucursal_id;
 
         $cita = Cita::create([
             'cliente_id'   => $clienteId,

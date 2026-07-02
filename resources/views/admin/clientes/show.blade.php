@@ -745,6 +745,24 @@
                 </p>
             @endif
 
+            {{-- Sucursal de registro + sucursales visitadas --}}
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;align-items:center;">
+                @if($cliente->sucursal)
+                    <span style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em;">Registrado en:</span>
+                    <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.18rem 0.65rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:20px;color:#0369a1;font-size:0.75rem;">
+                        🏢 {{ $cliente->sucursal->nombre }}
+                    </span>
+                @endif
+                @if($sucursalesVisitadas->isNotEmpty())
+                    <span style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em;margin-left:0.25rem;">Visitó:</span>
+                    @foreach($sucursalesVisitadas as $sv)
+                        <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.18rem 0.65rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;color:#166534;font-size:0.75rem;">
+                            ✓ {{ $sv->nombre }}
+                        </span>
+                    @endforeach
+                @endif
+            </div>
+
             @php $cuponPendiente = $cliente->cuponRecomendacionActivo(); @endphp
             @if($cuponPendiente)
                 <div style="margin-top:0.75rem;display:inline-flex;align-items:center;gap:0.5rem;background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.35);padding:0.35rem 0.8rem;">
@@ -878,6 +896,9 @@
                             </div>
                             @if($nombresEmps->isNotEmpty())
                                 <div class="agenda-sub">con {{ $nombresEmps->implode(', ') }}</div>
+                            @endif
+                            @if($cita->sucursal)
+                                <div class="agenda-sub" style="color:#0369a1;">🏢 {{ $cita->sucursal->nombre }}</div>
                             @endif
                             @if($cita->notas)
                                 <div class="agenda-notes" title="{{ $cita->notas }}">{{ $cita->notas }}</div>
@@ -1157,6 +1178,18 @@
                             <option value="efectivo">Efectivo</option>
                             <option value="tarjeta">Tarjeta</option>
                             <option value="qr">QR</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sucursal <span style="color:var(--error-color)">*</span></label>
+                        <select name="sucursal_id" class="form-control" required>
+                            @foreach($sucursales as $s)
+                                <option value="{{ $s->id }}"
+                                    {{ (old('sucursal_id', $sucursalActiva->id ?? null) == $s->id) ? 'selected' : '' }}>
+                                    {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 

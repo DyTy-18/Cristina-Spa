@@ -334,7 +334,6 @@
 
     <form action="{{ route('admin.citas.store') }}" method="POST" id="formCita">
         @csrf
-        @include('admin.partials.sucursal_selector')
         <input type="hidden" name="cliente_tipo" id="clienteTipo" value="{{ old('cliente_tipo', 'existente') }}">
 
         <div class="create-layout">
@@ -567,6 +566,17 @@
                                     <span style="color:var(--error-color);font-size:0.78rem;">{{ $message }}</span>
                                 @enderror
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sucursal <span style="color:var(--error-color)">*</span></label>
+                            <select name="sucursal_id" class="form-control" required>
+                                @foreach($sucursales as $s)
+                                    <option value="{{ $s->id }}"
+                                        {{ (old('sucursal_id', $sucursalActiva->id ?? null) == $s->id) ? 'selected' : '' }}>
+                                        {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Estado</label>

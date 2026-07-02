@@ -225,6 +225,9 @@
 
 {{-- ===== Barra superior: tabs de período ===== --}}
 <div class="gastos-top-bar">
+    {{-- Selector de sucursal --}}
+    @include('admin.partials.sucursal_badge')
+
     <div class="periodo-tabs">
         @foreach(['diario'=>'Diario','mensual'=>'Mensual','trimestral'=>'Trimestral','rango'=>'Por rango'] as $p => $label)
         <a href="{{ route('admin.gastos.index', array_merge(request()->except('periodo'), ['periodo' => $p])) }}"

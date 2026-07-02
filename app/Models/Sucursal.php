@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,6 +26,11 @@ class Sucursal extends Model
         'es_principal' => 'boolean',
         'activo'       => 'boolean',
     ];
+
+    public function encargado()
+    {
+        return $this->hasOne(User::class)->whereHas('roles', fn($q) => $q->where('name', 'encargado'));
+    }
 
     public function citas()
     {

@@ -576,6 +576,18 @@ h1, h2, h3, h4 {
     gap: 0.4rem;
 }
 
+/* ===== Sidebar section label ===== */
+.nav-label {
+    padding: 1.1rem 1.5rem 0.3rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+    user-select: none;
+}
+
 /* ===== Sidebar sub-items ===== */
 .nav-subitem {
     padding-left: 3.8rem;

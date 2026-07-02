@@ -89,6 +89,7 @@
                     <tr>
                         <th>Cliente</th>
                         <th>Contacto</th>
+                        <th>Registrado en</th>
                         <th>Visitas completadas</th>
                         @if($ordenar === 'frecuentes')
                             <th>Últimos 3 meses</th>
@@ -113,6 +114,15 @@
                             <td>
                                 <div>{{ $cliente->email ?? '—' }}</div>
                                 <div style="font-size:0.8rem;color:var(--text-light);">{{ $cliente->telefono ?? '' }}</div>
+                            </td>
+                            <td style="font-size:0.82rem;">
+                                @if($cliente->sucursal)
+                                    <span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.18rem 0.6rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:20px;color:#0369a1;font-size:0.72rem;white-space:nowrap;">
+                                        🏢 {{ $cliente->sucursal->nombre }}
+                                    </span>
+                                @else
+                                    <span style="color:var(--text-light);">—</span>
+                                @endif
                             </td>
                             <td>
                                 <span style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;">
