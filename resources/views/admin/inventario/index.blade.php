@@ -3,6 +3,38 @@
 @section('title', 'Inventario - Stock Actual')
 @section('page-title', 'Inventario')
 
+@push('styles')
+<style>
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+        background: var(--white);
+        border-radius: 8px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-box h4 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.4rem;
+        color: var(--primary-color);
+        margin-bottom: 0.35rem;
+        font-weight: 400;
+    }
+    .modal-box p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.25rem; }
+    .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 0.5rem; }
+</style>
+@endpush
+
 @section('content')
 @if($alertas->isNotEmpty())
     <div style="margin-bottom:1.5rem;">
@@ -40,15 +72,36 @@
         <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline btn-sm">Catálogo</a>
         <a href="{{ route('admin.inventario.importar') }}" class="btn btn-outline btn-sm">Importar Excel</a>
         <a href="{{ route('admin.inventario.analisis') }}" class="btn btn-outline btn-sm">📊 Análisis</a>
+        <a href="{{ route('admin.inventario.backups') }}" class="btn btn-outline btn-sm">🗂 Ver Backups</a>
 
-        <form method="POST" action="{{ route('admin.inventario.limpiar') }}" style="margin-left:auto;"
-              onsubmit="return confirm('¿Eliminar TODOS los datos de inventario? Esta acción no se puede deshacer.')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;">
-                🗑 Limpiar inventario
-            </button>
-        </form>
+        <button type="button" class="btn btn-sm" style="margin-left:auto;background:#dc2626;color:#fff;border:none;"
+                onclick="document.getElementById('modalLimpiarInventario').classList.add('active')">
+            🗑 Limpiar inventario
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="modalLimpiarInventario">
+        <div class="modal-box">
+            <h4>Limpiar inventario</h4>
+            <p>
+                Esto elimina TODOS los productos, entradas y salidas. Se guardará un backup con lo eliminado
+                (accesible desde "Ver Backups"), pero la acción no se puede deshacer sobre el stock actual.
+                ¿Confirmás?
+            </p>
+            <form method="POST" action="{{ route('admin.inventario.limpiar') }}">
+                @csrf
+                @method('DELETE')
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline btn-sm"
+                            onclick="document.getElementById('modalLimpiarInventario').classList.remove('active')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;">
+                        Sí, eliminar todo
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="table-container">
@@ -166,5 +219,8 @@ function marcarLeida(id) {
         }
     });
 }
+document.getElementById('modalLimpiarInventario').addEventListener('click', function (e) {
+    if (e.target === this) this.classList.remove('active');
+});
 </script>
 @endpush

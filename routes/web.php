@@ -282,6 +282,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/importar', [InventarioController::class, 'import'])->name('importar.store');
 
         Route::delete('/limpiar', [InventarioController::class, 'limpiar'])->name('limpiar');
+        Route::get('/backups', [InventarioController::class, 'backups'])->name('backups');
+        Route::get('/backups/{backup}', [InventarioController::class, 'verBackup'])->name('backups.show');
     });
 });
 

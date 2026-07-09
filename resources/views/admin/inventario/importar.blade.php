@@ -52,36 +52,25 @@
             <div style="padding:1rem 1.25rem; background:#f8f6f4; border:1px solid #e0d9d0; margin-bottom:1.5rem;">
                 <p style="margin:0 0 0.5rem; font-weight:600; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em;">El archivo Excel debe tener estas hojas:</p>
                 <ul style="margin:0; padding-left:1.2rem; font-size:0.85rem; line-height:1.8;">
-                    <li><strong>REGISTRO</strong> — Catálogo de productos: Código de Barra | Nombre | Marca | Línea | Unidades</li>
-                    <li><strong>ENTRADAS</strong> (o ENTRADA) — Movimientos de entrada: Código | Nombre | Marca | Línea | Unidades | Fecha</li>
-                    <li><strong>SALIDAS</strong> — Movimientos de salida: Código | Nombre | Marca | Línea | Unidades | Fecha | Destino</li>
-                    <li><strong>INVENTARIO</strong> — Solo se usará para importar el costo de cada producto (columna H). El stock se recalcula automáticamente.</li>
+                    <li><strong>REGISTRO</strong> — Catálogo de productos: Código de Barra | Nombre | Marca | Línea | Uso. No genera stock inicial (la columna Unidades se ignora).</li>
+                    <li><strong>ENTRADA</strong> (o ENTRADAS) — Movimientos de entrada: Código de Barras | Unidades | Fecha</li>
+                    <li><strong>SALIDAS</strong> — Movimientos de salida: Código de Barras | Unidades | Fecha | Destino</li>
+                    <li><strong>INVENTARIO</strong> — Se ignora por completo (es un resumen calculado con fórmulas).</li>
                 </ul>
                 <p style="margin:0.75rem 0 0; font-size:0.8rem; color:#888;">
-                    La primera fila de cada hoja debe ser el encabezado. Los productos que aparezcan en ENTRADAS/SALIDAS pero no en REGISTRO se crearán automáticamente.
+                    Las columnas se leen por nombre de encabezado (no por posición), así que el orden de columnas no importa.
+                    La primera fila de cada hoja debe ser el encabezado. Los productos que aparezcan en ENTRADA/SALIDAS pero no en REGISTRO se crearán automáticamente.
+                    Los movimientos sin fecha se guardan como "sin fecha de movimiento". El costo de todos los productos entra en 0 (no viene en el archivo).
                 </p>
             </div>
 
             <form action="{{ route('admin.inventario.importar.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="excel">Archivo Excel (.xlsx o .xls) *</label>
-                        <input type="file" id="excel" name="excel"
-                               class="form-control" accept=".xlsx,.xls" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="fecha_registro">
-                            Fecha del inventario inicial (hoja REGISTRO) *
-                        </label>
-                        <input type="date" id="fecha_registro" name="fecha_registro"
-                               class="form-control" value="{{ old('fecha_registro', '2025-01-01') }}" required>
-                        <small style="color:#888; font-size:0.75rem;">
-                            Las unidades de REGISTRO se cargarán como entradas en esta fecha.
-                        </small>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="excel">Archivo Excel (.xlsx o .xls) *</label>
+                    <input type="file" id="excel" name="excel"
+                           class="form-control" accept=".xlsx,.xls" required>
                 </div>
 
                 <div style="display:flex; gap:0.75rem; margin-top:1rem;">

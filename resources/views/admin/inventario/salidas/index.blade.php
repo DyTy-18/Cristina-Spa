@@ -75,7 +75,7 @@
                 <tbody>
                     @foreach ($salidas as $salida)
                         <tr>
-                            <td>{{ $salida->fecha->format('d/m/Y') }}</td>
+                            <td>{{ $salida->fecha?->format('d/m/Y') ?? 'Sin fecha de movimiento' }}</td>
                             <td><code style="font-size:0.8rem;">{{ $salida->codigo_barras }}</code></td>
                             <td>{{ $salida->producto->nombre ?? '—' }}</td>
                             <td>{{ $salida->producto->marca ?? '—' }}</td>

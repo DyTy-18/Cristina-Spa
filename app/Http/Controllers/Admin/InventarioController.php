@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AlertaStock;
 use App\Models\Entrada;
+use App\Models\InventarioBackup;
 use App\Models\Producto;
 use App\Models\Salida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
@@ -428,8 +430,7 @@ class InventarioController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'excel'          => 'required|file|mimes:xlsx,xls|max:20480',
-            'fecha_registro' => 'required|date',
+            'excel' => 'required|file|mimes:xlsx,xls|max:20480',
         ]);
 
         try {
@@ -443,103 +444,119 @@ class InventarioController extends Controller
             $sheets[strtoupper(trim($name))] = $spreadsheet->getSheetByName($name);
         }
 
-        $stats         = ['productos_nuevos' => 0, 'entradas' => 0, 'salidas' => 0, 'errores' => []];
-        $fechaRegistro = $request->input('fecha_registro');
-        $sucursalId    = session('sucursal_activa_id');
+        $stats      = ['productos_nuevos' => 0, 'entradas' => 0, 'salidas' => 0, 'errores' => []];
+        $sucursalId = session('sucursal_activa_id');
 
-        // Paso 1: extraer costos de INVENTARIO
-        $costos = [];
-        if ($invSheet = $sheets['INVENTARIO'] ?? null) {
-            for ($r = 2; $r <= $invSheet->getHighestRow(); $r++) {
-                $codigo = $this->normalizeCodigo($invSheet->getCell('A' . $r)->getValue());
-                $costo  = (float) $invSheet->getCell('H' . $r)->getValue();
-                if ($codigo) {
-                    $costos[$codigo] = $costo;
-                }
-            }
-        }
+        // INVENTARIO se ignora: es un dashboard con fórmulas, no aporta datos al import.
 
-        // Paso 2: REGISTRO → productos + entradas iniciales
+        // Paso 1: REGISTRO → catálogo de productos (sin generar stock inicial)
         if ($regSheet = $sheets['REGISTRO'] ?? null) {
-            for ($r = 2; $r <= $regSheet->getHighestRow(); $r++) {
-                $codigo = $this->normalizeCodigo($regSheet->getCell('A' . $r)->getValue());
-                if (!$codigo) continue;
+            $cols        = $this->buildHeaderMap($regSheet);
+            $colCodigo   = $this->findColumn($cols, ['CODIGO DE BARRA', 'CODIGO DE BARRAS']);
+            $colNombre   = $cols['NOMBRE'] ?? null;
+            $colMarca    = $cols['MARCA'] ?? null;
+            $colLinea    = $cols['LINEA'] ?? null;
+            $colUso      = $cols['USO'] ?? null;
 
-                $nombre   = trim((string) $regSheet->getCell('B' . $r)->getValue());
-                $marca    = trim((string) $regSheet->getCell('C' . $r)->getValue()) ?: null;
-                $linea    = trim((string) $regSheet->getCell('D' . $r)->getValue()) ?: null;
-                $unidades = (int) $regSheet->getCell('E' . $r)->getValue();
+            for ($r = 2; $r <= $regSheet->getHighestRow(); $r++) {
+                $codigo = $this->normalizeCodigo($this->cellValue($regSheet, $colCodigo, $r));
+                if (!$codigo) continue;
+                if (!ctype_digit($codigo)) {
+                    $stats['errores'][] = "REGISTRO fila {$r}: código no numérico, omitida";
+                    continue;
+                }
 
                 $producto = Producto::updateOrCreate(
                     ['codigo_barras' => $codigo],
-                    ['nombre' => $nombre, 'marca' => $marca, 'linea' => $linea, 'costo' => $costos[$codigo] ?? 0]
+                    [
+                        'nombre' => trim((string) $this->cellValue($regSheet, $colNombre, $r)),
+                        'marca'  => trim((string) $this->cellValue($regSheet, $colMarca, $r)) ?: null,
+                        'linea'  => trim((string) $this->cellValue($regSheet, $colLinea, $r)) ?: null,
+                        'uso'    => trim((string) $this->cellValue($regSheet, $colUso, $r)) ?: null,
+                        'costo'  => 0,
+                    ]
                 );
                 if ($producto->wasRecentlyCreated) {
                     $stats['productos_nuevos']++;
                 }
-
-                if ($unidades > 0) {
-                    Entrada::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fechaRegistro]);
-                    $stats['entradas']++;
-                }
             }
         }
 
-        // Paso 3: ENTRADA / ENTRADAS
-        $entSheet = $sheets['ENTRADAS'] ?? $sheets['ENTRADA'] ?? null;
+        // Paso 2: ENTRADA / ENTRADAS → movimientos de entrada
+        $entSheet = $sheets['ENTRADA'] ?? $sheets['ENTRADAS'] ?? null;
         if ($entSheet) {
-            for ($r = 2; $r <= $entSheet->getHighestRow(); $r++) {
-                $codigo   = $this->normalizeCodigo($entSheet->getCell('A' . $r)->getValue());
-                $unidades = (int) $entSheet->getCell('E' . $r)->getValue();
-                if (!$codigo || !$unidades) continue;
+            $cols        = $this->buildHeaderMap($entSheet);
+            $colCodigo   = $this->findColumn($cols, ['CODIGO DE BARRAS', 'CODIGO DE BARRA']);
+            $colNombre   = $cols['NOMBRE'] ?? null;
+            $colMarca    = $cols['MARCA'] ?? null;
+            $colLinea    = $cols['LINEA'] ?? null;
+            $colUnidades = $cols['UNIDADES'] ?? null;
+            $colFecha    = $cols['FECHA'] ?? null;
 
-                try {
-                    $fecha = $this->parseDate($entSheet->getCell('F' . $r)->getValue());
-                } catch (\Exception $e) {
-                    $stats['errores'][] = "Entrada fila {$r}: fecha inválida";
+            for ($r = 2; $r <= $entSheet->getHighestRow(); $r++) {
+                $codigo   = $this->normalizeCodigo($this->cellValue($entSheet, $colCodigo, $r));
+                $unidades = (int) $this->cellValue($entSheet, $colUnidades, $r);
+                if (!$codigo || !$unidades) continue;
+                if (!ctype_digit($codigo)) {
+                    $stats['errores'][] = "ENTRADA fila {$r}: código no numérico, omitida";
                     continue;
                 }
 
-                Producto::firstOrCreate(
+                $fecha = $this->parseDateOrNull($this->cellValue($entSheet, $colFecha, $r));
+
+                $producto = Producto::firstOrCreate(
                     ['codigo_barras' => $codigo],
                     [
-                        'nombre' => trim((string) $entSheet->getCell('B' . $r)->getValue()),
-                        'marca'  => trim((string) $entSheet->getCell('C' . $r)->getValue()) ?: null,
-                        'linea'  => trim((string) $entSheet->getCell('D' . $r)->getValue()) ?: null,
-                        'costo'  => $costos[$codigo] ?? 0,
+                        'nombre' => trim((string) $this->cellValue($entSheet, $colNombre, $r)) ?: $codigo,
+                        'marca'  => trim((string) $this->cellValue($entSheet, $colMarca, $r)) ?: null,
+                        'linea'  => trim((string) $this->cellValue($entSheet, $colLinea, $r)) ?: null,
+                        'costo'  => 0,
                     ]
                 );
+                if ($producto->wasRecentlyCreated) {
+                    $stats['productos_nuevos']++;
+                }
 
                 Entrada::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fecha]);
                 $stats['entradas']++;
             }
         }
 
-        // Paso 4: SALIDAS
+        // Paso 3: SALIDAS → movimientos de salida
         if ($salSheet = $sheets['SALIDAS'] ?? null) {
-            for ($r = 2; $r <= $salSheet->getHighestRow(); $r++) {
-                $codigo   = $this->normalizeCodigo($salSheet->getCell('A' . $r)->getValue());
-                $unidades = (int) $salSheet->getCell('E' . $r)->getValue();
-                if (!$codigo || !$unidades) continue;
+            $cols        = $this->buildHeaderMap($salSheet);
+            $colCodigo   = $this->findColumn($cols, ['CODIGO DE BARRAS', 'CODIGO DE BARRA']);
+            $colNombre   = $cols['NOMBRE'] ?? null;
+            $colMarca    = $cols['MARCA'] ?? null;
+            $colLinea    = $cols['LINEA'] ?? null;
+            $colUnidades = $cols['UNIDADES'] ?? null;
+            $colFecha    = $cols['FECHA'] ?? null;
+            $colDestino  = $cols['DESTINO'] ?? null;
 
-                try {
-                    $fecha = $this->parseDate($salSheet->getCell('F' . $r)->getValue());
-                } catch (\Exception $e) {
-                    $stats['errores'][] = "Salida fila {$r}: fecha inválida";
+            for ($r = 2; $r <= $salSheet->getHighestRow(); $r++) {
+                $codigo   = $this->normalizeCodigo($this->cellValue($salSheet, $colCodigo, $r));
+                $unidades = (int) $this->cellValue($salSheet, $colUnidades, $r);
+                if (!$codigo || !$unidades) continue;
+                if (!ctype_digit($codigo)) {
+                    $stats['errores'][] = "SALIDAS fila {$r}: código no numérico, omitida";
                     continue;
                 }
 
-                $destino = trim((string) $salSheet->getCell('G' . $r)->getValue()) ?: null;
+                $fecha   = $this->parseDateOrNull($this->cellValue($salSheet, $colFecha, $r));
+                $destino = trim((string) $this->cellValue($salSheet, $colDestino, $r)) ?: null;
 
-                Producto::firstOrCreate(
+                $producto = Producto::firstOrCreate(
                     ['codigo_barras' => $codigo],
                     [
-                        'nombre' => trim((string) $salSheet->getCell('B' . $r)->getValue()),
-                        'marca'  => trim((string) $salSheet->getCell('C' . $r)->getValue()) ?: null,
-                        'linea'  => trim((string) $salSheet->getCell('D' . $r)->getValue()) ?: null,
-                        'costo'  => $costos[$codigo] ?? 0,
+                        'nombre' => trim((string) $this->cellValue($salSheet, $colNombre, $r)) ?: $codigo,
+                        'marca'  => trim((string) $this->cellValue($salSheet, $colMarca, $r)) ?: null,
+                        'linea'  => trim((string) $this->cellValue($salSheet, $colLinea, $r)) ?: null,
+                        'costo'  => 0,
                     ]
                 );
+                if ($producto->wasRecentlyCreated) {
+                    $stats['productos_nuevos']++;
+                }
 
                 Salida::create(['codigo_barras' => $codigo, 'sucursal_id' => $sucursalId, 'unidades' => $unidades, 'fecha' => $fecha, 'destino' => $destino]);
                 $stats['salidas']++;
@@ -572,6 +589,48 @@ class InventarioController extends Controller
         return [$marcas, $lineas];
     }
 
+    /**
+     * Mapea encabezados normalizados (trim + mayúsculas) de la fila 1 a su letra de columna.
+     */
+    private function buildHeaderMap($sheet): array
+    {
+        $map             = [];
+        $highestColIndex = Coordinate::columnIndexFromString($sheet->getHighestColumn());
+
+        for ($col = 1; $col <= $highestColIndex; $col++) {
+            $colLetter = Coordinate::stringFromColumnIndex($col);
+            $header    = strtoupper(trim((string) $sheet->getCell($colLetter . '1')->getValue()));
+            if ($header !== '') {
+                $map[$header] = $colLetter;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Busca la primera cabecera candidata presente en el mapa (permite variantes como singular/plural).
+     */
+    private function findColumn(array $headerMap, array $candidatos): ?string
+    {
+        foreach ($candidatos as $c) {
+            if (isset($headerMap[$c])) {
+                return $headerMap[$c];
+            }
+        }
+
+        return null;
+    }
+
+    private function cellValue($sheet, ?string $colLetter, int $row): mixed
+    {
+        if ($colLetter === null) {
+            return null;
+        }
+
+        return $sheet->getCell($colLetter . $row)->getValue();
+    }
+
     private function normalizeCodigo(mixed $value): string
     {
         if ($value === null || $value === '') return '';
@@ -579,6 +638,23 @@ class InventarioController extends Controller
             return number_format((float) $value, 0, '.', '');
         }
         return trim((string) $value);
+    }
+
+    /**
+     * Igual que parseDate() pero devuelve null en vez de lanzar excepción cuando
+     * la celda está vacía o no se puede interpretar (movimiento "sin fecha").
+     */
+    private function parseDateOrNull(mixed $value): ?string
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
+
+        try {
+            return $this->parseDate($value);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function parseDate(mixed $value): string
@@ -598,6 +674,22 @@ class InventarioController extends Controller
 
     public function limpiar()
     {
+        $productos = DB::table('productos')->get();
+        $entradas  = DB::table('entradas')->get();
+        $salidas   = DB::table('salidas')->get();
+
+        InventarioBackup::create([
+            'user_id'         => auth()->id(),
+            'productos_count' => $productos->count(),
+            'entradas_count'  => $entradas->count(),
+            'salidas_count'   => $salidas->count(),
+            'datos'           => [
+                'productos' => $productos,
+                'entradas'  => $entradas,
+                'salidas'   => $salidas,
+            ],
+        ]);
+
         DB::table('consumos_material')->delete();
         DB::table('alertas_stock')->delete();
         DB::table('salidas')->delete();
@@ -606,6 +698,18 @@ class InventarioController extends Controller
         DB::table('productos')->delete();
 
         return redirect()->route('admin.inventario.index')
-            ->with('success', 'Todos los datos de inventario han sido eliminados.');
+            ->with('success', 'Todos los datos de inventario han sido eliminados. Se guardó un backup con lo eliminado.');
+    }
+
+    public function backups()
+    {
+        $backups = InventarioBackup::with('user')->latest()->paginate(20);
+
+        return view('admin.inventario.backups.index', compact('backups'));
+    }
+
+    public function verBackup(InventarioBackup $backup)
+    {
+        return view('admin.inventario.backups.show', compact('backup'));
     }
 }

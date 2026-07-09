@@ -12,6 +12,7 @@ class Producto extends Model
         'nombre',
         'marca',
         'linea',
+        'uso',
         'costo',
         'stock_minimo',
     ];
