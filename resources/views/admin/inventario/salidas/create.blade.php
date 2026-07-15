@@ -76,6 +76,7 @@
                                     data-marca="{{ $producto->marca ?? '' }}"
                                     data-linea="{{ $producto->linea ?? '' }}"
                                     data-codigo="{{ $producto->codigo_barras }}"
+                                    data-stock="{{ $producto->stock_actual }}"
                                 {{ old('codigo_barras') == $producto->codigo_barras ? 'selected' : '' }}>
                                 {{ $producto->nombre }}
                                 @if ($producto->marca) — {{ $producto->marca }} @endif
@@ -84,6 +85,7 @@
                             </option>
                         @endforeach
                     </select>
+                    <span id="stock_actual_info" style="display:none; margin-top:0.4rem; font-size:0.85rem;"></span>
                 </div>
 
                 <div class="form-row">
@@ -92,6 +94,9 @@
                         <input type="number" id="unidades" name="unidades"
                                class="form-control" value="{{ old('unidades', 1) }}"
                                min="1" required>
+                        <span id="stock_warning" style="display:none; color:#dc2626; font-size:0.8rem;">
+                            La cantidad supera el stock actual disponible.
+                        </span>
                     </div>
 
                     <div class="form-group">
@@ -170,8 +175,41 @@ function limpiarFiltros() {
     actualizarLineas();
 }
 
+function stockSeleccionado() {
+    const select = document.getElementById('codigo_barras');
+    const opt    = select.options[select.selectedIndex];
+    return (opt && opt.value) ? (parseInt(opt.dataset.stock, 10) || 0) : null;
+}
+
+function mostrarStock() {
+    const info  = document.getElementById('stock_actual_info');
+    const stock = stockSeleccionado();
+
+    if (stock === null) {
+        info.style.display = 'none';
+    } else {
+        info.textContent = 'Stock actual: ' + stock + ' uds.';
+        info.style.color = stock <= 0 ? '#dc2626' : '#555';
+        info.style.display = 'inline-block';
+    }
+
+    validarUnidades();
+}
+
+function validarUnidades() {
+    const stock   = stockSeleccionado();
+    const unidades = parseInt(document.getElementById('unidades').value, 10) || 0;
+    const warning = document.getElementById('stock_warning');
+
+    warning.style.display = (stock !== null && unidades > stock) ? 'block' : 'none';
+}
+
+document.getElementById('codigo_barras').addEventListener('change', mostrarStock);
+document.getElementById('unidades').addEventListener('input', validarUnidades);
+
 // Inicializar contador
 filtrarProductos();
+mostrarStock();
 </script>
 @endpush
 @endsection

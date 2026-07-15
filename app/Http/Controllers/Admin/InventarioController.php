@@ -24,25 +24,32 @@ class InventarioController extends Controller
         $q     = $request->input('q');
         $marca = $request->input('marca');
         $linea = $request->input('linea');
+        $tipoStock = $request->input('tipo') === 'reventa' ? 'reventa' : 'tecnico';
         $sid    = session('sucursal_activa_id');
         $sidSql = $sid ? " AND sucursal_id = {$sid}" : '';
 
         $query = DB::table('productos as p')
             ->select([
-                'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.costo', 'p.stock_minimo',
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql}) AS total_entradas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql}) AS total_salidas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql})
-                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql}) AS stock_actual"),
+                'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.costo', 'p.stock_minimo', 'p.es_reventa',
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql}) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql}) AS total_salidas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql})
+                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql}) AS stock_actual"),
             ])
             ->orderBy('p.nombre');
 
-        // Sucursal específica: solo mostrar productos con actividad en esa sucursal
+        if ($tipoStock === 'reventa') {
+            $query->where('p.es_reventa', true);
+        }
+
+        // Sucursal específica: solo mostrar productos con actividad (movimientos) en esa
+        // sucursal para el pool activo. Igual regla para técnico y reventa: un producto de
+        // reventa recién creado queda anclado a la sucursal activa vía asegurarPresenciaReventa().
         if ($sid) {
             $query->whereRaw(
-                "EXISTS (SELECT 1 FROM entradas WHERE entradas.codigo_barras = p.codigo_barras AND entradas.sucursal_id = ?)
-                 OR EXISTS (SELECT 1 FROM salidas WHERE salidas.codigo_barras = p.codigo_barras AND salidas.sucursal_id = ?)",
-                [$sid, $sid]
+                "EXISTS (SELECT 1 FROM entradas WHERE entradas.codigo_barras = p.codigo_barras AND entradas.sucursal_id = ? AND entradas.tipo_stock = ?)
+                 OR EXISTS (SELECT 1 FROM salidas WHERE salidas.codigo_barras = p.codigo_barras AND salidas.sucursal_id = ? AND salidas.tipo_stock = ?)",
+                [$sid, $tipoStock, $sid, $tipoStock]
             );
         }
 
@@ -57,11 +64,13 @@ class InventarioController extends Controller
 
         $stock = $query->get();
 
-        [$marcas, $lineas] = $this->filterOptions($marca);
+        [$marcas, $lineas] = $this->filterOptions($marca, $tipoStock);
 
-        $alertas = AlertaStock::noLeidas()->with('producto')->latest()->get();
+        $alertas = $tipoStock === 'tecnico'
+            ? AlertaStock::noLeidas()->with('producto')->latest()->get()
+            : collect();
 
-        return view('admin.inventario.index', compact('stock', 'q', 'marca', 'linea', 'marcas', 'lineas', 'alertas'));
+        return view('admin.inventario.index', compact('stock', 'q', 'marca', 'linea', 'marcas', 'lineas', 'alertas', 'tipoStock'));
     }
 
     // ─── Productos ────────────────────────────────────────────────────────────
@@ -71,8 +80,32 @@ class InventarioController extends Controller
         $q     = $request->input('q');
         $marca = $request->input('marca');
         $linea = $request->input('linea');
+        $sid   = session('sucursal_activa_id');
+        $tipoStock = $request->input('tipo') === 'reventa' ? 'reventa' : 'tecnico';
 
         $query = Producto::orderBy('nombre');
+
+        if ($tipoStock === 'reventa') {
+            $query->where('es_reventa', true);
+        }
+
+        // Sucursal específica: solo listar productos con movimiento del pool activo
+        // registrado ahí. En "todas las sucursales" se ve el catálogo completo.
+        if ($sid) {
+            $query->where(function ($qb) use ($sid, $tipoStock) {
+                $qb->whereExists(function ($sub) use ($sid, $tipoStock) {
+                    $sub->selectRaw('1')->from('entradas')
+                        ->whereColumn('entradas.codigo_barras', 'productos.codigo_barras')
+                        ->where('entradas.sucursal_id', $sid)
+                        ->where('entradas.tipo_stock', $tipoStock);
+                })->orWhereExists(function ($sub) use ($sid, $tipoStock) {
+                    $sub->selectRaw('1')->from('salidas')
+                        ->whereColumn('salidas.codigo_barras', 'productos.codigo_barras')
+                        ->where('salidas.sucursal_id', $sid)
+                        ->where('salidas.tipo_stock', $tipoStock);
+                });
+            });
+        }
 
         if ($q) {
             $query->where(function ($qb) use ($q) {
@@ -85,9 +118,9 @@ class InventarioController extends Controller
 
         $productos = $query->get();
 
-        [$marcas, $lineas] = $this->filterOptions($marca);
+        [$marcas, $lineas] = $this->filterOptions($marca, $tipoStock);
 
-        return view('admin.inventario.productos.index', compact('productos', 'q', 'marca', 'linea', 'marcas', 'lineas'));
+        return view('admin.inventario.productos.index', compact('productos', 'q', 'marca', 'linea', 'marcas', 'lineas', 'tipoStock'));
     }
 
     public function createProducto()
@@ -98,15 +131,49 @@ class InventarioController extends Controller
     public function storeProducto(Request $request)
     {
         $validated = $request->validate([
-            'codigo_barras' => 'required|string|max:100|unique:productos,codigo_barras',
-            'nombre'        => 'required|string|max:255',
-            'marca'         => 'nullable|string|max:100',
-            'linea'         => 'nullable|string|max:100',
-            'costo'         => 'required|numeric|min:0',
-            'stock_minimo'  => 'required|integer|min:0',
+            'codigo_barras'       => 'required|string|max:100|unique:productos,codigo_barras',
+            'nombre'              => 'required|string|max:255',
+            'marca'               => 'nullable|string|max:100',
+            'linea'               => 'nullable|string|max:100',
+            'costo'               => 'required|numeric|min:0',
+            'stock_minimo'        => 'required|integer|min:0',
+            'es_reventa'          => 'nullable|boolean',
+            'unidades_iniciales'  => 'nullable|integer|min:0',
+            'fecha_inicial'       => 'nullable|date',
+        ], [
+            'codigo_barras.unique' => 'Ese código de barras ya está registrado en el catálogo (puede pertenecer a otra sucursal, por eso no aparece en tus filtros). No se puede duplicar.',
+        ]);
+        $esReventa         = $request->boolean('es_reventa');
+        $unidadesIniciales = (int) ($request->input('unidades_iniciales') ?? 0);
+        $fechaInicial      = $request->input('fecha_inicial') ?: now()->toDateString();
+
+        $producto = Producto::create([
+            'codigo_barras' => $validated['codigo_barras'],
+            'nombre'        => $validated['nombre'],
+            'marca'         => $validated['marca'] ?? null,
+            'linea'         => $validated['linea'] ?? null,
+            'costo'         => $validated['costo'],
+            'stock_minimo'  => $validated['stock_minimo'],
+            'es_reventa'    => $esReventa,
         ]);
 
-        Producto::create($validated);
+        $sid = session('sucursal_activa_id');
+        if ($unidadesIniciales > 0 && $sid) {
+            // Ya viene con stock real: esa entrada ancla el producto a la sucursal.
+            Entrada::create([
+                'codigo_barras' => $producto->codigo_barras,
+                'sucursal_id'   => $sid,
+                'tipo_stock'    => 'tecnico',
+                'unidades'      => $unidadesIniciales,
+                'fecha'         => $fechaInicial,
+            ]);
+        } else {
+            $this->asegurarPresenciaSucursal($producto, 'tecnico');
+        }
+
+        if ($esReventa) {
+            $this->asegurarPresenciaSucursal($producto, 'reventa');
+        }
 
         return redirect()->route('admin.inventario.productos')
             ->with('success', 'Producto registrado correctamente.');
@@ -126,9 +193,16 @@ class InventarioController extends Controller
             'linea'         => 'nullable|string|max:100',
             'costo'         => 'required|numeric|min:0',
             'stock_minimo'  => 'required|integer|min:0',
+            'es_reventa'    => 'nullable|boolean',
         ]);
+        $validated['es_reventa'] = $request->boolean('es_reventa');
 
         $producto->update($validated);
+
+        $this->asegurarPresenciaSucursal($producto, 'tecnico');
+        if ($producto->es_reventa) {
+            $this->asegurarPresenciaSucursal($producto, 'reventa');
+        }
 
         return redirect()->route('admin.inventario.productos')
             ->with('success', 'Producto actualizado correctamente.');
@@ -143,10 +217,12 @@ class InventarioController extends Controller
         $linea = $request->input('linea');
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
+        $tipoStock = $request->input('tipo') === 'reventa' ? 'reventa' : 'tecnico';
 
         $sid = session('sucursal_activa_id');
 
         $query = Entrada::with('producto')
+            ->where('tipo_stock', $tipoStock)
             ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->orderByDesc('fecha')
             ->orderByDesc('id');
@@ -169,16 +245,16 @@ class InventarioController extends Controller
 
         $entradas = $query->paginate(20)->withQueryString();
 
-        [$marcas, $lineas] = $this->filterOptions($marca);
+        [$marcas, $lineas] = $this->filterOptions($marca, $tipoStock);
 
         return view('admin.inventario.entradas.index', compact(
-            'entradas', 'q', 'marca', 'linea', 'desde', 'hasta', 'marcas', 'lineas'
+            'entradas', 'q', 'marca', 'linea', 'desde', 'hasta', 'marcas', 'lineas', 'tipoStock'
         ));
     }
 
     public function createEntrada()
     {
-        $productos  = Producto::orderBy('nombre')->get();
+        $productos  = $this->productosConStock();
         $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
         return view('admin.inventario.entradas.create', compact('productos', 'sucursales'));
     }
@@ -192,7 +268,7 @@ class InventarioController extends Controller
         ]);
 
         $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
-        Entrada::create(array_merge($validated, ['sucursal_id' => $sid]));
+        Entrada::create(array_merge($validated, ['sucursal_id' => $sid, 'tipo_stock' => 'tecnico']));
 
         return redirect()->route('admin.inventario.entradas')
             ->with('success', 'Entrada registrada correctamente.');
@@ -208,10 +284,12 @@ class InventarioController extends Controller
         $desde   = $request->input('desde');
         $hasta   = $request->input('hasta');
         $destino = $request->input('destino');
+        $tipoStock = $request->input('tipo') === 'reventa' ? 'reventa' : 'tecnico';
 
         $sid = session('sucursal_activa_id');
 
         $query = Salida::with('producto')
+            ->where('tipo_stock', $tipoStock)
             ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
             ->orderByDesc('fecha')
             ->orderByDesc('id');
@@ -235,16 +313,16 @@ class InventarioController extends Controller
 
         $salidas = $query->paginate(20)->withQueryString();
 
-        [$marcas, $lineas] = $this->filterOptions($marca);
+        [$marcas, $lineas] = $this->filterOptions($marca, $tipoStock);
 
         return view('admin.inventario.salidas.index', compact(
-            'salidas', 'q', 'marca', 'linea', 'desde', 'hasta', 'destino', 'marcas', 'lineas'
+            'salidas', 'q', 'marca', 'linea', 'desde', 'hasta', 'destino', 'marcas', 'lineas', 'tipoStock'
         ));
     }
 
     public function createSalida()
     {
-        $productos  = Producto::orderBy('nombre')->get();
+        $productos  = $this->productosConStock();
         $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
         return view('admin.inventario.salidas.create', compact('productos', 'sucursales'));
     }
@@ -259,10 +337,89 @@ class InventarioController extends Controller
         ]);
 
         $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
-        Salida::create(array_merge($validated, ['sucursal_id' => $sid]));
+        Salida::create(array_merge($validated, ['sucursal_id' => $sid, 'tipo_stock' => 'tecnico']));
 
         return redirect()->route('admin.inventario.salidas')
             ->with('success', 'Salida registrada correctamente.');
+    }
+
+    // ─── Reventa (segundo inventario, alimentado por transferencias) ──────────
+
+    public function createTransferencia()
+    {
+        // Cualquier producto técnico con stock en la sucursal activa se puede transferir;
+        // no hace falta que ya esté marcado como "de reventa" (la transferencia lo habilita).
+        $productos  = $this->productosConStock('tecnico');
+        $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.inventario.reventa.transferir', compact('productos', 'sucursales'));
+    }
+
+    public function storeTransferencia(Request $request)
+    {
+        $validated = $request->validate([
+            'codigo_barras' => 'required|string|exists:productos,codigo_barras',
+            'unidades'      => 'required|integer|min:1',
+            'fecha'         => 'required|date',
+        ]);
+
+        $producto = Producto::where('codigo_barras', $validated['codigo_barras'])->firstOrFail();
+
+        $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
+
+        DB::transaction(function () use ($validated, $sid) {
+            Salida::create([
+                'codigo_barras' => $validated['codigo_barras'],
+                'sucursal_id'   => $sid,
+                'tipo_stock'    => 'tecnico',
+                'unidades'      => $validated['unidades'],
+                'fecha'         => $validated['fecha'],
+                'destino'       => 'Transferencia a reventa',
+            ]);
+
+            Entrada::create([
+                'codigo_barras' => $validated['codigo_barras'],
+                'sucursal_id'   => $sid,
+                'tipo_stock'    => 'reventa',
+                'unidades'      => $validated['unidades'],
+                'fecha'         => $validated['fecha'],
+            ]);
+        });
+
+        // La transferencia habilita el pool de reventa para este producto.
+        if (! $producto->es_reventa) {
+            $producto->update(['es_reventa' => true]);
+        }
+
+        return redirect()->route('admin.inventario.index', ['tipo' => 'reventa'])
+            ->with('success', 'Transferencia a reventa registrada correctamente.');
+    }
+
+    public function createSalidaReventa()
+    {
+        $productos  = $this->productosConStock('reventa');
+        $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.inventario.reventa.salida', compact('productos', 'sucursales'));
+    }
+
+    public function storeSalidaReventa(Request $request)
+    {
+        $validated = $request->validate([
+            'codigo_barras' => 'required|string|exists:productos,codigo_barras',
+            'unidades'      => 'required|integer|min:1',
+            'fecha'         => 'required|date',
+            'destino'       => 'nullable|string|max:255',
+        ]);
+
+        $producto = Producto::where('codigo_barras', $validated['codigo_barras'])->firstOrFail();
+        if (! $producto->es_reventa) {
+            return back()->withErrors(['codigo_barras' => 'Este producto no está habilitado para reventa.'])->withInput();
+        }
+
+        $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
+        Salida::create(array_merge($validated, ['sucursal_id' => $sid, 'tipo_stock' => 'reventa']));
+
+        return redirect()->route('admin.inventario.salidas', ['tipo' => 'reventa'])
+            ->with('success', 'Venta de reventa registrada correctamente.');
     }
 
     // ─── Análisis por producto ────────────────────────────────────────────────
@@ -284,11 +441,11 @@ class InventarioController extends Controller
         $query = DB::table('productos as p')
             ->select([
                 'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.stock_minimo',
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidFilter}{$entFiltro}) AS total_entradas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidFilter}{$salFiltro}) AS total_salidas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidFilter})
-                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidFilter}) AS stock_actual"),
-                DB::raw("(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras{$sidFilter}) AS ultima_salida"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras AND tipo_stock = 'tecnico'{$sidFilter}{$entFiltro}) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras AND tipo_stock = 'tecnico'{$sidFilter}{$salFiltro}) AS total_salidas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras AND tipo_stock = 'tecnico'{$sidFilter})
+                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras AND tipo_stock = 'tecnico'{$sidFilter}) AS stock_actual"),
+                DB::raw("(SELECT MAX(fecha) FROM salidas WHERE codigo_barras = p.codigo_barras AND tipo_stock = 'tecnico'{$sidFilter}) AS ultima_salida"),
             ])
             ->orderBy('p.nombre');
 
@@ -337,6 +494,7 @@ class InventarioController extends Controller
                 // Filtro por marca/linea si aplica
                 $histQuery = DB::table('salidas as s')
                     ->selectRaw("s.codigo_barras, SUM(s.unidades) as hist_total, COUNT(DISTINCT substr(s.fecha, 1, 4)) as hist_años")
+                    ->where('s.tipo_stock', 'tecnico')
                     ->whereRaw("({$condiciones})")
                     ->groupBy('s.codigo_barras');
 
@@ -570,17 +728,101 @@ class InventarioController extends Controller
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Devuelve [marcas, lineas] para los dropdowns de filtro.
+     * Un producto solo "existe" en una sucursal cuando tiene movimientos ahí (mismo
+     * criterio para técnico y reventa). Al crear/editar un producto mientras hay una
+     * sucursal activa, se ancla con un movimiento de 0 unidades en el/los pool(es)
+     * correspondientes, para que aparezca de inmediato en esa sucursal (y solo en esa)
+     * sin necesidad de registrar stock real primero.
+     */
+    private function asegurarPresenciaSucursal(Producto $producto, string $tipoStock): void
+    {
+        $sid = session('sucursal_activa_id');
+        if (! $sid) {
+            return;
+        }
+
+        $yaExiste = Entrada::where('codigo_barras', $producto->codigo_barras)
+            ->where('tipo_stock', $tipoStock)
+            ->where('sucursal_id', $sid)
+            ->exists()
+            || Salida::where('codigo_barras', $producto->codigo_barras)
+                ->where('tipo_stock', $tipoStock)
+                ->where('sucursal_id', $sid)
+                ->exists();
+
+        if (! $yaExiste) {
+            Entrada::create([
+                'codigo_barras' => $producto->codigo_barras,
+                'sucursal_id'   => $sid,
+                'tipo_stock'    => $tipoStock,
+                'unidades'      => 0,
+                'fecha'         => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Productos con su stock_actual calculado (entradas - salidas), respetando
+     * la sucursal activa en sesión, para mostrarlo en los formularios de movimiento.
+     */
+
+    /**
+     * Restringe un query de productos a los que tienen algún movimiento del pool
+     * indicado en la sucursal activa. Sin sucursal activa (modo global) no filtra:
+     * eso permite alcanzar cualquier producto para, por ejemplo, activarlo en una
+     * sucursal nueva registrándole ahí su primera entrada.
+     */
+    private function scopeSucursal($query, string $tipoStock, string $tabla = 'productos')
+    {
+        $sid = session('sucursal_activa_id');
+        if (! $sid) {
+            return $query;
+        }
+
+        return $query->where(function ($qb) use ($sid, $tipoStock, $tabla) {
+            $qb->whereExists(function ($sub) use ($sid, $tipoStock, $tabla) {
+                $sub->selectRaw('1')->from('entradas')
+                    ->whereColumn('entradas.codigo_barras', "{$tabla}.codigo_barras")
+                    ->where('entradas.sucursal_id', $sid)
+                    ->where('entradas.tipo_stock', $tipoStock);
+            })->orWhereExists(function ($sub) use ($sid, $tipoStock, $tabla) {
+                $sub->selectRaw('1')->from('salidas')
+                    ->whereColumn('salidas.codigo_barras', "{$tabla}.codigo_barras")
+                    ->where('salidas.sucursal_id', $sid)
+                    ->where('salidas.tipo_stock', $tipoStock);
+            });
+        });
+    }
+
+    private function productosConStock(string $tipoStock = 'tecnico'): \Illuminate\Support\Collection
+    {
+        $sid    = session('sucursal_activa_id');
+        $sidSql = $sid ? " AND sucursal_id = {$sid}" : '';
+
+        $query = Producto::query()
+            ->select('productos.*')
+            ->selectRaw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = productos.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql})
+                       - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = productos.codigo_barras AND tipo_stock = '{$tipoStock}'{$sidSql}) AS stock_actual")
+            ->when($tipoStock === 'reventa', fn ($q) => $q->where('es_reventa', true));
+
+        return $this->scopeSucursal($query, $tipoStock)
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    /**
+     * Devuelve [marcas, lineas] para los dropdowns de filtro, restringidos a la
+     * sucursal activa (mismo criterio que las listas de productos/movimientos).
      * Si se selecciona una marca, las lineas se filtran a las de esa marca.
      */
-    private function filterOptions(?string $marcaSeleccionada): array
+    private function filterOptions(?string $marcaSeleccionada, string $tipoStock = 'tecnico'): array
     {
-        $marcas = Producto::whereNotNull('marca')
+        $marcas = $this->scopeSucursal(Producto::whereNotNull('marca'), $tipoStock)
             ->distinct()
             ->orderBy('marca')
             ->pluck('marca');
 
-        $lineas = Producto::whereNotNull('linea')
+        $lineas = $this->scopeSucursal(Producto::whereNotNull('linea'), $tipoStock)
             ->when($marcaSeleccionada, fn ($q) => $q->where('marca', $marcaSeleccionada))
             ->distinct()
             ->orderBy('linea')

@@ -79,6 +79,55 @@
         </div>
     </div>
 
+    {{-- ── Productos del Servicio ──────────────────────────── --}}
+    <div class="card" style="margin-top: 2rem;" id="productos-section">
+        <div class="card-header">
+            <h3 class="card-title">Productos del Servicio</h3>
+        </div>
+        <div class="card-body">
+
+            <table class="data-table" id="productos-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="text-align:right;">Precio</th>
+                        <th style="width:100px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productos-tbody">
+                    {{-- Rows injected by JS on load --}}
+                </tbody>
+            </table>
+
+            <div id="productos-empty" style="display:none; padding: 1.5rem 0; color: var(--text-light); text-align:center;">
+                Sin productos asignados aún.
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.06);">
+                <h4 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary-color);">
+                    Agregar Producto
+                </h4>
+                <div class="form-row" id="add-producto-form">
+                    <div class="form-group" style="flex:2;">
+                        <label class="form-label">Producto</label>
+                        <select class="form-control" id="nuevo-producto-catalogo-id">
+                            <option value="">— seleccionar producto —</option>
+                            @foreach ($catalogoProductos as $p)
+                                <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                            @endforeach
+                        </select>
+                        <small id="add-error-producto-catalogo" style="color: var(--error-color); display:none;"></small>
+                    </div>
+                    <div class="form-group" style="flex:0; align-self: flex-end;">
+                        <button type="button" class="btn btn-primary" id="btn-agregar-producto">Agregar</button>
+                    </div>
+                </div>
+                <div id="add-producto-general-error" style="color: var(--error-color); display:none; margin-top: 0.5rem;"></div>
+            </div>
+
+        </div>
+    </div>
+
     {{-- ── Materiales del Servicio ─────────────────────────── --}}
     <div class="card" style="margin-top: 2rem;" id="materiales-section">
         <div class="card-header">
@@ -167,6 +216,117 @@ $materialesData = $materiales->map(fn($m) => [
 ]);
 @endphp
 @push('scripts')
+<script>
+(function () {
+    const BASE_URL = '{{ route("admin.servicios.productos.store", $servicio) }}';
+    const CSRF     = '{{ csrf_token() }}';
+
+    let productos = @json($productosServicio->map(fn($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'precio' => $p->precio]));
+
+    function renderTable() {
+        const tbody = document.getElementById('productos-tbody');
+        const empty = document.getElementById('productos-empty');
+        tbody.innerHTML = '';
+
+        if (productos.length === 0) {
+            empty.style.display = '';
+            document.getElementById('productos-table').style.display = 'none';
+        } else {
+            empty.style.display = 'none';
+            document.getElementById('productos-table').style.display = '';
+            productos.forEach(p => tbody.appendChild(buildRow(p)));
+        }
+
+        refreshProductoSelect();
+    }
+
+    function buildRow(p) {
+        const tr = document.createElement('tr');
+        tr.dataset.id = p.id;
+        tr.innerHTML = `
+            <td><strong>${escHtml(p.nombre)}</strong></td>
+            <td style="text-align:right;">${p.precio !== null ? 'Bs. ' + Number(p.precio).toFixed(2) : '—'}</td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm btn-delete">Quitar</button>
+                <small class="row-error" style="color:var(--error-color); display:none;"></small>
+            </td>
+        `;
+        tr.querySelector('.btn-delete').addEventListener('click', () => deleteRow(tr, p));
+        return tr;
+    }
+
+    function refreshProductoSelect() {
+        const usedIds = new Set(productos.map(p => p.id));
+        document.querySelectorAll('#nuevo-producto-catalogo-id option[value]:not([value=""])').forEach(opt => {
+            opt.disabled = usedIds.has(parseInt(opt.value));
+        });
+    }
+
+    function deleteRow(tr, p) {
+        if (!confirm('¿Quitar este producto del servicio?')) return;
+
+        const errEl = tr.querySelector('.row-error');
+        errEl.style.display = 'none';
+
+        fetch(`${BASE_URL}/${p.id}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) {
+                errEl.textContent = 'Error al quitar.';
+                errEl.style.display = '';
+                return;
+            }
+            productos = productos.filter(x => x.id !== p.id);
+            renderTable();
+        })
+        .catch(() => {
+            errEl.textContent = 'Error de conexión.';
+            errEl.style.display = '';
+        });
+    }
+
+    document.getElementById('btn-agregar-producto').addEventListener('click', () => {
+        const productoCatalogoId = document.getElementById('nuevo-producto-catalogo-id').value;
+
+        ['add-error-producto-catalogo', 'add-producto-general-error']
+            .forEach(id => { const el = document.getElementById(id); el.style.display = 'none'; el.textContent = ''; });
+
+        fetch(BASE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ producto_catalogo_id: productoCatalogoId }),
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok) {
+                const errors = data.errors || {};
+                if (errors.producto_catalogo_id) showError('add-error-producto-catalogo', errors.producto_catalogo_id[0]);
+                if (!Object.keys(errors).length) showError('add-producto-general-error', data.message || 'Error al agregar.');
+                return;
+            }
+            productos.push(data);
+            renderTable();
+            document.getElementById('nuevo-producto-catalogo-id').value = '';
+        })
+        .catch(() => showError('add-producto-general-error', 'Error de conexión.'));
+    });
+
+    function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = '';
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    renderTable();
+})();
+</script>
 <script>
 (function () {
     const BASE_URL = '{{ route("admin.servicios.materiales.store", $servicio) }}';

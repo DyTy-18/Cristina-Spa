@@ -15,11 +15,13 @@ class Producto extends Model
         'uso',
         'costo',
         'stock_minimo',
+        'es_reventa',
     ];
 
     protected $casts = [
         'costo'        => 'decimal:2',
         'stock_minimo' => 'integer',
+        'es_reventa'   => 'boolean',
     ];
 
     public function entradas(): HasMany

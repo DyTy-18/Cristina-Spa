@@ -362,6 +362,19 @@
     @endforeach
 </div>
 
+{{-- ===== KPI Gastos generales del período ===== --}}
+<div class="kpi-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:1.75rem;">
+    <div class="kpi-card">
+        <div class="kpi-card-label">Total gastos generales</div>
+        <div class="kpi-card-value" style="color:#dc3545;">Bs. {{ number_format($totalGastosGenerales, 2) }}</div>
+        <div class="kpi-card-sub">Mismo período seleccionado ({{ ['diario'=>'Diario','mensual'=>'Mensual','trimestral'=>'Trimestral','rango'=>'Por rango'][$periodo] }})</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-card-label">Ingresos netos (ingresos − gastos generales)</div>
+        <div class="kpi-card-value" style="color:var(--primary-color);">Bs. {{ number_format($totalGeneral - $totalGastosGenerales, 2) }}</div>
+    </div>
+</div>
+
 {{-- ====================================================================== --}}
 {{-- VISTA DIARIA                                                            --}}
 {{-- ====================================================================== --}}

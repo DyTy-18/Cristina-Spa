@@ -40,11 +40,11 @@ class GastosController extends Controller
             'monto'       => 'required|numeric|min:0.01',
             'categoria'   => 'required|string',
             'fecha'       => 'required|date',
-            'metodo_pago' => 'nullable|string',
             'notas'       => 'nullable|string|max:500',
         ]);
 
         Gasto::create(array_merge($validated, [
+            'metodo_pago' => 'efectivo',
             'sucursal_id' => session('sucursal_activa_id'),
             'user_id'     => auth()->id(),
         ]));
@@ -82,7 +82,9 @@ class GastosController extends Controller
             'fecha_pago'    => 'required|date',
             'periodo_desde' => 'nullable|date',
             'periodo_hasta' => 'nullable|date',
-            'metodo_pago'   => 'nullable|string',
+            'metodo_pago'   => 'required|in:efectivo,transferencia,qr',
+            'metodo_pago_2' => 'nullable|in:efectivo,transferencia,qr|different:metodo_pago|required_with:monto_2',
+            'monto_2'       => 'nullable|numeric|min:0.01|lt:monto|required_with:metodo_pago_2',
             'notas'         => 'nullable|string|max:500',
         ]);
 

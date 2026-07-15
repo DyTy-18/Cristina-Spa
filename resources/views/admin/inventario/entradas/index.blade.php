@@ -4,19 +4,32 @@
 @section('page-title', 'Entradas de Mercancía')
 
 @section('content')
+    @php $tipoStock = $tipoStock ?? 'tecnico'; @endphp
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+        <a href="{{ route('admin.inventario.entradas') }}"
+           class="btn btn-sm {{ $tipoStock === 'tecnico' ? 'btn-primary' : 'btn-outline' }}">Técnico</a>
+        <a href="{{ route('admin.inventario.entradas', ['tipo' => 'reventa']) }}"
+           class="btn btn-sm {{ $tipoStock === 'reventa' ? 'btn-primary' : 'btn-outline' }}">Reventa</a>
+    </div>
+
     <div class="table-container">
         <div class="table-header">
             <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                <h3 class="table-title">Historial de Entradas</h3>
+                <h3 class="table-title">Historial de Entradas {{ $tipoStock === 'reventa' ? '(Reventa)' : '(Técnico)' }}</h3>
                 @include('admin.partials.sucursal_badge')
             </div>
             <div style="display:flex; gap:0.5rem;">
-                <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline btn-sm">Ver Stock</a>
-                <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary btn-sm">+ Registrar Entrada</a>
+                <a href="{{ route('admin.inventario.index', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Ver Stock</a>
+                @if ($tipoStock === 'tecnico')
+                    <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary btn-sm">+ Registrar Entrada</a>
+                @else
+                    <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-primary btn-sm">+ Transferir a Reventa</a>
+                @endif
             </div>
         </div>
 
         <form method="GET" action="{{ route('admin.inventario.entradas') }}" class="table-filter">
+            <input type="hidden" name="tipo" value="{{ $tipoStock }}">
             <input type="text" name="q" class="search-input"
                    placeholder="Buscar por nombre o código..."
                    value="{{ $q ?? '' }}">
@@ -47,7 +60,7 @@
 
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
             @if ($q || $marca || $linea || $desde || $hasta)
-                <a href="{{ route('admin.inventario.entradas') }}" class="btn btn-outline btn-sm">Limpiar</a>
+                <a href="{{ route('admin.inventario.entradas', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
 
@@ -96,7 +109,11 @@
                     @endif
                 </p>
                 @if (!$q && !$marca && !$linea && !$desde && !$hasta)
-                    <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary">Registrar Primera Entrada</a>
+                    @if ($tipoStock === 'tecnico')
+                        <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary">Registrar Primera Entrada</a>
+                    @else
+                        <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-primary">Transferir a Reventa</a>
+                    @endif
                 @endif
             </div>
         @endif

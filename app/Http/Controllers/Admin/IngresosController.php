@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
+use App\Models\Gasto;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -37,12 +38,13 @@ class IngresosController extends Controller
             ->orderBy('hora')
             ->get();
 
-        $totalGeneral   = (float) $citas->sum('precio_final');
-        $porTipoPago    = $this->resumenPorTipo($citas);
-        $fechaAnterior  = $fecha->copy()->subDay()->format('Y-m-d');
-        $fechaSiguiente = $fecha->copy()->addDay()->format('Y-m-d');
+        $totalGeneral       = (float) $citas->sum('precio_final');
+        $porTipoPago        = $this->resumenPorTipo($citas);
+        $totalGastosGenerales = $this->totalGastosGenerales($sid, $fecha, $fecha);
+        $fechaAnterior      = $fecha->copy()->subDay()->format('Y-m-d');
+        $fechaSiguiente     = $fecha->copy()->addDay()->format('Y-m-d');
 
-        return compact('fecha', 'citas', 'totalGeneral', 'porTipoPago', 'fechaAnterior', 'fechaSiguiente');
+        return compact('fecha', 'citas', 'totalGeneral', 'porTipoPago', 'totalGastosGenerales', 'fechaAnterior', 'fechaSiguiente');
     }
 
     // ── Mensual ───────────────────────────────────────────────────────────────
@@ -58,8 +60,9 @@ class IngresosController extends Controller
             ->orderBy('fecha')->orderBy('hora')
             ->get();
 
-        $totalGeneral = (float) $citas->sum('precio_final');
-        $porTipoPago  = $this->resumenPorTipo($citas);
+        $totalGeneral         = (float) $citas->sum('precio_final');
+        $porTipoPago          = $this->resumenPorTipo($citas);
+        $totalGastosGenerales = $this->totalGastosGenerales($sid, $desde, $hasta);
 
         $porDia = [];
         for ($d = 1; $d <= $desde->daysInMonth; $d++) {
@@ -76,7 +79,7 @@ class IngresosController extends Controller
         $labelPeriodo = $mesesNombres[$mes] . ' ' . $anio;
 
         return compact(
-            'anio', 'mes', 'desde', 'citas', 'totalGeneral', 'porTipoPago',
+            'anio', 'mes', 'desde', 'citas', 'totalGeneral', 'porTipoPago', 'totalGastosGenerales',
             'porDia', 'mesPrev', 'anioPrev', 'mesSig', 'anioSig', 'labelPeriodo', 'mesesNombres'
         );
     }
@@ -97,9 +100,10 @@ class IngresosController extends Controller
             ->orderBy('fecha')
             ->get();
 
-        $totalGeneral = (float) $citas->sum('precio_final');
-        $porTipoPago  = $this->resumenPorTipo($citas);
-        $mesesNombres = $this->mesesNombres();
+        $totalGeneral         = (float) $citas->sum('precio_final');
+        $porTipoPago          = $this->resumenPorTipo($citas);
+        $totalGastosGenerales = $this->totalGastosGenerales($sid, $desde, $hasta);
+        $mesesNombres         = $this->mesesNombres();
 
         $porMes = [];
         for ($m = $mesInicio; $m <= $mesFin; $m++) {
@@ -112,7 +116,7 @@ class IngresosController extends Controller
         $labelPeriodo = "T{$trimestre} · {$anio}";
 
         return compact(
-            'anio', 'trimestre', 'desde', 'hasta', 'citas', 'totalGeneral', 'porTipoPago',
+            'anio', 'trimestre', 'desde', 'hasta', 'citas', 'totalGeneral', 'porTipoPago', 'totalGastosGenerales',
             'porMes', 'trimPrev', 'anioPrev', 'trimSig', 'anioSig', 'labelPeriodo', 'mesesNombres'
         );
     }
@@ -138,8 +142,9 @@ class IngresosController extends Controller
             ->orderBy('fecha')->orderBy('hora')
             ->get();
 
-        $totalGeneral = (float) $citas->sum('precio_final');
-        $porTipoPago  = $this->resumenPorTipo($citas);
+        $totalGeneral         = (float) $citas->sum('precio_final');
+        $porTipoPago          = $this->resumenPorTipo($citas);
+        $totalGastosGenerales = $this->totalGastosGenerales($sid, $desde, $hasta);
 
         // Desglose por día (solo con citas)
         $porDia = [];
@@ -156,7 +161,7 @@ class IngresosController extends Controller
         $diasRango    = $desde->diffInDays($hasta) + 1;
         $labelPeriodo = $desde->format('d/m/Y') . ' — ' . $hasta->format('d/m/Y');
 
-        return compact('desde', 'hasta', 'citas', 'totalGeneral', 'porTipoPago', 'porDia', 'diasRango', 'labelPeriodo');
+        return compact('desde', 'hasta', 'citas', 'totalGeneral', 'porTipoPago', 'totalGastosGenerales', 'porDia', 'diasRango', 'labelPeriodo');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -172,6 +177,13 @@ class IngresosController extends Controller
                     $q->where('tipo_pago', $tipoPago);
                 }
             });
+    }
+
+    private function totalGastosGenerales(?int $sid, Carbon $desde, Carbon $hasta): float
+    {
+        return (float) Gasto::when($sid, fn($q) => $q->where('sucursal_id', $sid))
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->sum('monto');
     }
 
     private function resumenPorTipo($citas): array

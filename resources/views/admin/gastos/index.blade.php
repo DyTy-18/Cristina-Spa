@@ -450,7 +450,7 @@
                     <th>Empleado</th>
                     <th>Tipo</th>
                     <th>Período</th>
-                    <th>Método</th>
+                    <th>Método(s)</th>
                     <th style="text-align:right;">Monto</th>
                     <th></th>
                 </tr>
@@ -480,7 +480,12 @@
                         @endif
                     </td>
                     <td style="font-size:0.8rem;color:var(--text-light);">
-                        {{ $p->metodo_pago ? ucfirst($p->metodo_pago) : '—' }}
+                        @if($p->metodo_pago_2)
+                            <div>{{ \App\Models\PagoSueldo::metodosPago()[$p->metodo_pago] ?? ucfirst($p->metodo_pago) }}: Bs. {{ number_format($p->monto_metodo_1, 2) }}</div>
+                            <div>{{ \App\Models\PagoSueldo::metodosPago()[$p->metodo_pago_2] ?? ucfirst($p->metodo_pago_2) }}: Bs. {{ number_format($p->monto_2, 2) }}</div>
+                        @else
+                            {{ $p->metodo_pago ? (\App\Models\PagoSueldo::metodosPago()[$p->metodo_pago] ?? ucfirst($p->metodo_pago)) : '—' }}
+                        @endif
                     </td>
                     <td style="text-align:right;font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:#dc3545;">
                         Bs. {{ number_format($p->monto, 2) }}
@@ -561,12 +566,9 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Método de pago</label>
-                    <select name="metodo_pago" class="form-control">
-                        <option value="">— Sin especificar —</option>
-                        <option value="efectivo"     {{ old('metodo_pago') === 'efectivo'     ? 'selected' : '' }}>Efectivo</option>
-                        <option value="transferencia"{{ old('metodo_pago') === 'transferencia'? 'selected' : '' }}>Transferencia</option>
-                        <option value="tarjeta"      {{ old('metodo_pago') === 'tarjeta'      ? 'selected' : '' }}>Tarjeta</option>
-                    </select>
+                    <input type="text" class="form-control" value="Efectivo" disabled
+                           style="background:var(--light-bg);color:var(--text-light);">
+                    <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.25rem;">Los gastos generales se registran solo en efectivo.</div>
                 </div>
             </div>
 
@@ -721,8 +723,8 @@
                         </div>
                     </div>
 
-                    {{-- Tipo / Monto / Fecha / Método --}}
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+                    {{-- Tipo / Monto / Fecha --}}
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Tipo *</label>
                             <select name="tipo" class="form-control" required>
@@ -732,7 +734,7 @@
                             </select>
                         </div>
                         <div class="form-group" style="margin:0;">
-                            <label class="form-label">Monto (Bs.) *</label>
+                            <label class="form-label">Monto total (Bs.) *</label>
                             <input type="number" name="monto" id="pago-monto" class="form-control"
                                    step="0.01" min="0.01" required value="{{ old('monto') }}" placeholder="0.00">
                         </div>
@@ -741,14 +743,40 @@
                             <input type="date" name="fecha_pago" id="pago-fecha" class="form-control" required
                                    value="{{ old('fecha_pago', now()->format('Y-m-d')) }}">
                         </div>
-                        <div class="form-group" style="margin:0;">
-                            <label class="form-label">Método</label>
-                            <select name="metodo_pago" class="form-control">
-                                <option value="">— Sin especificar —</option>
-                                <option value="efectivo"      {{ old('metodo_pago') === 'efectivo'      ? 'selected' : '' }}>Efectivo</option>
-                                <option value="transferencia" {{ old('metodo_pago') === 'transferencia' ? 'selected' : '' }}>Transferencia</option>
+                    </div>
+
+                    {{-- Método(s) de pago --}}
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label class="form-label">Método de pago *</label>
+                        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.6rem;">
+                            <select name="metodo_pago" id="pago-metodo1" class="form-control" required style="max-width:220px;">
+                                <option value="">— Seleccionar —</option>
+                                @foreach(\App\Models\PagoSueldo::metodosPago() as $mval => $mlabel)
+                                    <option value="{{ $mval }}" {{ old('metodo_pago') === $mval ? 'selected' : '' }}>{{ $mlabel }}</option>
+                                @endforeach
                             </select>
+                            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--text-light);white-space:nowrap;cursor:pointer;">
+                                <input type="checkbox" id="pago-dividir" {{ old('metodo_pago_2') ? 'checked' : '' }}>
+                                Dividir el pago entre 2 métodos
+                            </label>
                         </div>
+                        <div id="pago-metodo2-wrap" style="display:{{ old('metodo_pago_2') ? 'grid' : 'none' }};grid-template-columns:1fr 1fr;gap:0.9rem;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Segundo método</label>
+                                <select name="metodo_pago_2" id="pago-metodo2" class="form-control">
+                                    <option value="">— Seleccionar —</option>
+                                    @foreach(\App\Models\PagoSueldo::metodosPago() as $mval => $mlabel)
+                                        <option value="{{ $mval }}" {{ old('metodo_pago_2') === $mval ? 'selected' : '' }}>{{ $mlabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Monto 2do método (Bs.)</label>
+                                <input type="number" name="monto_2" id="pago-monto2" class="form-control"
+                                       step="0.01" min="0.01" value="{{ old('monto_2') }}" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div id="pago-metodo1-info" style="font-size:0.7rem;color:var(--text-light);margin-top:0.4rem;"></div>
                     </div>
 
                     <div class="form-group" style="margin-bottom:1.25rem;">
@@ -891,6 +919,38 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btn-usar-comisiones').addEventListener('click', function() {
         document.getElementById('pago-monto').value = document.getElementById('total-comisiones').textContent;
     });
+
+    // ── Pago dividido entre 2 métodos ──────────────────────────────
+    var dividirChk   = document.getElementById('pago-dividir');
+    var metodo2Wrap  = document.getElementById('pago-metodo2-wrap');
+    var metodo2Sel   = document.getElementById('pago-metodo2');
+    var monto2Input  = document.getElementById('pago-monto2');
+    var montoInput   = document.getElementById('pago-monto');
+    var metodo1Info  = document.getElementById('pago-metodo1-info');
+
+    function actualizarInfoMetodo1() {
+        var total  = parseFloat(montoInput.value) || 0;
+        var monto2 = parseFloat(monto2Input.value) || 0;
+        if (dividirChk.checked && total > 0 && monto2 > 0) {
+            metodo1Info.textContent = 'El primer método recibirá Bs. ' + fmt(Math.max(total - monto2, 0));
+        } else {
+            metodo1Info.textContent = '';
+        }
+    }
+
+    dividirChk.addEventListener('change', function() {
+        if (dividirChk.checked) {
+            metodo2Wrap.style.display = 'grid';
+        } else {
+            metodo2Wrap.style.display = 'none';
+            metodo2Sel.value = '';
+            monto2Input.value = '';
+        }
+        actualizarInfoMetodo1();
+    });
+    montoInput.addEventListener('input', actualizarInfoMetodo1);
+    monto2Input.addEventListener('input', actualizarInfoMetodo1);
+    actualizarInfoMetodo1();
 });
 </script>
 

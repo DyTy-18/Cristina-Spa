@@ -223,6 +223,13 @@
         flex-shrink: 0;
     }
 
+    .action-btns {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
     .agenda-price {
         font-family: 'Cormorant Garamond', serif;
         font-size: 1.2rem;
@@ -911,23 +918,59 @@
                                 <div class="agenda-price">Bs. {{ number_format($cita->precio_final, 0) }}</div>
                             @endif
 
-                            <div style="position:relative;">
-                                <div class="estado-pill {{ $cita->estado }}"
-                                     data-cita-id="{{ $cita->id }}"
-                                     data-url="{{ $updateUrl }}"
-                                     onclick="toggleEstadoMenu(this)">
-                                    {{ $cita->estado }}
+                            <div style="display:flex;align-items:center;gap:0.4rem;">
+                                <div style="position:relative;">
+                                    <div class="estado-pill {{ $cita->estado }}"
+                                         data-cita-id="{{ $cita->id }}"
+                                         data-url="{{ $updateUrl }}"
+                                         onclick="toggleEstadoMenu(this)">
+                                        {{ $cita->estado }}
+                                    </div>
+                                    <div class="estado-menu" id="emenu-{{ $cita->id }}">
+                                        @foreach(['completada','confirmada','pendiente','cancelada'] as $est)
+                                            <div class="estado-menu-item {{ $cita->estado === $est ? 'current' : '' }}"
+                                                 data-estado="{{ $est }}"
+                                                 onclick="cambiarEstado('{{ $cita->id }}', '{{ $est }}', '{{ $updateUrl }}')">
+                                                <span class="estado-dot {{ $est }}"></span>
+                                                {{ ucfirst($est) }}
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
-                                <div class="estado-menu" id="emenu-{{ $cita->id }}">
-                                    @foreach(['completada','confirmada','pendiente','cancelada'] as $est)
-                                        <div class="estado-menu-item {{ $cita->estado === $est ? 'current' : '' }}"
-                                             data-estado="{{ $est }}"
-                                             onclick="cambiarEstado('{{ $cita->id }}', '{{ $est }}', '{{ $updateUrl }}')">
-                                            <span class="estado-dot {{ $est }}"></span>
-                                            {{ ucfirst($est) }}
-                                        </div>
-                                    @endforeach
-                                </div>
+
+                            </div>
+
+                            <div class="action-btns" style="margin-top:0.4rem;">
+                                <a href="{{ route('admin.citas.show', $cita) }}"
+                                   class="btn btn-secondary"
+                                   style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                   title="Ver detalles">Ver</a>
+
+                                <a href="{{ route('admin.citas.seguimiento.show', $cita) }}"
+                                   class="btn btn-outline"
+                                   style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                   title="Hacer seguimiento">Seguimiento</a>
+
+                                @if($cita->estado === 'completada')
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                            onclick="abrirModalEditar('{{ route('admin.citas.verificarEdicion', $cita) }}')"
+                                            title="Editar (requiere contraseña)">Editar</button>
+                                @else
+                                    <a href="{{ route('admin.citas.edit', $cita) }}"
+                                       class="btn btn-primary"
+                                       style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                       title="Editar">Editar</a>
+                                @endif
+
+                                @hasanyrole('admin|encargado|developer')
+                                    <button type="button"
+                                            class="btn btn-danger"
+                                            style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                            onclick="abrirModalEliminarCita('{{ route('admin.citas.destroy', $cita) }}')"
+                                            title="Eliminar (requiere contraseña)">Eliminar</button>
+                                @endhasanyrole
                             </div>
                         </div>
 
@@ -1270,6 +1313,70 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal: Editar cita completada (requiere contraseña) --}}
+    <div id="modalEditar" class="modal-backdrop" onclick="if(event.target===this)cerrarModal()">
+        <div class="modal-box" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar cita completada</h3>
+                <button type="button" class="modal-close" onclick="cerrarModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:1rem;">
+                    Esta cita ya fue completada. Ingresa la contraseña de administrador para continuar.
+                </p>
+                <form id="formVerificar" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <input type="password" name="password" id="modalPassword" class="form-control"
+                               placeholder="Contraseña" autocomplete="current-password" required>
+                    </div>
+                    <div id="modalError" style="color:var(--error-color);font-size:0.8rem;margin-bottom:0.75rem;">
+                        @if($errors->has('password') && session('verificar_cita_id'))
+                            {{ $errors->first('password') }}
+                        @endif
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                        <button type="submit" class="btn btn-primary">Confirmar</button>
+                        <button type="button" class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @hasanyrole('admin|encargado|developer')
+    {{-- Modal: Eliminar visita (requiere contraseña) --}}
+    <div id="modalEliminarCita" class="modal-backdrop" onclick="if(event.target===this)cerrarModalEliminarCita()">
+        <div class="modal-box" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Eliminar visita</h3>
+                <button type="button" class="modal-close" onclick="cerrarModalEliminarCita()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:1rem;">
+                    Esta acción no se puede deshacer. Ingresa la contraseña de administrador para continuar.
+                </p>
+                <form id="formEliminarCita" method="POST">
+                    @csrf @method('DELETE')
+                    <div class="form-group">
+                        <input type="password" name="password" id="modalEliminarCitaPassword" class="form-control"
+                               placeholder="Contraseña" autocomplete="current-password" required>
+                    </div>
+                    <div id="modalEliminarCitaError" style="color:var(--error-color);font-size:0.8rem;margin-bottom:0.75rem;">
+                        @if($errors->has('password') && session('confirmar_eliminar_cita_id'))
+                            {{ $errors->first('password') }}
+                        @endif
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                        <button type="button" class="btn btn-outline" onclick="cerrarModalEliminarCita()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endhasanyrole
 
 @endsection
 
@@ -1784,5 +1891,49 @@
             alert('No se pudo actualizar el estado. Intenta de nuevo.');
         });
     }
+
+    // ── Editar cita completada (requiere contraseña) ──────────────────────────
+    function abrirModalEditar(actionUrl) {
+        const modal = document.getElementById('modalEditar');
+        document.getElementById('formVerificar').action = actionUrl;
+        document.getElementById('modalPassword').value = '';
+        document.getElementById('modalError').textContent = '';
+        modal.classList.add('open');
+        setTimeout(() => document.getElementById('modalPassword').focus(), 50);
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalEditar')?.classList.remove('open');
+    }
+
+    @if(session('verificar_cita_id'))
+        document.addEventListener('DOMContentLoaded', function () {
+            const url = '{{ route('admin.citas.verificarEdicion', session('verificar_cita_id')) }}';
+            abrirModalEditar(url);
+            document.getElementById('modalError').textContent = '{{ $errors->first('password') }}';
+        });
+    @endif
+
+    // ── Eliminar visita (requiere contraseña) ─────────────────────────────────
+    function abrirModalEliminarCita(actionUrl) {
+        const modal = document.getElementById('modalEliminarCita');
+        document.getElementById('formEliminarCita').action = actionUrl;
+        document.getElementById('modalEliminarCitaPassword').value = '';
+        document.getElementById('modalEliminarCitaError').textContent = '';
+        modal.classList.add('open');
+        setTimeout(() => document.getElementById('modalEliminarCitaPassword').focus(), 50);
+    }
+
+    function cerrarModalEliminarCita() {
+        document.getElementById('modalEliminarCita')?.classList.remove('open');
+    }
+
+    @if(session('confirmar_eliminar_cita_id'))
+        document.addEventListener('DOMContentLoaded', function () {
+            const url = '{{ route('admin.citas.destroy', session('confirmar_eliminar_cita_id')) }}';
+            abrirModalEliminarCita(url);
+            document.getElementById('modalEliminarCitaError').textContent = '{{ $errors->first('password') }}';
+        });
+    @endif
 </script>
 @endpush

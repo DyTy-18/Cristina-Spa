@@ -16,6 +16,16 @@
         border: 1px solid rgba(0,0,0,0.06);
         margin-bottom: 0.6rem;
     }
+    .linea-producto {
+        display: grid;
+        grid-template-columns: 1fr 70px 90px 78px auto;
+        gap: 0.5rem;
+        align-items: end;
+        padding: 0.75rem;
+        background: var(--light-bg);
+        border: 1px solid rgba(0,0,0,0.06);
+        margin-bottom: 0.6rem;
+    }
     .linea-desc-wrap { position: relative; }
     .linea-desc-suffix {
         position: absolute;
@@ -259,10 +269,67 @@
                     </div>
                 </div>
 
-                {{-- SECCIÓN 3: Profesionales --}}
+                {{-- SECCIÓN 3: Productos --}}
                 <div class="form-section">
                     <div class="form-section-header">
                         <div class="form-section-num">3</div>
+                        <span class="form-section-title">Productos</span>
+                    </div>
+                    <div class="form-section-body">
+                        <div style="display:grid;grid-template-columns:1fr 70px 90px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Producto</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Cant.</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
+                            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Desc.</span>
+                            <span></span>
+                        </div>
+
+                        <div id="productosContainer">
+                            @foreach($cita->citaProductos as $i => $cp)
+                                <div class="linea-producto" data-index="{{ $i }}">
+                                    <div class="form-group" style="margin:0;">
+                                        <select name="productos[{{ $i }}][producto_catalogo_id]" class="form-control select-producto"
+                                                onchange="onProductoChange(this)">
+                                            <option value="">— Seleccionar —</option>
+                                            @foreach($productos as $p)
+                                                <option value="{{ $p->id }}" data-precio="{{ $p->precio ?? 0 }}"
+                                                        {{ $cp->producto_catalogo_id == $p->id ? 'selected' : '' }}>
+                                                    {{ $p->nombre }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin:0;">
+                                        <input type="number" name="productos[{{ $i }}][cantidad]" class="form-control"
+                                               min="1" step="1" value="{{ $cp->cantidad }}">
+                                    </div>
+                                    <div class="form-group linea-precio-wrap" style="margin:0;">
+                                        <span class="linea-precio-prefix">Bs.</span>
+                                        <input type="number" name="productos[{{ $i }}][precio]" class="form-control linea-precio-input"
+                                               step="0.01" min="0" placeholder="0.00"
+                                               value="{{ $cp->precio_unitario !== null ? number_format($cp->precio_unitario, 2, '.', '') : '' }}">
+                                    </div>
+                                    <div class="form-group linea-desc-wrap" style="margin:0;">
+                                        <input type="number" name="productos[{{ $i }}][descuento]" class="form-control linea-desc-input"
+                                               step="1" min="0" max="100" placeholder="0"
+                                               value="{{ $cp->descuento_porcentaje > 0 ? number_format($cp->descuento_porcentaje, 0, '.', '') : '' }}">
+                                        <span class="linea-desc-suffix">%</span>
+                                    </div>
+                                    <button type="button" class="btn-remove-linea" onclick="removeProducto(this)" title="Quitar">✕</button>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <button type="button" class="btn btn-outline btn-sm" onclick="addProducto()" style="margin-top:0.25rem;">
+                            + Agregar producto
+                        </button>
+                    </div>
+                </div>
+
+                {{-- SECCIÓN 4: Profesionales --}}
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div class="form-section-num">4</div>
                         <span class="form-section-title">Profesionales</span>
                     </div>
                     <div class="form-section-body">
@@ -306,10 +373,10 @@
                     </div>
                 </div>
 
-                {{-- SECCIÓN 4: Horario y detalles --}}
+                {{-- SECCIÓN 5: Horario y detalles --}}
                 <div class="form-section">
                     <div class="form-section-header">
-                        <div class="form-section-num">4</div>
+                        <div class="form-section-num">5</div>
                         <span class="form-section-title">Horario y detalles</span>
                     </div>
                     <div class="form-section-body">
@@ -400,6 +467,11 @@
                             <div id="resumeServicios" style="font-size:0.9rem;color:var(--text-light);font-style:italic;">Cargando…</div>
                         </div>
 
+                        <div id="resumeProductosWrap" style="display:none;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                            <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Productos</div>
+                            <div id="resumeProductos" style="font-size:0.9rem;"></div>
+                        </div>
+
                         <div style="margin-bottom:1.5rem;">
                             <div class="detail-label" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);margin-bottom:0.25rem;">Total estimado</div>
                             <div id="resumeAhorro" style="font-size:0.78rem;color:var(--success-color);margin-bottom:0.15rem;display:none;"></div>
@@ -427,9 +499,11 @@
 <script>
     const SERVICIOS = @json($serviciosJson);
     const EMPLEADOS = @json($empleadosJson);
+    const PRODUCTOS = @json($productosJson);
 
     let servicioIdx = {{ $cita->citaServicios->count() }};
     let profIdx     = {{ $cita->citaServicios->whereNotNull('empleado_id')->count() }};
+    let productoIdx = {{ $cita->citaProductos->count() }};
 
     const serviciosSeleccionados = new Map();
 
@@ -518,6 +592,56 @@
         updateResume();
     }
 
+    // ===== Sección Productos =====
+    function buildProductoOptions(selected = '') {
+        return '<option value="">— Seleccionar —</option>' +
+            PRODUCTOS.map(p => `<option value="${p.id}" data-precio="${p.precio}"${p.id == selected ? ' selected' : ''}>${p.nombre}</option>`).join('');
+    }
+
+    function onProductoChange(sel) {
+        const row       = sel.closest('.linea-producto');
+        const opt       = sel.options[sel.selectedIndex];
+        const precioInp = row.querySelector('.linea-precio-input');
+        if (opt.value && precioInp && !precioInp.value) {
+            precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+        }
+        updateResume();
+    }
+
+    function addProducto() {
+        const idx = String(productoIdx++);
+        const div = document.createElement('div');
+        div.className = 'linea-producto';
+        div.dataset.index = idx;
+        div.innerHTML = `
+            <div class="form-group" style="margin:0;">
+                <select name="productos[${idx}][producto_catalogo_id]" class="form-control select-producto"
+                        onchange="onProductoChange(this)">
+                    ${buildProductoOptions()}
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <input type="number" name="productos[${idx}][cantidad]" class="form-control" min="1" step="1" value="1" oninput="updateResume()">
+            </div>
+            <div class="form-group linea-precio-wrap" style="margin:0;">
+                <span class="linea-precio-prefix">Bs.</span>
+                <input type="number" name="productos[${idx}][precio]" class="form-control linea-precio-input"
+                       step="0.01" min="0" placeholder="0.00" oninput="updateResume()">
+            </div>
+            <div class="form-group linea-desc-wrap" style="margin:0;">
+                <input type="number" name="productos[${idx}][descuento]" class="form-control linea-desc-input"
+                       step="1" min="0" max="100" placeholder="0" oninput="updateResume()">
+                <span class="linea-desc-suffix">%</span>
+            </div>
+            <button type="button" class="btn-remove-linea" onclick="removeProducto(this)" title="Quitar">✕</button>`;
+        document.getElementById('productosContainer').appendChild(div);
+    }
+
+    function removeProducto(btn) {
+        btn.closest('.linea-producto').remove();
+        updateResume();
+    }
+
     // ===== Sección Profesionales =====
     function buildEmpleadoOptions() {
         return '<option value="">— Seleccionar —</option>' +
@@ -593,6 +717,26 @@
             }
         });
 
+        const prodRows  = document.querySelectorAll('#productosContainer .linea-producto');
+        const prodItems = [];
+
+        prodRows.forEach(row => {
+            const sel      = row.querySelector('.select-producto');
+            const cantIn   = row.querySelector('input[name*="[cantidad]"]');
+            const precioIn = row.querySelector('.linea-precio-input');
+            const descIn   = row.querySelector('.linea-desc-input');
+            if (sel && sel.value) {
+                const nombre   = sel.options[sel.selectedIndex].text;
+                const cantidad = cantIn && cantIn.value ? parseInt(cantIn.value) : 1;
+                const precio   = precioIn && precioIn.value ? parseFloat(precioIn.value) : parseFloat(sel.options[sel.selectedIndex].dataset.precio || 0);
+                const desc     = descIn && descIn.value ? parseFloat(descIn.value) : 0;
+                const neto     = Math.round(precio * (1 - desc / 100) * cantidad * 100) / 100;
+                prodItems.push({ nombre, cantidad, precio, desc, neto });
+                totalBruto += precio * cantidad;
+                totalNeto  += neto;
+            }
+        });
+
         const ahorro = Math.round((totalBruto - totalNeto) * 100) / 100;
 
         const resumeServicios = document.getElementById('resumeServicios');
@@ -606,6 +750,19 @@
                 </div>`).join('');
         } else {
             resumeServicios.innerHTML = '<span style="color:var(--text-light);font-style:italic;">Sin seleccionar</span>';
+        }
+
+        const resumeProductosWrap = document.getElementById('resumeProductosWrap');
+        const resumeProductos     = document.getElementById('resumeProductos');
+        if (prodItems.length > 0) {
+            resumeProductosWrap.style.display = '';
+            resumeProductos.innerHTML = prodItems.map(i => `
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.2rem;gap:0.5rem;">
+                    <span style="color:var(--text-dark);">• ${i.nombre}${i.cantidad > 1 ? ' x' + i.cantidad : ''}</span>
+                    <span style="color:var(--accent-color);font-weight:400;white-space:nowrap;">Bs. ${i.neto.toFixed(2)}</span>
+                </div>`).join('');
+        } else {
+            resumeProductosWrap.style.display = 'none';
         }
 
         const ahorroEl = document.getElementById('resumeAhorro');

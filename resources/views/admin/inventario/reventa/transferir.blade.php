@@ -1,0 +1,124 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Transferir a Reventa')
+@section('page-title', 'Transferir a Reventa')
+
+@section('content')
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Transferir stock Técnico → Reventa</h3>
+        </div>
+        <div class="card-body">
+            <p style="color:#888; font-size:0.85rem; margin-top:-0.5rem; margin-bottom:1.25rem;">
+                Mueve unidades del inventario técnico al inventario de reventa del mismo producto.
+                Esto registra una salida en el stock técnico y una entrada en el stock de reventa.
+                Cualquier producto técnico con stock en esta sucursal puede transferirse.
+            </p>
+
+            @if ($errors->any())
+                <div style="padding:0.75rem 1rem; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; margin-bottom:1rem;">
+                    <ul style="margin:0; padding-left:1.2rem;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if ($productos->isEmpty())
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <p class="empty-state-text">
+                        No hay productos marcados como "producto de reventa" todavía.
+                    </p>
+                    <a href="{{ route('admin.inventario.productos') }}" class="btn btn-primary">Ir al Catálogo</a>
+                </div>
+            @else
+                <form action="{{ route('admin.inventario.reventa.transferir.store') }}" method="POST">
+                    @csrf
+                    @include('admin.partials.sucursal_selector')
+
+                    <div class="form-group">
+                        <label class="form-label" for="codigo_barras">Producto (reventa) *</label>
+                        <select id="codigo_barras" name="codigo_barras" class="form-control" required>
+                            <option value="">— Seleccionar producto —</option>
+                            @foreach ($productos as $producto)
+                                <option value="{{ $producto->codigo_barras }}"
+                                        data-stock="{{ $producto->stock_actual }}"
+                                    {{ old('codigo_barras') == $producto->codigo_barras ? 'selected' : '' }}>
+                                    {{ $producto->nombre }}
+                                    @if ($producto->marca) — {{ $producto->marca }} @endif
+                                    ({{ $producto->codigo_barras }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <span id="stock_actual_info" style="display:none; margin-top:0.4rem; font-size:0.85rem;"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="unidades">Unidades a transferir *</label>
+                            <input type="number" id="unidades" name="unidades"
+                                   class="form-control" value="{{ old('unidades', 1) }}"
+                                   min="1" required>
+                            <span id="stock_warning" style="display:none; color:#dc2626; font-size:0.8rem;">
+                                La cantidad supera el stock técnico disponible.
+                            </span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="fecha">Fecha *</label>
+                            <input type="date" id="fecha" name="fecha"
+                                   class="form-control" value="{{ old('fecha', date('Y-m-d')) }}"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+                        <button type="submit" class="btn btn-primary">Transferir a Reventa</button>
+                        <a href="{{ route('admin.inventario.index', ['tipo' => 'reventa']) }}" class="btn btn-outline">Cancelar</a>
+                    </div>
+                </form>
+            @endif
+        </div>
+    </div>
+
+@push('scripts')
+<script>
+function stockSeleccionado() {
+    const select = document.getElementById('codigo_barras');
+    const opt    = select.options[select.selectedIndex];
+    return (opt && opt.value) ? (parseInt(opt.dataset.stock, 10) || 0) : null;
+}
+
+function mostrarStock() {
+    const info  = document.getElementById('stock_actual_info');
+    const stock = stockSeleccionado();
+
+    if (stock === null) {
+        info.style.display = 'none';
+    } else {
+        info.textContent = 'Stock técnico disponible: ' + stock + ' uds.';
+        info.style.color = stock <= 0 ? '#dc2626' : '#555';
+        info.style.display = 'inline-block';
+    }
+
+    validarUnidades();
+}
+
+function validarUnidades() {
+    const stock    = stockSeleccionado();
+    const unidades = parseInt(document.getElementById('unidades').value, 10) || 0;
+    const warning  = document.getElementById('stock_warning');
+
+    warning.style.display = (stock !== null && unidades > stock) ? 'block' : 'none';
+}
+
+document.getElementById('codigo_barras').addEventListener('change', mostrarStock);
+document.getElementById('unidades').addEventListener('input', validarUnidades);
+
+mostrarStock();
+</script>
+@endpush
+@endsection

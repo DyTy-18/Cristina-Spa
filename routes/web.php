@@ -94,6 +94,14 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::delete('/citas/{cita}', [CitaController::class, 'destroy'])->name('citas.destroy');
     });
 
+    // Seguimiento de citas
+    Route::prefix('citas/{cita}/seguimiento')->name('citas.seguimiento.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SeguimientoController::class, 'show'])->name('show');
+        Route::post('/notas', [\App\Http\Controllers\Admin\SeguimientoController::class, 'storeNota'])->name('notas.store');
+        Route::post('/productos', [\App\Http\Controllers\Admin\SeguimientoController::class, 'storeProducto'])->name('productos.store');
+        Route::delete('/productos/{seguimientoProducto}', [\App\Http\Controllers\Admin\SeguimientoController::class, 'destroyProducto'])->name('productos.destroy');
+    });
+
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
@@ -119,6 +127,21 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'store'])->name('store');
         Route::put('/{material}', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'update'])->name('update');
         Route::delete('/{material}', [\App\Http\Controllers\Admin\ServicioMaterialController::class, 'destroy'])->name('destroy');
+    });
+
+    // Catálogo de productos (seguimiento de clientes, independiente de inventario)
+    Route::resource('productos', \App\Http\Controllers\Admin\ProductoCatalogoController::class)->except(['show']);
+
+    // Productos asignados a un servicio
+    Route::prefix('servicios/{servicio}/productos')->name('servicios.productos.')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Admin\ServicioProductoController::class, 'store'])->name('store');
+        Route::delete('/{producto}', [\App\Http\Controllers\Admin\ServicioProductoController::class, 'destroy'])->name('destroy');
+    });
+
+    // Servicios asignados a un producto (desde el listado de productos)
+    Route::prefix('productos/{producto}/servicios')->name('productos.servicios.')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Admin\ProductoServicioController::class, 'store'])->name('store');
+        Route::delete('/{servicio}', [\App\Http\Controllers\Admin\ProductoServicioController::class, 'destroy'])->name('destroy');
     });
 
     // Campañas
@@ -275,6 +298,11 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::get('/salidas', [InventarioController::class, 'salidas'])->name('salidas');
         Route::get('/salidas/crear', [InventarioController::class, 'createSalida'])->name('salidas.create');
         Route::post('/salidas', [InventarioController::class, 'storeSalida'])->name('salidas.store');
+
+        Route::get('/reventa/transferir', [InventarioController::class, 'createTransferencia'])->name('reventa.transferir.create');
+        Route::post('/reventa/transferir', [InventarioController::class, 'storeTransferencia'])->name('reventa.transferir.store');
+        Route::get('/reventa/salida', [InventarioController::class, 'createSalidaReventa'])->name('reventa.salida.create');
+        Route::post('/reventa/salida', [InventarioController::class, 'storeSalidaReventa'])->name('reventa.salida.store');
 
         Route::get('/analisis', [InventarioController::class, 'analisis'])->name('analisis');
 

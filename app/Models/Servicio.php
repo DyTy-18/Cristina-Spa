@@ -57,6 +57,11 @@ class Servicio extends Model
         return $this->hasMany(ServicioMaterial::class);
     }
 
+    public function productos()
+    {
+        return $this->belongsToMany(ProductoCatalogo::class, 'producto_catalogo_servicio');
+    }
+
     /**
      * Scope para servicios activos
      */

@@ -73,6 +73,41 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="unidades_iniciales">Stock inicial (opcional)</label>
+                        <input type="number" id="unidades_iniciales" name="unidades_iniciales"
+                               class="form-control" value="{{ old('unidades_iniciales', 0) }}"
+                               min="0" {{ ($modoGlobal ?? true) ? 'disabled' : '' }}>
+                        @if ($modoGlobal ?? true)
+                            <small style="color:#888; font-size:0.75rem;">
+                                Cambia a una sucursal específica desde el encabezado para poder registrar stock inicial aquí.
+                            </small>
+                        @else
+                            <small style="color:#888; font-size:0.75rem;">
+                                Se registrará como entrada técnica en {{ $sucursalActiva->nombre ?? 'la sucursal activa' }}.
+                            </small>
+                        @endif
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="fecha_inicial">Fecha del stock inicial</label>
+                        <input type="date" id="fecha_inicial" name="fecha_inicial"
+                               class="form-control" value="{{ old('fecha_inicial', date('Y-m-d')) }}"
+                               {{ ($modoGlobal ?? true) ? 'disabled' : '' }}>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="es_reventa" name="es_reventa" value="1"
+                           {{ old('es_reventa') ? 'checked' : '' }}>
+                    <label class="form-label" for="es_reventa" style="margin:0;">Producto de reventa</label>
+                </div>
+                <small style="color:#888; font-size:0.75rem; display:block; margin-top:-0.75rem; margin-bottom:1rem;">
+                    Habilita un segundo stock (reventa) para este producto, independiente del stock técnico.
+                    También se puede habilitar después transfiriéndole stock desde "Transferir a Reventa".
+                </small>
+
                 <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
                     <button type="submit" class="btn btn-primary">Guardar Producto</button>
                     <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline">Cancelar</a>

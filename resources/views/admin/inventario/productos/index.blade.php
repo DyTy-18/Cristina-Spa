@@ -4,16 +4,28 @@
 @section('page-title', 'Productos')
 
 @section('content')
+    @php $tipoStock = $tipoStock ?? 'tecnico'; @endphp
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+        <a href="{{ route('admin.inventario.productos') }}"
+           class="btn btn-sm {{ $tipoStock === 'tecnico' ? 'btn-primary' : 'btn-outline' }}">Técnico</a>
+        <a href="{{ route('admin.inventario.productos', ['tipo' => 'reventa']) }}"
+           class="btn btn-sm {{ $tipoStock === 'reventa' ? 'btn-primary' : 'btn-outline' }}">Reventa</a>
+    </div>
+
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Catálogo de Productos</h3>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                <h3 class="table-title">Catálogo de Productos {{ $tipoStock === 'reventa' ? '(Reventa)' : '(Técnico)' }}</h3>
+                @include('admin.partials.sucursal_badge')
+            </div>
             <div style="display:flex; gap:0.5rem;">
-                <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline btn-sm">Ver Stock</a>
+                <a href="{{ route('admin.inventario.index', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Ver Stock</a>
                 <a href="{{ route('admin.inventario.productos.create') }}" class="btn btn-primary btn-sm">+ Nuevo Producto</a>
             </div>
         </div>
 
         <form method="GET" action="{{ route('admin.inventario.productos') }}" class="table-filter">
+            <input type="hidden" name="tipo" value="{{ $tipoStock }}">
             <input type="text" name="q" class="search-input"
                    placeholder="Buscar por nombre o código..."
                    value="{{ $q ?? '' }}">
@@ -35,7 +47,7 @@
 
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
             @if ($q || $marca || $linea)
-                <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline btn-sm">Limpiar</a>
+                <a href="{{ route('admin.inventario.productos', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
 
@@ -60,7 +72,12 @@
                     @foreach ($productos as $producto)
                         <tr>
                             <td><code style="font-size:0.8rem;">{{ $producto->codigo_barras }}</code></td>
-                            <td>{{ $producto->nombre }}</td>
+                            <td>
+                                {{ $producto->nombre }}
+                                @if ($producto->es_reventa)
+                                    <span class="badge badge-success" style="font-size:0.65rem;">Reventa</span>
+                                @endif
+                            </td>
                             <td>{{ $producto->marca ?? '—' }}</td>
                             <td>{{ $producto->linea ?? '—' }}</td>
                             <td style="text-align:right;">Bs. {{ number_format($producto->costo, 2) }}</td>
@@ -79,6 +96,8 @@
                 <p class="empty-state-text">
                     @if ($q || $marca || $linea)
                         No se encontraron productos con los filtros aplicados
+                    @elseif ($tipoStock === 'reventa')
+                        No hay productos de reventa registrados (en esta sucursal)
                     @else
                         No hay productos registrados
                     @endif

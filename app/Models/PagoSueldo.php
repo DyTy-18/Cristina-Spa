@@ -16,6 +16,8 @@ class PagoSueldo extends Model
         'periodo_hasta',
         'fecha_pago',
         'metodo_pago',
+        'metodo_pago_2',
+        'monto_2',
         'notas',
         'sucursal_id',
         'user_id',
@@ -26,6 +28,7 @@ class PagoSueldo extends Model
         'periodo_desde' => 'date',
         'periodo_hasta' => 'date',
         'monto'         => 'float',
+        'monto_2'       => 'float',
     ];
 
     public function empleado()
@@ -51,5 +54,19 @@ class PagoSueldo extends Model
             'adelanto' => 'Adelanto',
             'bono'     => 'Bono',
         ];
+    }
+
+    public static function metodosPago(): array
+    {
+        return [
+            'efectivo'      => 'Efectivo',
+            'transferencia' => 'Transferencia',
+            'qr'            => 'QR',
+        ];
+    }
+
+    public function getMontoMetodo1Attribute(): float
+    {
+        return round($this->monto - (float) ($this->monto_2 ?? 0), 2);
     }
 }

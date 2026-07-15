@@ -163,7 +163,10 @@
     {{-- Top bar --}}
     <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;">
         <a href="{{ route('admin.citas.calendario') }}" class="btn btn-sm btn-outline">← Calendario</a>
-        <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-sm btn-accent">Editar cita</a>
+        <div style="display:flex;gap:0.5rem;">
+            <a href="{{ route('admin.citas.seguimiento.show', $cita) }}" class="btn btn-sm btn-outline">Hacer seguimiento</a>
+            <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-sm btn-accent">Editar cita</a>
+        </div>
     </div>
 
     @if(session('success'))

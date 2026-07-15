@@ -76,6 +76,7 @@
                                     data-marca="{{ $producto->marca ?? '' }}"
                                     data-linea="{{ $producto->linea ?? '' }}"
                                     data-codigo="{{ $producto->codigo_barras }}"
+                                    data-stock="{{ $producto->stock_actual }}"
                                 {{ old('codigo_barras') == $producto->codigo_barras ? 'selected' : '' }}>
                                 {{ $producto->nombre }}
                                 @if ($producto->marca) — {{ $producto->marca }} @endif
@@ -84,6 +85,7 @@
                             </option>
                         @endforeach
                     </select>
+                    <span id="stock_actual_info" style="display:none; margin-top:0.4rem; font-size:0.85rem;"></span>
                 </div>
 
                 <div class="form-row">
@@ -163,8 +165,27 @@ function limpiarFiltros() {
     actualizarLineas(); // resetea lineas y filtra
 }
 
+function mostrarStock() {
+    const select = document.getElementById('codigo_barras');
+    const info   = document.getElementById('stock_actual_info');
+    const opt    = select.options[select.selectedIndex];
+
+    if (!opt || !opt.value) {
+        info.style.display = 'none';
+        return;
+    }
+
+    const stock = parseInt(opt.dataset.stock, 10) || 0;
+    info.textContent = 'Stock actual: ' + stock + ' uds.';
+    info.style.color = stock <= 0 ? '#dc2626' : '#555';
+    info.style.display = 'inline-block';
+}
+
+document.getElementById('codigo_barras').addEventListener('change', mostrarStock);
+
 // Inicializar contador
 filtrarProductos();
+mostrarStock();
 </script>
 @endpush
 @endsection

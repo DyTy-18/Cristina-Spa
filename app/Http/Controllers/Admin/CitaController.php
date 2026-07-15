@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
+use App\Models\CitaProducto;
 use App\Models\CitaServicio;
 use App\Models\Cliente;
 use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
 use App\Models\Campana;
 use App\Models\Paquete;
+use App\Models\ProductoCatalogo;
 use App\Models\Servicio;
 use App\Services\WppService;
 use App\Services\MaterialConsumptionService;
@@ -49,10 +51,11 @@ class CitaController extends Controller
 
         $citas = $query->paginate(25)->withQueryString();
 
-        return view('admin.citas.index', compact('citas'));
+        return view('admin.citas.index', array_merge(compact('citas'), $this->datosFormularioCita()));
     }
 
-    public function create()
+    /** Datos compartidos para el formulario/modal de creación de cita. */
+    private function datosFormularioCita(): array
     {
         $clientesRaw = Cliente::orderBy('apellido')->orderBy('nombre')->get(['id', 'nombre', 'apellido', 'telefono']);
         $servicios   = Servicio::where('activo', true)->orderBy('nombre')->get();
@@ -81,6 +84,13 @@ class CitaController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
+        $productos     = ProductoCatalogo::activos()->orderBy('nombre')->get();
+        $productosJson = $productos->map(fn($p) => [
+            'id'     => $p->id,
+            'nombre' => $p->nombre,
+            'precio' => $p->precio ?? 0,
+        ])->values();
+
         $sucursales  = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
         $paquetes    = Paquete::where('activo', true)->with(['nivel', 'servicios'])->orderBy('categoria')->orderBy('nombre')->get();
         $paquetesJson = $paquetes->map(fn($p) => [
@@ -100,10 +110,16 @@ class CitaController extends Controller
             ])->values(),
         ])->values();
 
-        return view('admin.citas.create', compact(
+        return compact(
             'clientesRaw', 'clientesJson', 'servicios', 'empleados', 'campanas',
-            'serviciosJson', 'empleadosJson', 'paquetesJson', 'sucursales'
-        ));
+            'serviciosJson', 'empleadosJson', 'paquetesJson', 'sucursales',
+            'productos', 'productosJson'
+        );
+    }
+
+    public function create()
+    {
+        return view('admin.citas.create', $this->datosFormularioCita());
     }
 
     public function store(Request $request)
@@ -123,6 +139,11 @@ class CitaController extends Controller
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
+            'productos'                     => 'nullable|array',
+            'productos.*.producto_catalogo_id' => 'required_with:productos.*|exists:productos_catalogo,id',
+            'productos.*.cantidad'          => 'nullable|integer|min:1',
+            'productos.*.precio'            => 'nullable|numeric|min:0',
+            'productos.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
@@ -162,10 +183,20 @@ class CitaController extends Controller
             }
         }
 
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_catalogo_id']))->values();
+        $productosBase = ProductoCatalogo::whereIn('id', $productosData->pluck('producto_catalogo_id'))->pluck('precio', 'id');
+
         $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
             $desc   = (float) ($s['descuento'] ?? 0);
             return round($precio * (1 - $desc / 100), 2);
+        });
+
+        $precioTotal += $productosData->sum(function ($p) use ($productosBase) {
+            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? 0));
+            $desc     = (float) ($p['descuento'] ?? 0);
+            $cantidad = (int) ($p['cantidad'] ?? 1);
+            return round($precio * (1 - $desc / 100), 2) * $cantidad;
         });
 
         $sucursalId = $request->integer('sucursal_id')
@@ -195,10 +226,26 @@ class CitaController extends Controller
             ]);
         }
 
+        foreach ($productosData as $p) {
+            $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
+            CitaProducto::create([
+                'cita_id'               => $cita->id,
+                'producto_catalogo_id'  => $p['producto_catalogo_id'],
+                'cantidad'              => $p['cantidad'] ?? 1,
+                'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? null),
+                'descuento_porcentaje'  => $desc,
+            ]);
+        }
+
         // Crear contrato de paquete si se solicitó
         $this->crearContratoSiCorresponde($request, $clienteId);
 
         app(WppService::class)->notificarSegunEstado($cita);
+
+        if ($request->input('_origen') === 'popup') {
+            return redirect()->route('admin.citas.index')
+                ->with('success', 'Cita registrada exitosamente.');
+        }
 
         return redirect()->route('admin.citas.calendario')
             ->with('success', 'Cita registrada exitosamente.');
@@ -206,16 +253,17 @@ class CitaController extends Controller
 
     public function show(Cita $cita)
     {
-        $cita->load(['cliente', 'citaServicios.servicio', 'citaServicios.empleado', 'campana']);
+        $cita->load(['cliente', 'citaServicios.servicio', 'citaServicios.empleado', 'citaProductos.producto', 'campana']);
         return view('admin.citas.show', compact('cita'));
     }
 
     public function edit(Cita $cita)
     {
-        $cita->load(['citaServicios.servicio', 'citaServicios.empleado']);
+        $cita->load(['citaServicios.servicio', 'citaServicios.empleado', 'citaProductos.producto']);
         $servicios = Servicio::where('activo', true)->orderBy('nombre')->get();
         $empleados = Empleado::where('activo', true)->orderBy('apellido')->get(['id', 'nombre', 'apellido']);
         $campanas  = Campana::activas()->orWhere('id', $cita->campana_id)->orderBy('nombre')->get();
+        $productos = ProductoCatalogo::activos()->orderBy('nombre')->get();
 
         $descuentosMapa = $this->descuentosVigentesMapa();
 
@@ -233,7 +281,16 @@ class CitaController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
-        return view('admin.citas.edit', compact('cita', 'servicios', 'empleados', 'serviciosJson', 'empleadosJson', 'campanas'));
+        $productosJson = $productos->map(fn($p) => [
+            'id'     => $p->id,
+            'nombre' => $p->nombre,
+            'precio' => $p->precio ?? 0,
+        ])->values();
+
+        return view('admin.citas.edit', compact(
+            'cita', 'servicios', 'empleados', 'serviciosJson', 'empleadosJson', 'campanas',
+            'productos', 'productosJson'
+        ));
     }
 
     public function update(Request $request, Cita $cita)
@@ -248,6 +305,11 @@ class CitaController extends Controller
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
+            'productos'                     => 'nullable|array',
+            'productos.*.producto_catalogo_id' => 'required_with:productos.*|exists:productos_catalogo,id',
+            'productos.*.cantidad'          => 'nullable|integer|min:1',
+            'productos.*.precio'            => 'nullable|numeric|min:0',
+            'productos.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
@@ -262,10 +324,20 @@ class CitaController extends Controller
             }
         }
 
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_catalogo_id']))->values();
+        $productosBase = ProductoCatalogo::whereIn('id', $productosData->pluck('producto_catalogo_id'))->pluck('precio', 'id');
+
         $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
             $desc   = (float) ($s['descuento'] ?? 0);
             return round($precio * (1 - $desc / 100), 2);
+        });
+
+        $precioTotal += $productosData->sum(function ($p) use ($productosBase) {
+            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? 0));
+            $desc     = (float) ($p['descuento'] ?? 0);
+            $cantidad = (int) ($p['cantidad'] ?? 1);
+            return round($precio * (1 - $desc / 100), 2) * $cantidad;
         });
 
         $estadoAnterior = $cita->estado;
@@ -280,6 +352,7 @@ class CitaController extends Controller
         ]);
 
         $cita->citaServicios()->delete();
+        $cita->citaProductos()->delete();
 
         foreach ($data['servicios'] as $s) {
             $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
@@ -289,6 +362,17 @@ class CitaController extends Controller
                 'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
                 'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
                 'descuento_porcentaje' => $desc,
+            ]);
+        }
+
+        foreach ($productosData as $p) {
+            $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
+            CitaProducto::create([
+                'cita_id'               => $cita->id,
+                'producto_catalogo_id'  => $p['producto_catalogo_id'],
+                'cantidad'              => $p['cantidad'] ?? 1,
+                'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? null),
+                'descuento_porcentaje'  => $desc,
             ]);
         }
 
@@ -414,7 +498,7 @@ class CitaController extends Controller
         $cita->citaServicios()->delete();
         $cita->delete();
 
-        return redirect()->route('admin.citas.index')->with('success', 'Cita eliminada.');
+        return back()->with('success', 'Cita eliminada.');
     }
 
     public function informe(Cita $cita)

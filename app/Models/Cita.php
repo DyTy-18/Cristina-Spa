@@ -58,6 +58,21 @@ class Cita extends Model
         return $this->hasMany(CitaServicio::class);
     }
 
+    public function citaProductos()
+    {
+        return $this->hasMany(CitaProducto::class);
+    }
+
+    public function seguimientoNotas()
+    {
+        return $this->hasMany(SeguimientoNota::class)->latest();
+    }
+
+    public function seguimientoProductos()
+    {
+        return $this->hasMany(SeguimientoProducto::class);
+    }
+
     /**
      * Scope para citas pendientes
      */

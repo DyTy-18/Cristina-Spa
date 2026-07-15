@@ -85,127 +85,170 @@
                         <span>Dashboard</span>
                     </a>
 
-                    @if (auth()->user()->hasAnyRole(['admin', 'encargado']))
-                        <div class="nav-item" style="cursor:default;">
-                            <span class="nav-icon">💰</span>
-                            <span>Finanzas</span>
-                        </div>
-                        <a href="{{ route('admin.ingresos.index') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
-                            <span class="nav-icon">💵</span>
-                            <span>Ingresos</span>
-                        </a>
-                        <a href="{{ route('admin.gastos.index') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
-                            <span class="nav-icon">🧾</span>
-                            <span>Gastos</span>
+                    {{-- ── Agenda ─────────────────────────────────────── --}}
+                    @if (auth()->user()->hasAnyPermission(['ver citas', 'crear citas', 'ver clientes']) || auth()->user()->hasAnyRole(['admin', 'secretario']))
+                        <div class="nav-label">Agenda</div>
+
+                        @if (auth()->user()->hasAnyPermission(['ver citas', 'crear citas']))
+                            <a href="{{ route('admin.citas.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.citas.index', 'admin.citas.create') ? 'active' : '' }}">
+                                <span class="nav-icon">📅</span>
+                                <span>Citas</span>
+                            </a>
+                            <a href="{{ route('admin.citas.calendario') }}"
+                                class="nav-item nav-subitem {{ request()->routeIs('admin.citas.calendario') ? 'active' : '' }}">
+                                <span class="nav-icon">🗓️</span>
+                                <span>Calendario</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasPermissionTo('ver clientes'))
+                            <a href="{{ route('admin.clientes.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.clientes.*') ? 'active' : '' }}">
+                                <span class="nav-icon">👥</span>
+                                <span>Clientes</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasAnyRole(['admin', 'secretario']))
+                            <a href="{{ route('admin.leads.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
+                                <span class="nav-icon">📥</span>
+                                <span>Leads Web</span>
+                            </a>
+                        @endif
+                    @endif
+
+                    {{-- ── Catálogo ───────────────────────────────────── --}}
+                    @if (auth()->user()->hasPermissionTo('ver servicios') || auth()->user()->hasRole('admin'))
+                        <div class="nav-label">Catálogo</div>
+
+                        @if (auth()->user()->hasPermissionTo('ver servicios'))
+                            <a href="{{ route('admin.servicios.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.servicios.*') ? 'active' : '' }}">
+                                <span class="nav-icon">✂️</span>
+                                <span>Servicios</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasRole('admin'))
+                            <a href="{{ route('admin.productos.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.productos.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🛍️</span>
+                                <span>Productos</span>
+                            </a>
+                            <a href="{{ route('admin.paquetes.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.paquetes.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🎁</span>
+                                <span>Paquetes</span>
+                            </a>
+                            <a href="{{ route('admin.contratos.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.contratos.*') ? 'active' : '' }}">
+                                <span class="nav-icon">📋</span>
+                                <span>Contratos</span>
+                            </a>
+                        @endif
+                    @endif
+
+                    {{-- ── Marketing ──────────────────────────────────── --}}
+                    @if (auth()->user()->hasPermissionTo('ver campanas') || auth()->user()->hasRole('admin'))
+                        <div class="nav-label">Marketing</div>
+
+                        @if (auth()->user()->hasPermissionTo('ver campanas'))
+                            <a href="{{ route('admin.campanas.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.campanas.*') ? 'active' : '' }}">
+                                <span class="nav-icon">📣</span>
+                                <span>Campañas</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasRole('admin'))
+                            <a href="{{ route('admin.descuentos.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.descuentos.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🏷️</span>
+                                <span>Descuentos & Cupones</span>
+                            </a>
+                        @endif
+                    @endif
+
+                    {{-- ── Finanzas ───────────────────────────────────── --}}
+                    @if (auth()->user()->hasAnyRole(['admin', 'encargado']) || auth()->user()->hasPermissionTo('ver comisiones') || auth()->user()->hasPermissionTo('ver reportes'))
+                        <div class="nav-label">Finanzas</div>
+
+                        @if (auth()->user()->hasAnyRole(['admin', 'encargado']))
+                            <a href="{{ route('admin.ingresos.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.ingresos.*') ? 'active' : '' }}">
+                                <span class="nav-icon">💵</span>
+                                <span>Ingresos</span>
+                            </a>
+                            <a href="{{ route('admin.gastos.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.gastos.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🧾</span>
+                                <span>Gastos</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasPermissionTo('ver comisiones'))
+                            <a href="{{ route('admin.comisiones.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.comisiones.*') ? 'active' : '' }}">
+                                <span class="nav-icon">💲</span>
+                                <span>Comisiones</span>
+                            </a>
+                            <a href="{{ route('admin.reportes.comisiones') }}"
+                                class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.comisiones*') ? 'active' : '' }}">
+                                <span class="nav-icon">📈</span>
+                                <span>Reporte comisiones</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasPermissionTo('ver reportes'))
+                            <a href="{{ route('admin.reportes.clientes') }}"
+                                class="nav-item {{ request()->routeIs('admin.reportes.clientes*') ? 'active' : '' }}">
+                                <span class="nav-icon">📋</span>
+                                <span>Reporte clientes</span>
+                            </a>
+                        @endif
+                    @endif
+
+                    {{-- ── Inventario ─────────────────────────────────── --}}
+                    @if (auth()->user()->hasPermissionTo('ver inventario'))
+                        <div class="nav-label">Inventario</div>
+
+                        <a href="{{ route('admin.inventario.index') }}"
+                            class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
+                            <span class="nav-icon">📦</span>
+                            <span>Inventario</span>
+                            @if(($alertasStockCount ?? 0) > 0)
+                                <span style="background:#f59e0b;color:#fff;border-radius:9999px;font-size:.62rem;font-weight:700;padding:.1rem .42rem;margin-left:auto;line-height:1.4;">{{ $alertasStockCount }}</span>
+                            @endif
                         </a>
                     @endif
 
-                    @if (auth()->user()->hasAnyPermission(['ver citas', 'crear citas']))
-                        <a href="{{ route('admin.citas.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.citas.index', 'admin.citas.create') ? 'active' : '' }}">
-                            <span class="nav-icon">📅</span>
-                            <span>Citas</span>
-                        </a>
-                        <a href="{{ route('admin.citas.calendario') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.citas.calendario') ? 'active' : '' }}">
-                            <span class="nav-icon">🗓️</span>
-                            <span>Calendario</span>
-                        </a>
+                    {{-- ── Equipo ─────────────────────────────────────── --}}
+                    @if (auth()->user()->hasPermissionTo('ver empleados') || auth()->user()->hasRole('admin'))
+                        <div class="nav-label">Equipo</div>
+
+                        @if (auth()->user()->hasPermissionTo('ver empleados'))
+                            <a href="{{ route('admin.empleados.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.empleados.*') ? 'active' : '' }}">
+                                <span class="nav-icon">💼</span>
+                                <span>Empleados</span>
+                            </a>
+                        @endif
+
+                        @if (auth()->user()->hasRole('admin'))
+                            <a href="{{ route('admin.sucursales.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.sucursales.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🏢</span>
+                                <span>Sucursales</span>
+                            </a>
+                        @endif
                     @endif
 
-                    @if (auth()->user()->hasPermissionTo('ver clientes'))
-                        <a href="{{ route('admin.clientes.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.clientes.*') ? 'active' : '' }}">
-                            <span class="nav-icon">👥</span>
-                            <span>Clientes</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasAnyRole(['admin', 'secretario']))
-                        <a href="{{ route('admin.leads.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.leads.*') ? 'active' : '' }}">
-                            <span class="nav-icon">📥</span>
-                            <span>Leads Web</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver servicios'))
-                        <a href="{{ route('admin.servicios.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.servicios.*') ? 'active' : '' }}">
-                            <span class="nav-icon">✂️</span>
-                            <span>Servicios</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.paquetes.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.paquetes.*') ? 'active' : '' }}">
-                            <span class="nav-icon">🎁</span>
-                            <span>Paquetes</span>
-                        </a>
-                        <a href="{{ route('admin.contratos.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.contratos.*') ? 'active' : '' }}">
-                            <span class="nav-icon">📋</span>
-                            <span>Contratos</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver campanas'))
-                        <a href="{{ route('admin.campanas.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.campanas.*') ? 'active' : '' }}">
-                            <span class="nav-icon">📣</span>
-                            <span>Campañas</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.descuentos.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.descuentos.*') ? 'active' : '' }}">
-                            <span class="nav-icon">🏷️</span>
-                            <span>Descuentos & Cupones</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver comisiones'))
-                        <a href="{{ route('admin.comisiones.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.comisiones.*') ? 'active' : '' }}">
-                            <span class="nav-icon">💲</span>
-                            <span>Comisiones</span>
-                        </a>
-                        <a href="{{ route('admin.reportes.comisiones') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.comisiones*') ? 'active' : '' }}">
-                            <span class="nav-icon">📈</span>
-                            <span>Reporte comisiones</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver reportes'))
-                        <a href="{{ route('admin.reportes.clientes') }}"
-                            class="nav-item nav-subitem {{ request()->routeIs('admin.reportes.clientes*') ? 'active' : '' }}">
-                            <span class="nav-icon">📋</span>
-                            <span>Reporte clientes</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver empleados'))
-                        <a href="{{ route('admin.empleados.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.empleados.*') ? 'active' : '' }}">
-                            <span class="nav-icon">💼</span>
-                            <span>Empleados</span>
-                        </a>
-                    @endif
-
-                    @if (auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.sucursales.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.sucursales.*') ? 'active' : '' }}">
-                            <span class="nav-icon">🏢</span>
-                            <span>Sucursales</span>
-                        </a>
-                    @endif
-
+                    {{-- ── Administración ─────────────────────────────── --}}
                     @if (auth()->user()->hasPermissionTo('gestionar usuarios'))
+                        <div class="nav-label">Administración</div>
+
                         <a href="{{ route('admin.usuarios.index') }}"
                             class="nav-item {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
                             <span class="nav-icon">👤</span>
@@ -221,17 +264,6 @@
                             <span class="nav-icon">📋</span>
                             <span>Registro de actividad</span>
                         </a>
-                    @endif
-
-                    @if (auth()->user()->hasPermissionTo('ver inventario'))
-                        <a href="{{ route('admin.inventario.index') }}"
-                            class="nav-item {{ request()->routeIs('admin.inventario.*') ? 'active' : '' }}">
-                            <span class="nav-icon">📦</span>
-                            <span>Inventario</span>
-                            @if(($alertasStockCount ?? 0) > 0)
-                                <span style="background:#f59e0b;color:#fff;border-radius:9999px;font-size:.62rem;font-weight:700;padding:.1rem .42rem;margin-left:auto;line-height:1.4;">{{ $alertasStockCount }}</span>
-                            @endif
-                    </a>
                     @endif
                 @endif {{-- fin @else estilista --}}
             </nav>
