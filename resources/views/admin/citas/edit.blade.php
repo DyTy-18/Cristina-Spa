@@ -288,13 +288,13 @@
                             @foreach($cita->citaProductos as $i => $cp)
                                 <div class="linea-producto" data-index="{{ $i }}">
                                     <div class="form-group" style="margin:0;">
-                                        <select name="productos[{{ $i }}][producto_catalogo_id]" class="form-control select-producto"
+                                        <select name="productos[{{ $i }}][producto_id]" class="form-control select-producto"
                                                 onchange="onProductoChange(this)">
                                             <option value="">— Seleccionar —</option>
                                             @foreach($productos as $p)
-                                                <option value="{{ $p->id }}" data-precio="{{ $p->precio ?? 0 }}"
-                                                        {{ $cp->producto_catalogo_id == $p->id ? 'selected' : '' }}>
-                                                    {{ $p->nombre }}
+                                                <option value="{{ $p->id }}" data-precio="{{ $p->precio_venta ?? 0 }}" data-stock="{{ $p->stock_actual }}"
+                                                        {{ $cp->producto_id == $p->id ? 'selected' : '' }}>
+                                                    {{ $p->nombre }} (Stock: {{ $p->stock_actual }})
                                                 </option>
                                             @endforeach
                                         </select>
@@ -595,15 +595,19 @@
     // ===== Sección Productos =====
     function buildProductoOptions(selected = '') {
         return '<option value="">— Seleccionar —</option>' +
-            PRODUCTOS.map(p => `<option value="${p.id}" data-precio="${p.precio}"${p.id == selected ? ' selected' : ''}>${p.nombre}</option>`).join('');
+            PRODUCTOS.map(p => `<option value="${p.id}" data-precio="${p.precio}" data-stock="${p.stock}"${p.id == selected ? ' selected' : ''}>${p.nombre} (Stock: ${p.stock})</option>`).join('');
     }
 
     function onProductoChange(sel) {
         const row       = sel.closest('.linea-producto');
         const opt       = sel.options[sel.selectedIndex];
         const precioInp = row.querySelector('.linea-precio-input');
+        const cantInp   = row.querySelector('input[name*="[cantidad]"]');
         if (opt.value && precioInp && !precioInp.value) {
             precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+        }
+        if (opt.value && cantInp) {
+            cantInp.max = opt.dataset.stock || 0;
         }
         updateResume();
     }
@@ -615,7 +619,7 @@
         div.dataset.index = idx;
         div.innerHTML = `
             <div class="form-group" style="margin:0;">
-                <select name="productos[${idx}][producto_catalogo_id]" class="form-control select-producto"
+                <select name="productos[${idx}][producto_id]" class="form-control select-producto"
                         onchange="onProductoChange(this)">
                     ${buildProductoOptions()}
                 </select>

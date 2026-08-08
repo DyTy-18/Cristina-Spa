@@ -64,8 +64,8 @@ class ServicioController extends Controller
         $materiales = $servicio->materiales()->with('producto')->get();
         $productos = \App\Models\Producto::orderBy('nombre')->get();
 
-        $productosServicio  = $servicio->productos()->get();
-        $catalogoProductos  = \App\Models\ProductoCatalogo::activos()->orderBy('nombre')->get();
+        $productosServicio  = $servicio->productosInventario()->get();
+        $catalogoProductos  = \App\Models\Producto::reventaConStock(session('sucursal_activa_id'));
 
         return view('admin.servicios.edit', compact(
             'servicio', 'materiales', 'productos', 'productosServicio', 'catalogoProductos'

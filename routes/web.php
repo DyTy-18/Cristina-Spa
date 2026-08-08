@@ -130,7 +130,7 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     });
 
     // Catálogo de productos (seguimiento de clientes, independiente de inventario)
-    Route::resource('productos', \App\Http\Controllers\Admin\ProductoCatalogoController::class)->except(['show']);
+    Route::resource('productos', \App\Http\Controllers\Admin\ProductoCatalogoController::class)->only(['index', 'edit', 'update']);
 
     // Productos asignados a un servicio
     Route::prefix('servicios/{servicio}/productos')->name('servicios.productos.')->group(function () {
@@ -299,6 +299,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::get('/salidas/crear', [InventarioController::class, 'createSalida'])->name('salidas.create');
         Route::post('/salidas', [InventarioController::class, 'storeSalida'])->name('salidas.store');
 
+        Route::get('/reventa/entrada', [InventarioController::class, 'createEntradaReventa'])->name('reventa.entrada.create');
+        Route::post('/reventa/entrada', [InventarioController::class, 'storeEntradaReventa'])->name('reventa.entrada.store');
         Route::get('/reventa/transferir', [InventarioController::class, 'createTransferencia'])->name('reventa.transferir.create');
         Route::post('/reventa/transferir', [InventarioController::class, 'storeTransferencia'])->name('reventa.transferir.store');
         Route::get('/reventa/salida', [InventarioController::class, 'createSalidaReventa'])->name('reventa.salida.create');

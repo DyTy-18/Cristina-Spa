@@ -19,33 +19,20 @@
                 </div>
             @endif
 
+            <p style="font-size:0.8rem;color:var(--text-light);margin-top:-0.5rem;margin-bottom:1rem;">
+                Producto de inventario (código {{ $producto->codigo_barras }}). El nombre, marca y stock se editan desde
+                Inventario; aquí solo se ajusta el precio de venta y los servicios que lo recomiendan.
+            </p>
+
             <form action="{{ route('admin.productos.update', $producto) }}" method="POST">
                 @csrf
                 @method('PUT')
 
                 <div class="form-group">
-                    <label class="form-label" for="nombre">Nombre del Producto *</label>
-                    <input type="text" id="nombre" name="nombre"
-                           class="form-control" value="{{ old('nombre', $producto->nombre) }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="descripcion">Descripción</label>
-                    <textarea id="descripcion" name="descripcion" class="form-control" rows="3">{{ old('descripcion', $producto->descripcion) }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="precio">Precio (Bs.)</label>
-                    <input type="number" id="precio" name="precio"
-                           class="form-control" value="{{ old('precio', $producto->precio) }}"
+                    <label class="form-label" for="precio_venta">Precio de venta (Bs.)</label>
+                    <input type="number" id="precio_venta" name="precio_venta"
+                           class="form-control" value="{{ old('precio_venta', $producto->precio_venta) }}"
                            step="0.01" min="0" placeholder="Opcional">
-                </div>
-
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" name="activo" value="1" {{ old('activo', $producto->activo) ? 'checked' : '' }}>
-                        <span>Producto activo</span>
-                    </label>
                 </div>
 
                 <div class="form-group">

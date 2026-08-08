@@ -684,6 +684,16 @@
                 <input type="hidden" name="_form" value="nueva_cita">
                 <input type="hidden" name="cliente_tipo" id="ncClienteTipo" value="{{ old('cliente_tipo', 'existente') }}">
 
+                @if ($errors->any() && old('_form') === 'nueva_cita')
+                    <div style="padding:0.75rem 1rem; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; margin-bottom:1rem;">
+                        <ul style="margin:0; padding-left:1.2rem;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 {{-- Cliente --}}
                 <div class="form-group">
                     <label class="form-label">Cliente</label>
@@ -822,9 +832,7 @@
                     <div id="ncPanelProductos" style="display:none;">
                         <div id="ncPcCountBadge" style="display:none;font-size:.72rem;font-weight:400;color:var(--accent-color);letter-spacing:0.5px;margin-bottom:0.4rem;"></div>
                         <div id="ncProductoCardsGrid" class="servicio-cards-grid"></div>
-                        @if($productos->isEmpty())
-                            <p style="font-size:.78rem;color:var(--text-light);font-style:italic;margin-top:.5rem;">No hay productos registrados.</p>
-                        @endif
+                        <p id="ncProductosEmpty" style="font-size:.78rem;color:var(--text-light);font-style:italic;margin-top:.5rem;display:none;"></p>
 
                         <div id="ncProductosPreciosPanel" style="margin-top:0.9rem;display:none;">
                             <div style="display:grid;grid-template-columns:1fr 80px 100px 88px auto;gap:0.5rem;padding:0 0.7rem;margin-bottom:0.3rem;">
@@ -894,7 +902,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Sucursal <span style="color:var(--error-color)">*</span></label>
-                    <select name="sucursal_id" class="form-control" required>
+                    <select name="sucursal_id" class="form-control" required onchange="ncRefreshProductosPorSucursal(this.value)">
                         @foreach($sucursales as $s)
                             <option value="{{ $s->id }}"
                                 {{ (old('sucursal_id', $sucursalActiva->id ?? null) == $s->id) ? 'selected' : '' }}>
@@ -902,6 +910,7 @@
                             </option>
                         @endforeach
                     </select>
+                    <small style="font-size:0.72rem;color:var(--text-light);">Los productos disponibles en la pestaña "Productos" dependen de esta sucursal.</small>
                 </div>
 
                 <div class="form-group">
@@ -1050,6 +1059,12 @@ document.getElementById('modalEliminarCita')?.addEventListener('click', function
     });
 @endif
 
+@if ($errors->any() && old('_form') === 'nueva_cita')
+    document.addEventListener('DOMContentLoaded', function () {
+        abrirModalNuevaCita();
+    });
+@endif
+
 // ══════════════════════════════════════════════════════════════════════════
 // Modal: Nueva cita
 // ══════════════════════════════════════════════════════════════════════════
@@ -1057,7 +1072,27 @@ const NC_CLIENTES  = @json($clientesJson);
 const NC_SERVICIOS = @json($serviciosJson);
 const NC_EMPLEADOS = @json($empleadosJson);
 const NC_PAQUETES  = @json($paquetesJson);
-const NC_PRODUCTOS = @json($productosJson);
+let   NC_PRODUCTOS = @json($productosJson);
+const NC_PRODUCTOS_POR_SUCURSAL = @json($productosPorSucursalJson);
+const NC_MODO_GLOBAL = @json($modoGlobal ?? false);
+
+function ncRefreshProductosPorSucursal(sucursalId) {
+    NC_PRODUCTOS = NC_PRODUCTOS_POR_SUCURSAL[sucursalId] || [];
+    ncPcSelected.clear();
+    ncRenderProductoCards();
+    ncRenderProductosPreciosPanel();
+    ncUpdatePcCountBadge();
+
+    const empty = document.getElementById('ncProductosEmpty');
+    if (NC_PRODUCTOS.length === 0) {
+        empty.textContent = NC_MODO_GLOBAL
+            ? 'No hay productos de reventa con stock registrado en ninguna sucursal.'
+            : 'No hay productos de reventa con stock en esta sucursal.';
+        empty.style.display = '';
+    } else {
+        empty.style.display = 'none';
+    }
+}
 
 function abrirModalNuevaCita() {
     document.getElementById('modalNuevaCita').classList.add('open');
@@ -1568,7 +1603,7 @@ function ncInjectProductosHiddenInputs() {
     ncPcSelected.forEach(({ precio, descuento, cantidad }, id) => {
         const d = parseFloat(descuento) || 0;
         wrap.innerHTML += `
-            <input type="hidden" name="productos[${i}][producto_catalogo_id]" value="${id}">
+            <input type="hidden" name="productos[${i}][producto_id]" value="${id}">
             <input type="hidden" name="productos[${i}][cantidad]" value="${cantidad || 1}">
             <input type="hidden" name="productos[${i}][precio]" value="${precio || 0}">
             <input type="hidden" name="productos[${i}][descuento]" value="${d}">`;
@@ -1579,6 +1614,9 @@ function ncInjectProductosHiddenInputs() {
 document.addEventListener('DOMContentLoaded', () => {
     ncRenderServicioCards();
     ncRenderPkgCards();
+
+    const ncSucursalSelect = document.querySelector('#formNuevaCita select[name="sucursal_id"]');
+    if (ncSucursalSelect) ncRefreshProductosPorSucursal(ncSucursalSelect.value);
 
     document.getElementById('formNuevaCita')?.addEventListener('submit', function (e) {
         if (ncScSelected.size === 0) {

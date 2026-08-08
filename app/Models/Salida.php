@@ -14,6 +14,7 @@ class Salida extends Model
         'unidades',
         'fecha',
         'destino',
+        'cita_id',
     ];
 
     protected $casts = [

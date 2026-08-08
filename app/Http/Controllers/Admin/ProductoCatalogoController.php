@@ -3,58 +3,33 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductoCatalogo;
+use App\Models\Producto;
 use App\Models\Servicio;
 use Illuminate\Http\Request;
 
 class ProductoCatalogoController extends Controller
 {
+    /**
+     * Productos de reventa de la sucursal activa, con stock en vivo.
+     * En modo global (sin sucursal seleccionada) se ven todos.
+     */
     public function index(Request $request)
     {
         $q = $request->input('q');
 
-        $query = ProductoCatalogo::with('servicios')->orderBy('nombre');
+        $productos = Producto::reventaConStock(session('sucursal_activa_id'));
 
         if ($q) {
-            $query->where('nombre', 'like', "%{$q}%");
+            $productos = $productos->filter(fn ($p) => str_contains(mb_strtolower($p->nombre), mb_strtolower($q)))->values();
         }
 
-        $productos = $query->get();
+        $productos->load('servicios');
         $servicios = Servicio::orderBy('nombre')->get();
 
         return view('admin.productos.index', compact('productos', 'q', 'servicios'));
     }
 
-    public function create()
-    {
-        $servicios = Servicio::orderBy('nombre')->get();
-
-        return view('admin.productos.create', compact('servicios'));
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'precio'      => 'nullable|numeric|min:0',
-            'activo'      => 'boolean',
-            'servicios'   => 'array',
-            'servicios.*' => 'integer|exists:servicios,id',
-        ]);
-
-        $validated['activo'] = $request->has('activo');
-        $servicios = $validated['servicios'] ?? [];
-        unset($validated['servicios']);
-
-        $producto = ProductoCatalogo::create($validated);
-        $producto->servicios()->sync($servicios);
-
-        return redirect()->route('admin.productos.index')
-            ->with('success', 'Producto creado correctamente.');
-    }
-
-    public function edit(ProductoCatalogo $producto)
+    public function edit(Producto $producto)
     {
         $servicios = Servicio::orderBy('nombre')->get();
         $servicioIdsSeleccionados = $producto->servicios()->pluck('servicios.id')->toArray();
@@ -62,33 +37,20 @@ class ProductoCatalogoController extends Controller
         return view('admin.productos.edit', compact('producto', 'servicios', 'servicioIdsSeleccionados'));
     }
 
-    public function update(Request $request, ProductoCatalogo $producto)
+    public function update(Request $request, Producto $producto)
     {
         $validated = $request->validate([
-            'nombre'      => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'precio'      => 'nullable|numeric|min:0',
-            'activo'      => 'boolean',
-            'servicios'   => 'array',
-            'servicios.*' => 'integer|exists:servicios,id',
+            'precio_venta' => 'nullable|numeric|min:0',
+            'servicios'    => 'array',
+            'servicios.*'  => 'integer|exists:servicios,id',
         ]);
 
-        $validated['activo'] = $request->has('activo');
         $servicios = $validated['servicios'] ?? [];
-        unset($validated['servicios']);
 
-        $producto->update($validated);
+        $producto->update(['precio_venta' => $validated['precio_venta'] ?? null]);
         $producto->servicios()->sync($servicios);
 
         return redirect()->route('admin.productos.index')
             ->with('success', 'Producto actualizado correctamente.');
-    }
-
-    public function destroy(ProductoCatalogo $producto)
-    {
-        $producto->delete();
-
-        return redirect()->route('admin.productos.index')
-            ->with('success', 'Producto eliminado correctamente.');
     }
 }

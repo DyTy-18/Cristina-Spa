@@ -78,9 +78,10 @@
             <a href="{{ route('admin.inventario.entradas') }}" class="btn btn-outline btn-sm">Historial Entradas</a>
             <a href="{{ route('admin.inventario.salidas') }}" class="btn btn-outline btn-sm">Historial Salidas</a>
         @else
-            <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-primary">+ Transferir a Reventa</a>
+            <a href="{{ route('admin.inventario.reventa.entrada.create') }}" class="btn btn-primary">+ Registrar Entrada</a>
+            <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-outline">+ Transferir a Reventa</a>
             <a href="{{ route('admin.inventario.reventa.salida.create') }}" class="btn btn-accent">+ Registrar Venta</a>
-            <a href="{{ route('admin.inventario.entradas', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Historial Transferencias</a>
+            <a href="{{ route('admin.inventario.entradas', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Historial Entradas</a>
             <a href="{{ route('admin.inventario.salidas', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Historial Ventas</a>
         @endif
         <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline btn-sm">Catálogo</a>

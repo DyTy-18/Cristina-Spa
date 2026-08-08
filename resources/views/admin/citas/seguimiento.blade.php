@@ -103,8 +103,8 @@
                         <tr>
                             <td>{{ $sp->nombre }}</td>
                             <td>
-                                @if($sp->producto_catalogo_id)
-                                    <span style="font-size:0.75rem;color:var(--text-light);">Catálogo general</span>
+                                @if($sp->producto_id || $sp->producto_catalogo_id)
+                                    <span style="font-size:0.75rem;color:var(--text-light);">Inventario</span>
                                 @else
                                     <span style="font-size:0.75rem;color:var(--accent-color);">Exclusivo de este cliente</span>
                                 @endif
@@ -134,30 +134,22 @@
                     <input type="hidden" name="modo" id="segModoInput" value="existente">
 
                     <div id="segPanelExistente" class="form-group">
-                        <label class="form-label">Producto del catálogo</label>
-                        <select name="producto_catalogo_id" class="form-control">
+                        <label class="form-label">Producto de inventario (reventa)</label>
+                        <select name="producto_id" class="form-control">
                             <option value="">— seleccionar producto —</option>
                             @foreach($catalogoProductos as $p)
-                                <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                                <option value="{{ $p->id }}">{{ $p->nombre }} (Stock: {{ $p->stock_actual }})</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div id="segPanelNuevo" class="form-group" style="display:none;">
-                        <label class="form-label">Nombre del producto nuevo</label>
+                        <label class="form-label">Nombre del producto</label>
                         <input type="text" name="nombre" class="form-control" placeholder="Ej: Mascarilla capilar de prueba">
-                        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-top:0.75rem;font-size:0.85rem;font-weight:300;">
-                            <input type="checkbox" name="publicar_catalogo" value="1" id="segPublicarCheckbox" onchange="segTogglePrecio()">
-                            <span>Publicar también en el catálogo general de productos</span>
-                        </label>
                         <p style="font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;">
-                            Si no marcas esta opción, el producto solo se verá en el seguimiento de este cliente.
+                            Es una nota exclusiva de este cliente, no crea un producto en el catálogo. Para vender un producto
+                            real, primero debe existir en Inventario.
                         </p>
-
-                        <div id="segPrecioWrap" style="display:none;margin-top:0.75rem;">
-                            <label class="form-label">Precio (Bs.)</label>
-                            <input type="number" name="precio" id="segPrecioInput" class="form-control" step="0.01" min="0" placeholder="0.00">
-                        </div>
                     </div>
 
                     <div style="display:flex;gap:0.75rem;margin-top:1rem;">
@@ -217,14 +209,6 @@
         document.getElementById('segTabNuevo').classList.toggle('active', modo === 'nuevo');
         document.getElementById('segPanelExistente').style.display = modo === 'existente' ? '' : 'none';
         document.getElementById('segPanelNuevo').style.display     = modo === 'nuevo' ? '' : 'none';
-    }
-
-    function segTogglePrecio() {
-        const checked = document.getElementById('segPublicarCheckbox').checked;
-        const wrap  = document.getElementById('segPrecioWrap');
-        const input = document.getElementById('segPrecioInput');
-        wrap.style.display = checked ? '' : 'none';
-        if (!checked) input.value = '';
     }
 </script>
 @endpush

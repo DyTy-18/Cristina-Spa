@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductoCatalogo;
+use App\Models\Producto;
 use App\Models\Servicio;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,28 +14,28 @@ class ServicioProductoController extends Controller
     public function store(Request $request, Servicio $servicio): JsonResponse
     {
         $validated = $request->validate([
-            'producto_catalogo_id' => [
+            'producto_id' => [
                 'required',
                 'integer',
-                'exists:productos_catalogo,id',
-                Rule::unique('producto_catalogo_servicio', 'producto_catalogo_id')->where('servicio_id', $servicio->id),
+                'exists:productos,id',
+                Rule::unique('producto_catalogo_servicio', 'producto_id')->where('servicio_id', $servicio->id),
             ],
         ]);
 
-        $servicio->productos()->attach($validated['producto_catalogo_id']);
+        $servicio->productosInventario()->attach($validated['producto_id']);
 
-        $producto = ProductoCatalogo::findOrFail($validated['producto_catalogo_id']);
+        $producto = Producto::findOrFail($validated['producto_id']);
 
         return response()->json([
             'id'     => $producto->id,
             'nombre' => $producto->nombre,
-            'precio' => $producto->precio,
+            'precio' => $producto->precio_venta,
         ], 201);
     }
 
-    public function destroy(Servicio $servicio, ProductoCatalogo $producto): JsonResponse
+    public function destroy(Servicio $servicio, Producto $producto): JsonResponse
     {
-        $servicio->productos()->detach($producto->id);
+        $servicio->productosInventario()->detach($producto->id);
 
         return response()->json(['success' => true]);
     }

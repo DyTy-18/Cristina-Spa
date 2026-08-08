@@ -136,6 +136,7 @@ class InventarioController extends Controller
             'marca'               => 'nullable|string|max:100',
             'linea'               => 'nullable|string|max:100',
             'costo'               => 'required|numeric|min:0',
+            'precio_venta'        => 'nullable|numeric|min:0',
             'stock_minimo'        => 'required|integer|min:0',
             'es_reventa'          => 'nullable|boolean',
             'unidades_iniciales'  => 'nullable|integer|min:0',
@@ -153,6 +154,7 @@ class InventarioController extends Controller
             'marca'         => $validated['marca'] ?? null,
             'linea'         => $validated['linea'] ?? null,
             'costo'         => $validated['costo'],
+            'precio_venta'  => $validated['precio_venta'] ?? null,
             'stock_minimo'  => $validated['stock_minimo'],
             'es_reventa'    => $esReventa,
         ]);
@@ -192,6 +194,7 @@ class InventarioController extends Controller
             'marca'         => 'nullable|string|max:100',
             'linea'         => 'nullable|string|max:100',
             'costo'         => 'required|numeric|min:0',
+            'precio_venta'  => 'nullable|numeric|min:0',
             'stock_minimo'  => 'required|integer|min:0',
             'es_reventa'    => 'nullable|boolean',
         ]);
@@ -392,6 +395,33 @@ class InventarioController extends Controller
 
         return redirect()->route('admin.inventario.index', ['tipo' => 'reventa'])
             ->with('success', 'Transferencia a reventa registrada correctamente.');
+    }
+
+    public function createEntradaReventa()
+    {
+        $productos  = $this->productosConStock('reventa');
+        $sucursales = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
+        return view('admin.inventario.reventa.entrada', compact('productos', 'sucursales'));
+    }
+
+    public function storeEntradaReventa(Request $request)
+    {
+        $validated = $request->validate([
+            'codigo_barras' => 'required|string|exists:productos,codigo_barras',
+            'unidades'      => 'required|integer|min:1',
+            'fecha'         => 'required|date',
+        ]);
+
+        $producto = Producto::where('codigo_barras', $validated['codigo_barras'])->firstOrFail();
+        if (! $producto->es_reventa) {
+            return back()->withErrors(['codigo_barras' => 'Este producto no está habilitado para reventa.'])->withInput();
+        }
+
+        $sid = session('sucursal_activa_id') ?? $request->integer('sucursal_id') ?: auth()->user()->sucursal_id;
+        Entrada::create(array_merge($validated, ['sucursal_id' => $sid, 'tipo_stock' => 'reventa']));
+
+        return redirect()->route('admin.inventario.entradas', ['tipo' => 'reventa'])
+            ->with('success', 'Entrada de reventa registrada correctamente.');
     }
 
     public function createSalidaReventa()

@@ -113,7 +113,7 @@
                         <select class="form-control" id="nuevo-producto-catalogo-id">
                             <option value="">— seleccionar producto —</option>
                             @foreach ($catalogoProductos as $p)
-                                <option value="{{ $p->id }}">{{ $p->nombre }}</option>
+                                <option value="{{ $p->id }}">{{ $p->nombre }} (Stock: {{ $p->stock_actual }})</option>
                             @endforeach
                         </select>
                         <small id="add-error-producto-catalogo" style="color: var(--error-color); display:none;"></small>
@@ -221,7 +221,7 @@ $materialesData = $materiales->map(fn($m) => [
     const BASE_URL = '{{ route("admin.servicios.productos.store", $servicio) }}';
     const CSRF     = '{{ csrf_token() }}';
 
-    let productos = @json($productosServicio->map(fn($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'precio' => $p->precio]));
+    let productos = @json($productosServicio->map(fn($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'precio' => $p->precio_venta]));
 
     function renderTable() {
         const tbody = document.getElementById('productos-tbody');
@@ -289,7 +289,7 @@ $materialesData = $materiales->map(fn($m) => [
     }
 
     document.getElementById('btn-agregar-producto').addEventListener('click', () => {
-        const productoCatalogoId = document.getElementById('nuevo-producto-catalogo-id').value;
+        const productoId = document.getElementById('nuevo-producto-catalogo-id').value;
 
         ['add-error-producto-catalogo', 'add-producto-general-error']
             .forEach(id => { const el = document.getElementById(id); el.style.display = 'none'; el.textContent = ''; });
@@ -297,13 +297,13 @@ $materialesData = $materiales->map(fn($m) => [
         fetch(BASE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ producto_catalogo_id: productoCatalogoId }),
+            body: JSON.stringify({ producto_id: productoId }),
         })
         .then(r => r.json().then(data => ({ ok: r.ok, data })))
         .then(({ ok, data }) => {
             if (!ok) {
                 const errors = data.errors || {};
-                if (errors.producto_catalogo_id) showError('add-error-producto-catalogo', errors.producto_catalogo_id[0]);
+                if (errors.producto_id) showError('add-error-producto-catalogo', errors.producto_id[0]);
                 if (!Object.keys(errors).length) showError('add-producto-general-error', data.message || 'Error al agregar.');
                 return;
             }

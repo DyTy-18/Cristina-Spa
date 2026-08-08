@@ -1,7 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(php -l app/Http/Controllers/Admin/ProductoCatalogoController.php)",
+      "Bash(php -l app/Http/Controllers/Admin/SeguimientoController.php)",
+      "Bash(php -l app/Http/Controllers/Admin/ServicioController.php)",
+      "Bash(php -l app/Observers/ProductoObserver.php)",
+      "Bash(php -l app/Providers/AppServiceProvider.php)",
+      "Bash(php -l app/Http/Controllers/Admin/Concerns/VendeProductosReventa.php)",
+      "Bash(curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt http://127.0.0.1:8123/admin/citas -o /tmp/citas_page.html)",
+      "Bash(awk '/Modal: Nueva cita/,0' /tmp/citas_page.html)",
+      "Bash(cygpath -w /tmp/citas_page.html)",
+      "Bash(node harness.js)",
+      "Bash(sed -i \"s#/tmp/jstest/nc_products.js#C:\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\myvlad\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\AppData\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Local\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\Temp\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\jstest\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\nc_products.js#\" harness.js)",
+      "Bash(node real_test.js)",
+      "Bash(curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt http://127.0.0.1:8123/admin/clientes/1/historial -o /tmp/cliente_page.html -w \"%{http_code}\\\\n\")",
+      "Bash(node real_test_cliente.js)",
+      "Bash(powershell -Command \"Stop-Process -Id 1544 -Force\")"
     ]
   }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
-use App\Models\ProductoCatalogo;
+use App\Models\Producto;
 use App\Models\SeguimientoProducto;
 use Illuminate\Http\Request;
 
@@ -14,19 +14,19 @@ class SeguimientoController extends Controller
     {
         $cita->load([
             'cliente',
-            'citaServicios.servicio.productos',
+            'citaServicios.servicio.productosInventario',
             'seguimientoNotas.user',
             'seguimientoProductos.producto',
         ]);
 
         $productosDeServicios = $cita->citaServicios
-            ->pluck('servicio.productos')
+            ->pluck('servicio.productosInventario')
             ->filter()
             ->flatten()
             ->unique('id')
             ->values();
 
-        $catalogoProductos = ProductoCatalogo::activos()->orderBy('nombre')->get();
+        $catalogoProductos = Producto::reventaConStock(session('sucursal_activa_id'));
 
         return view('admin.citas.seguimiento', compact('cita', 'productosDeServicios', 'catalogoProductos'));
     }
@@ -48,33 +48,17 @@ class SeguimientoController extends Controller
     public function storeProducto(Request $request, Cita $cita)
     {
         $data = $request->validate([
-            'modo'                  => 'required|in:existente,nuevo',
-            'producto_catalogo_id'  => 'required_if:modo,existente|nullable|exists:productos_catalogo,id',
-            'nombre'                => 'required_if:modo,nuevo|nullable|string|max:255',
-            'publicar_catalogo'     => 'boolean',
-            'precio'                => 'required_if:publicar_catalogo,1|nullable|numeric|min:0',
+            'modo'          => 'required|in:existente,nuevo',
+            'producto_id'   => 'required_if:modo,existente|nullable|exists:productos,id',
+            'nombre'        => 'required_if:modo,nuevo|nullable|string|max:255',
         ]);
 
         if ($data['modo'] === 'existente') {
             $cita->seguimientoProductos()->create([
-                'producto_catalogo_id' => $data['producto_catalogo_id'],
+                'producto_id' => $data['producto_id'],
             ]);
 
             return back()->with('success', 'Producto agregado al seguimiento.');
-        }
-
-        if ($request->boolean('publicar_catalogo')) {
-            $producto = ProductoCatalogo::create([
-                'nombre' => $data['nombre'],
-                'precio' => $data['precio'],
-                'activo' => true,
-            ]);
-
-            $cita->seguimientoProductos()->create([
-                'producto_catalogo_id' => $producto->id,
-            ]);
-
-            return back()->with('success', 'Producto creado, publicado en el catálogo y agregado al seguimiento.');
         }
 
         $cita->seguimientoProductos()->create([

@@ -6,8 +6,8 @@
 @section('content')
     <div class="table-container">
         <div class="table-header">
-            <h3 class="table-title">Productos</h3>
-            <a href="{{ route('admin.productos.create') }}" class="btn btn-primary btn-sm">+ Nuevo Producto</a>
+            <h3 class="table-title">Productos de reventa @if($sucursalActiva ?? null)&mdash; {{ $sucursalActiva->nombre }}@endif</h3>
+            <a href="{{ route('admin.inventario.productos', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Ir a Inventario</a>
         </div>
 
         <form method="GET" action="{{ route('admin.productos.index') }}" class="table-filter">
@@ -29,8 +29,9 @@
                 <thead>
                     <tr>
                         <th>Nombre</th>
+                        <th>Marca / Línea</th>
+                        <th style="text-align:right;">Stock</th>
                         <th style="text-align:right;">Precio</th>
-                        <th>Estado</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -41,10 +42,11 @@
                         @endphp
                         <tr>
                             <td>{{ $producto->nombre }}</td>
+                            <td>{{ trim(($producto->marca ?? '—') . ' / ' . ($producto->linea ?? '—')) }}</td>
+                            <td style="text-align:right;">{{ $producto->stock_actual }}</td>
                             <td style="text-align:right;">
-                                {{ $producto->precio !== null ? 'Bs. ' . number_format($producto->precio, 2) : '—' }}
+                                {{ $producto->precio_venta !== null ? 'Bs. ' . number_format($producto->precio_venta, 2) : '—' }}
                             </td>
-                            <td>{{ $producto->activo ? 'Activo' : 'Inactivo' }}</td>
                             <td>
                                 <div class="actions">
                                     <button type="button" class="btn btn-outline btn-sm btn-toggle-servicios"
@@ -53,17 +55,11 @@
                                     </button>
                                     <a href="{{ route('admin.productos.edit', $producto) }}"
                                        class="btn btn-outline btn-sm">Editar</a>
-                                    <form action="{{ route('admin.productos.destroy', $producto) }}" method="POST"
-                                          style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>
                         <tr class="servicios-row" id="servicios-row-{{ $producto->id }}" style="display:none;">
-                            <td colspan="4" style="background:var(--light-bg); padding:1.25rem 1.5rem;">
+                            <td colspan="5" style="background:var(--light-bg); padding:1.25rem 1.5rem;">
                                 <strong style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-light);">
                                     Servicios que usan este producto
                                 </strong>
@@ -98,11 +94,11 @@
                     @if ($q)
                         No se encontraron productos con ese nombre
                     @else
-                        No hay productos registrados
+                        No hay productos registrados. Los productos se dan de alta desde Inventario.
                     @endif
                 </p>
                 @if (!$q)
-                    <a href="{{ route('admin.productos.create') }}" class="btn btn-primary">Agregar Producto</a>
+                    <a href="{{ route('admin.inventario.productos') }}" class="btn btn-primary">Ir a Inventario</a>
                 @endif
             </div>
         @endif

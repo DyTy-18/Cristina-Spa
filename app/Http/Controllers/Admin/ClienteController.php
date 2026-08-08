@@ -3,23 +3,27 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
+use App\Http\Controllers\Admin\Concerns\VendeProductosReventa;
 use App\Http\Controllers\Controller;
 use App\Models\Campana;
 use App\Models\Cita;
+use App\Models\CitaProducto;
 use App\Models\CitaServicio;
 use App\Models\Cliente;
 use App\Models\ContratoPaquete;
 use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
 use App\Models\Paquete;
+use App\Models\Producto;
 use App\Models\Servicio;
 use App\Services\WppService;
 use App\Services\MaterialConsumptionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
-    use CreaContratoPaquete;
+    use CreaContratoPaquete, VendeProductosReventa;
     public function index(Request $request)
     {
         $ordenar = $request->get('ordenar', 'recientes');
@@ -224,10 +228,19 @@ class ClienteController extends Controller
             ])->values(),
         ])->values();
 
+        $productosReventa = Producto::reventaConStock(session('sucursal_activa_id'));
+        $modalProductosJson = $productosReventa->map(fn($p) => [
+            'id'     => $p->id,
+            'nombre' => $p->nombre,
+            'precio' => $p->precio_venta ?? 0,
+            'stock'  => (int) $p->stock_actual,
+        ])->values();
+        $productosPorSucursalJson = $this->productosReventaPorSucursalJson();
+
         return view('admin.clientes.show', compact(
             'cliente', 'citas', 'citasPorMes', 'stats', 'ultimoServicio', 'periodo',
             'servicios', 'empleados', 'campanas', 'modalServiciosJson', 'modalEmpleadosJson', 'paquetesJson',
-            'sucursalesVisitadas'
+            'modalProductosJson', 'productosPorSucursalJson', 'sucursalesVisitadas'
         ));
     }
 
@@ -268,6 +281,11 @@ class ClienteController extends Controller
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
+            'productos'                     => 'nullable|array',
+            'productos.*.producto_id'       => 'required_with:productos.*|exists:productos,id',
+            'productos.*.cantidad'          => 'nullable|integer|min:1',
+            'productos.*.precio'            => 'nullable|numeric|min:0',
+            'productos.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'profesionales'                 => 'nullable|array',
             'profesionales.*.empleado_id'   => 'nullable|exists:empleados,id',
             'profesionales.*.servicio_id'   => 'nullable|exists:servicios,id',
@@ -288,6 +306,9 @@ class ClienteController extends Controller
             }
         }
 
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
+        $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
+
         // Total = suma de precios netos (precio_unitario aplicando descuento)
         $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
@@ -295,28 +316,52 @@ class ClienteController extends Controller
             return round($precio * (1 - $desc / 100), 2);
         });
 
-        $cita = Cita::create([
-            'cliente_id'   => $cliente->id,
-            'sucursal_id'  => $sucursalId,
-            'campana_id'   => $data['campana_id'] ?? null,
-            'fecha'        => $data['fecha'],
-            'hora'         => $data['hora'],
-            'estado'       => $data['estado'],
-            'precio_final' => $precioTotal ?: null,
-            'tipo_pago'    => $data['tipo_pago'] ?? null,
-            'notas'        => $data['notas'] ?? null,
-        ]);
+        $precioTotal += $productosData->sum(function ($p) use ($productosBase) {
+            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_id']] ?? 0));
+            $desc     = (float) ($p['descuento'] ?? 0);
+            $cantidad = (int) ($p['cantidad'] ?? 1);
+            return round($precio * (1 - $desc / 100), 2) * $cantidad;
+        });
 
-        foreach ($data['servicios'] as $s) {
-            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-            CitaServicio::create([
-                'cita_id'              => $cita->id,
-                'servicio_id'          => $s['servicio_id'],
-                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                'descuento_porcentaje' => $desc,
+        $cita = DB::transaction(function () use ($cliente, $sucursalId, $data, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+            $cita = Cita::create([
+                'cliente_id'   => $cliente->id,
+                'sucursal_id'  => $sucursalId,
+                'campana_id'   => $data['campana_id'] ?? null,
+                'fecha'        => $data['fecha'],
+                'hora'         => $data['hora'],
+                'estado'       => $data['estado'],
+                'precio_final' => $precioTotal ?: null,
+                'tipo_pago'    => $data['tipo_pago'] ?? null,
+                'notas'        => $data['notas'] ?? null,
             ]);
-        }
+
+            foreach ($data['servicios'] as $s) {
+                $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
+                CitaServicio::create([
+                    'cita_id'              => $cita->id,
+                    'servicio_id'          => $s['servicio_id'],
+                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                    'descuento_porcentaje' => $desc,
+                ]);
+            }
+
+            foreach ($productosData as $p) {
+                $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
+                CitaProducto::create([
+                    'cita_id'               => $cita->id,
+                    'producto_id'           => $p['producto_id'],
+                    'cantidad'              => $p['cantidad'] ?? 1,
+                    'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_id']] ?? null),
+                    'descuento_porcentaje'  => $desc,
+                ]);
+            }
+
+            $this->sincronizarVentaReventa($cita, $productosData, $cita->sucursal_id);
+
+            return $cita;
+        });
 
         // Auto-aplicar cupón de recomendación si el cliente tiene uno pendiente
         $cuponReco = $cliente->cuponRecomendacionActivo();

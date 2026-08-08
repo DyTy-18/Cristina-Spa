@@ -72,6 +72,18 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="precio_venta">Precio de venta (Bs.)</label>
+                        <input type="number" id="precio_venta" name="precio_venta"
+                               class="form-control" value="{{ old('precio_venta', $producto->precio_venta) }}"
+                               step="0.01" min="0" placeholder="Opcional">
+                        <small style="color:#888; font-size:0.75rem;">
+                            Precio al público, relevante para productos de reventa. Distinto del costo.
+                        </small>
+                    </div>
+                </div>
+
                 <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
                     <input type="checkbox" id="es_reventa" name="es_reventa" value="1"
                            {{ old('es_reventa', $producto->es_reventa) ? 'checked' : '' }}>

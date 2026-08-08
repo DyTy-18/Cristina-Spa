@@ -57,9 +57,16 @@ class Servicio extends Model
         return $this->hasMany(ServicioMaterial::class);
     }
 
+    /** Productos de catálogo legado vinculados (filas creadas antes de vender directo del inventario). */
     public function productos()
     {
         return $this->belongsToMany(ProductoCatalogo::class, 'producto_catalogo_servicio');
+    }
+
+    /** Productos de inventario (reventa) vinculados a este servicio (fuente actual). */
+    public function productosInventario()
+    {
+        return $this->belongsToMany(Producto::class, 'producto_catalogo_servicio', 'servicio_id', 'producto_id');
     }
 
     /**

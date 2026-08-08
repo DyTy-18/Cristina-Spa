@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
+use App\Http\Controllers\Admin\Concerns\VendeProductosReventa;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\CitaProducto;
@@ -12,16 +13,17 @@ use App\Models\DescuentoProgramado;
 use App\Models\Empleado;
 use App\Models\Campana;
 use App\Models\Paquete;
-use App\Models\ProductoCatalogo;
+use App\Models\Producto;
 use App\Models\Servicio;
 use App\Services\WppService;
 use App\Services\MaterialConsumptionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CitaController extends Controller
 {
-    use CreaContratoPaquete;
+    use CreaContratoPaquete, VendeProductosReventa;
     /** Devuelve un mapa [servicio_id => porcentaje] con los descuentos vigentes. */
     private function descuentosVigentesMapa(): array
     {
@@ -84,12 +86,14 @@ class CitaController extends Controller
             'nombre' => trim($e->nombre . ' ' . $e->apellido),
         ])->values();
 
-        $productos     = ProductoCatalogo::activos()->orderBy('nombre')->get();
+        $productos     = \App\Models\Producto::reventaConStock(session('sucursal_activa_id'));
         $productosJson = $productos->map(fn($p) => [
             'id'     => $p->id,
             'nombre' => $p->nombre,
-            'precio' => $p->precio ?? 0,
+            'precio' => $p->precio_venta ?? 0,
+            'stock'  => (int) $p->stock_actual,
         ])->values();
+        $productosPorSucursalJson = $this->productosReventaPorSucursalJson();
 
         $sucursales  = \App\Models\Sucursal::where('activo', true)->orderBy('es_principal', 'desc')->orderBy('nombre')->get();
         $paquetes    = Paquete::where('activo', true)->with(['nivel', 'servicios'])->orderBy('categoria')->orderBy('nombre')->get();
@@ -113,7 +117,7 @@ class CitaController extends Controller
         return compact(
             'clientesRaw', 'clientesJson', 'servicios', 'empleados', 'campanas',
             'serviciosJson', 'empleadosJson', 'paquetesJson', 'sucursales',
-            'productos', 'productosJson'
+            'productos', 'productosJson', 'productosPorSucursalJson'
         );
     }
 
@@ -140,7 +144,7 @@ class CitaController extends Controller
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'productos'                     => 'nullable|array',
-            'productos.*.producto_catalogo_id' => 'required_with:productos.*|exists:productos_catalogo,id',
+            'productos.*.producto_id'       => 'required_with:productos.*|exists:productos,id',
             'productos.*.cantidad'          => 'nullable|integer|min:1',
             'productos.*.precio'            => 'nullable|numeric|min:0',
             'productos.*.descuento'         => 'nullable|numeric|min:0|max:100',
@@ -183,8 +187,8 @@ class CitaController extends Controller
             }
         }
 
-        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_catalogo_id']))->values();
-        $productosBase = ProductoCatalogo::whereIn('id', $productosData->pluck('producto_catalogo_id'))->pluck('precio', 'id');
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
+        $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
 
         $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
@@ -193,7 +197,7 @@ class CitaController extends Controller
         });
 
         $precioTotal += $productosData->sum(function ($p) use ($productosBase) {
-            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? 0));
+            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_id']] ?? 0));
             $desc     = (float) ($p['descuento'] ?? 0);
             $cantidad = (int) ($p['cantidad'] ?? 1);
             return round($precio * (1 - $desc / 100), 2) * $cantidad;
@@ -203,39 +207,45 @@ class CitaController extends Controller
             ?: session('sucursal_activa_id')
             ?? auth()->user()->sucursal_id;
 
-        $cita = Cita::create([
-            'cliente_id'   => $clienteId,
-            'sucursal_id'  => $sucursalId,
-            'campana_id'   => $data['campana_id'] ?? null,
-            'fecha'        => $data['fecha'],
-            'hora'         => $data['hora'],
-            'estado'       => $data['estado'],
-            'precio_final' => $precioTotal ?: null,
-            'tipo_pago'    => $data['tipo_pago'] ?? null,
-            'notas'        => $data['notas'] ?? null,
-        ]);
-
-        foreach ($data['servicios'] as $s) {
-            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-            CitaServicio::create([
-                'cita_id'              => $cita->id,
-                'servicio_id'          => $s['servicio_id'],
-                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                'descuento_porcentaje' => $desc,
+        $cita = DB::transaction(function () use ($data, $clienteId, $sucursalId, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+            $cita = Cita::create([
+                'cliente_id'   => $clienteId,
+                'sucursal_id'  => $sucursalId,
+                'campana_id'   => $data['campana_id'] ?? null,
+                'fecha'        => $data['fecha'],
+                'hora'         => $data['hora'],
+                'estado'       => $data['estado'],
+                'precio_final' => $precioTotal ?: null,
+                'tipo_pago'    => $data['tipo_pago'] ?? null,
+                'notas'        => $data['notas'] ?? null,
             ]);
-        }
 
-        foreach ($productosData as $p) {
-            $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
-            CitaProducto::create([
-                'cita_id'               => $cita->id,
-                'producto_catalogo_id'  => $p['producto_catalogo_id'],
-                'cantidad'              => $p['cantidad'] ?? 1,
-                'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? null),
-                'descuento_porcentaje'  => $desc,
-            ]);
-        }
+            foreach ($data['servicios'] as $s) {
+                $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
+                CitaServicio::create([
+                    'cita_id'              => $cita->id,
+                    'servicio_id'          => $s['servicio_id'],
+                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                    'descuento_porcentaje' => $desc,
+                ]);
+            }
+
+            foreach ($productosData as $p) {
+                $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
+                CitaProducto::create([
+                    'cita_id'               => $cita->id,
+                    'producto_id'           => $p['producto_id'],
+                    'cantidad'              => $p['cantidad'] ?? 1,
+                    'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_id']] ?? null),
+                    'descuento_porcentaje'  => $desc,
+                ]);
+            }
+
+            $this->sincronizarVentaReventa($cita, $productosData, $cita->sucursal_id);
+
+            return $cita;
+        });
 
         // Crear contrato de paquete si se solicitó
         $this->crearContratoSiCorresponde($request, $clienteId);
@@ -263,7 +273,7 @@ class CitaController extends Controller
         $servicios = Servicio::where('activo', true)->orderBy('nombre')->get();
         $empleados = Empleado::where('activo', true)->orderBy('apellido')->get(['id', 'nombre', 'apellido']);
         $campanas  = Campana::activas()->orWhere('id', $cita->campana_id)->orderBy('nombre')->get();
-        $productos = ProductoCatalogo::activos()->orderBy('nombre')->get();
+        $productos = Producto::reventaConStock(session('sucursal_activa_id'));
 
         $descuentosMapa = $this->descuentosVigentesMapa();
 
@@ -284,7 +294,8 @@ class CitaController extends Controller
         $productosJson = $productos->map(fn($p) => [
             'id'     => $p->id,
             'nombre' => $p->nombre,
-            'precio' => $p->precio ?? 0,
+            'precio' => $p->precio_venta ?? 0,
+            'stock'  => (int) $p->stock_actual,
         ])->values();
 
         return view('admin.citas.edit', compact(
@@ -306,7 +317,7 @@ class CitaController extends Controller
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
             'productos'                     => 'nullable|array',
-            'productos.*.producto_catalogo_id' => 'required_with:productos.*|exists:productos_catalogo,id',
+            'productos.*.producto_id'       => 'required_with:productos.*|exists:productos,id',
             'productos.*.cantidad'          => 'nullable|integer|min:1',
             'productos.*.precio'            => 'nullable|numeric|min:0',
             'productos.*.descuento'         => 'nullable|numeric|min:0|max:100',
@@ -324,8 +335,8 @@ class CitaController extends Controller
             }
         }
 
-        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_catalogo_id']))->values();
-        $productosBase = ProductoCatalogo::whereIn('id', $productosData->pluck('producto_catalogo_id'))->pluck('precio', 'id');
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
+        $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
 
         $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
@@ -334,7 +345,7 @@ class CitaController extends Controller
         });
 
         $precioTotal += $productosData->sum(function ($p) use ($productosBase) {
-            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? 0));
+            $precio   = (float) ($p['precio'] ?? ($productosBase[$p['producto_id']] ?? 0));
             $desc     = (float) ($p['descuento'] ?? 0);
             $cantidad = (int) ($p['cantidad'] ?? 1);
             return round($precio * (1 - $desc / 100), 2) * $cantidad;
@@ -342,39 +353,43 @@ class CitaController extends Controller
 
         $estadoAnterior = $cita->estado;
 
-        $cita->update([
-            'campana_id'   => $data['campana_id'] ?? null,
-            'fecha'        => $data['fecha'],
-            'hora'         => $data['hora'],
-            'estado'       => $data['estado'],
-            'precio_final' => $precioTotal ?: null,
-            'notas'        => $data['notas'] ?? null,
-        ]);
-
-        $cita->citaServicios()->delete();
-        $cita->citaProductos()->delete();
-
-        foreach ($data['servicios'] as $s) {
-            $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-            CitaServicio::create([
-                'cita_id'              => $cita->id,
-                'servicio_id'          => $s['servicio_id'],
-                'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                'descuento_porcentaje' => $desc,
+        DB::transaction(function () use ($cita, $data, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+            $cita->update([
+                'campana_id'   => $data['campana_id'] ?? null,
+                'fecha'        => $data['fecha'],
+                'hora'         => $data['hora'],
+                'estado'       => $data['estado'],
+                'precio_final' => $precioTotal ?: null,
+                'notas'        => $data['notas'] ?? null,
             ]);
-        }
 
-        foreach ($productosData as $p) {
-            $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
-            CitaProducto::create([
-                'cita_id'               => $cita->id,
-                'producto_catalogo_id'  => $p['producto_catalogo_id'],
-                'cantidad'              => $p['cantidad'] ?? 1,
-                'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_catalogo_id']] ?? null),
-                'descuento_porcentaje'  => $desc,
-            ]);
-        }
+            $cita->citaServicios()->delete();
+            $cita->citaProductos()->delete();
+
+            foreach ($data['servicios'] as $s) {
+                $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
+                CitaServicio::create([
+                    'cita_id'              => $cita->id,
+                    'servicio_id'          => $s['servicio_id'],
+                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
+                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                    'descuento_porcentaje' => $desc,
+                ]);
+            }
+
+            foreach ($productosData as $p) {
+                $desc = isset($p['descuento']) && $p['descuento'] > 0 ? $p['descuento'] : null;
+                CitaProducto::create([
+                    'cita_id'               => $cita->id,
+                    'producto_id'           => $p['producto_id'],
+                    'cantidad'              => $p['cantidad'] ?? 1,
+                    'precio_unitario'       => $p['precio'] ?? ($productosBase[$p['producto_id']] ?? null),
+                    'descuento_porcentaje'  => $desc,
+                ]);
+            }
+
+            $this->sincronizarVentaReventa($cita, $productosData, $cita->sucursal_id);
+        });
 
         if ($estadoAnterior !== $cita->estado) {
             app(WppService::class)->notificarSegunEstado($cita);

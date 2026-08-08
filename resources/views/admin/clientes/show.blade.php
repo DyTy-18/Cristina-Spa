@@ -5,6 +5,20 @@
 
 @push('styles')
 <style>
+    /* ===== Modal: línea de producto ===== */
+    .btn-remove-linea {
+        background: none;
+        border: 1px solid rgba(0,0,0,0.12);
+        color: var(--text-light);
+        cursor: pointer;
+        padding: 0.45rem 0.6rem;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        line-height: 1;
+        height: 38px;
+    }
+    .btn-remove-linea:hover { color: var(--error-color); border-color: var(--error-color); }
+
     /* ===== Client Profile ===== */
     .client-profile {
         background: var(--white);
@@ -1108,6 +1122,17 @@
             <div class="modal-body">
                 <form action="{{ route('admin.clientes.storeCita', $cliente) }}" method="POST">
                     @csrf
+                    <input type="hidden" name="_form" value="registrar_visita">
+
+                    @if ($errors->any() && old('_form') === 'registrar_visita')
+                        <div style="padding:0.75rem 1rem; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; margin-bottom:1rem;">
+                            <ul style="margin:0; padding-left:1.2rem;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     {{-- Pestañas Servicios / Paquetes --}}
                     <div class="form-group">
@@ -1117,6 +1142,8 @@
                                 onclick="switchModalTab('servicios')">✂️ Servicios</button>
                             <button type="button" class="modal-srv-tab" id="mTabBtnPaquetes"
                                 onclick="switchModalTab('paquetes')">🎁 Paquetes</button>
+                            <button type="button" class="modal-srv-tab" id="mTabBtnProductos"
+                                onclick="switchModalTab('productos')">📦 Productos</button>
                             <div class="modal-pkg-chip" id="modalPkgChip">
                                 <span>✓</span>
                                 <span id="modalPkgChipText"></span>
@@ -1176,6 +1203,28 @@
                                 Al seleccionar un paquete se marcan los servicios automáticamente.
                             </p>
                         </div>
+
+                        {{-- Panel: Productos --}}
+                        <div id="mPanelProductos" style="display:none;">
+                            <p id="modalProductosEmpty" style="font-size:.78rem;color:var(--text-light);font-style:italic;display:none;"></p>
+
+                            <div id="modalProductosPicker">
+                                <div style="display:grid;grid-template-columns:1fr 70px 90px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Producto</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Cant.</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Desc.</span>
+                                    <span></span>
+                                </div>
+                                <div id="modalProductosContainer"></div>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addModalProducto()" style="margin-top:0.25rem;">
+                                    + Agregar producto
+                                </button>
+                                <p style="font-size:.72rem;color:var(--text-light);margin-top:.65rem;font-style:italic;">
+                                    Solo productos de reventa con stock disponible en la sucursal seleccionada. Al guardar se descuenta el stock automáticamente.
+                                </p>
+                            </div>
+                        </div>
                     </div>{{-- end form-group tabs --}}
 
                     {{-- Profesionales --}}
@@ -1226,7 +1275,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Sucursal <span style="color:var(--error-color)">*</span></label>
-                        <select name="sucursal_id" class="form-control" required>
+                        <select name="sucursal_id" class="form-control" required onchange="refrescarProductosPorSucursal(this.value)">
                             @foreach($sucursales as $s)
                                 <option value="{{ $s->id }}"
                                     {{ (old('sucursal_id', $sucursalActiva->id ?? null) == $s->id) ? 'selected' : '' }}>
@@ -1385,20 +1434,79 @@
     const MODAL_SERVICIOS = @json($modalServiciosJson);
     const MODAL_EMPLEADOS = @json($modalEmpleadosJson);
     const MODAL_PAQUETES  = @json($paquetesJson);
+    let   MODAL_PRODUCTOS = @json($modalProductosJson);
+    const MODAL_PRODUCTOS_POR_SUCURSAL = @json($productosPorSucursalJson);
+    const MODAL_MODO_GLOBAL = @json($modoGlobal ?? false);
 
-    // ── Pestañas Servicios / Paquetes en modal ────────────────────────────────
+    function refrescarProductosPorSucursal(sucursalId) {
+        MODAL_PRODUCTOS = MODAL_PRODUCTOS_POR_SUCURSAL[sucursalId] || [];
+        document.getElementById('modalProductosContainer').innerHTML = '';
+
+        const empty  = document.getElementById('modalProductosEmpty');
+        const picker = document.getElementById('modalProductosPicker');
+        if (MODAL_PRODUCTOS.length === 0) {
+            empty.textContent = MODAL_MODO_GLOBAL
+                ? 'No hay productos de reventa con stock registrado en ninguna sucursal.'
+                : 'No hay productos de reventa con stock en esta sucursal.';
+            empty.style.display = '';
+            picker.style.display = 'none';
+        } else {
+            empty.style.display = 'none';
+            picker.style.display = '';
+        }
+    }
+
+    // ── Pestañas Servicios / Paquetes / Productos en modal ─────────────────────
     let modalPkgCat      = 'todos';
     let modalPkgAplicado = null;
 
     function switchModalTab(tab) {
-        const isServicios = tab === 'servicios';
-        document.getElementById('mPanelServicios').style.display  = isServicios ? '' : 'none';
-        document.getElementById('mPanelPaquetes').style.display   = isServicios ? 'none' : '';
-        document.getElementById('mTabBtnServicios').classList.toggle('active', isServicios);
-        document.getElementById('mTabBtnPaquetes').classList.toggle('active', !isServicios);
-        if (!isServicios && document.getElementById('modalPkgCards').children.length === 0) {
+        document.getElementById('mPanelServicios').style.display = tab === 'servicios' ? '' : 'none';
+        document.getElementById('mPanelPaquetes').style.display  = tab === 'paquetes'  ? '' : 'none';
+        document.getElementById('mPanelProductos').style.display = tab === 'productos' ? '' : 'none';
+        document.getElementById('mTabBtnServicios').classList.toggle('active', tab === 'servicios');
+        document.getElementById('mTabBtnPaquetes').classList.toggle('active', tab === 'paquetes');
+        document.getElementById('mTabBtnProductos').classList.toggle('active', tab === 'productos');
+        if (tab === 'paquetes' && document.getElementById('modalPkgCards').children.length === 0) {
             renderModalPkgCards();
         }
+    }
+
+    // ── Sección Productos del modal ─────────────────────────────────────────
+    let modalProductoIdx = 0;
+
+    function buildModalProductoOptions() {
+        return '<option value="">— Seleccionar —</option>' +
+            MODAL_PRODUCTOS.map(p => `<option value="${p.id}" data-precio="${p.precio}" data-stock="${p.stock}">${p.nombre} (Stock: ${p.stock})</option>`).join('');
+    }
+
+    function onModalProductoChange(sel) {
+        const row       = sel.closest('.modal-linea-producto');
+        const opt       = sel.options[sel.selectedIndex];
+        const precioInp = row.querySelector('input[name*="[precio]"]');
+        const cantInp   = row.querySelector('input[name*="[cantidad]"]');
+        if (opt.value && precioInp && !precioInp.value) {
+            precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+        }
+        if (opt.value && cantInp) {
+            cantInp.max = opt.dataset.stock || 0;
+        }
+    }
+
+    function addModalProducto() {
+        const idx = String(modalProductoIdx++);
+        const div = document.createElement('div');
+        div.className = 'modal-linea-producto';
+        div.style.cssText = 'display:grid;grid-template-columns:1fr 70px 90px 78px auto;gap:0.5rem;margin-bottom:0.4rem;align-items:center;';
+        div.innerHTML = `
+            <select name="productos[${idx}][producto_id]" class="form-control" onchange="onModalProductoChange(this)">
+                ${buildModalProductoOptions()}
+            </select>
+            <input type="number" name="productos[${idx}][cantidad]" class="form-control" min="1" step="1" value="1">
+            <input type="number" name="productos[${idx}][precio]" class="form-control" step="0.01" min="0" placeholder="0.00">
+            <input type="number" name="productos[${idx}][descuento]" class="form-control" step="1" min="0" max="100" placeholder="0">
+            <button type="button" class="btn-remove-linea" onclick="this.closest('.modal-linea-producto').remove()" title="Quitar">✕</button>`;
+        document.getElementById('modalProductosContainer').appendChild(div);
     }
 
     function modalFilterCat(cat) {
@@ -1708,6 +1816,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         renderServicioCards();
         renderModalPkgCards();
+
+        const sucursalSelect = document.querySelector('#modalVisita select[name="sucursal_id"]');
+        if (sucursalSelect) refrescarProductosPorSucursal(sucursalSelect.value);
+
+        @if ($errors->any() && old('_form') === 'registrar_visita')
+            document.getElementById('modalVisita').classList.add('open');
+        @endif
 
         document.querySelector('#modalVisita form').addEventListener('submit', function(e) {
             if (scSelected.size === 0) {

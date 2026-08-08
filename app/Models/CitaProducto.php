@@ -11,6 +11,7 @@ class CitaProducto extends Model
     protected $fillable = [
         'cita_id',
         'producto_catalogo_id',
+        'producto_id',
         'cantidad',
         'precio_unitario',
         'descuento_porcentaje',
@@ -42,7 +43,14 @@ class CitaProducto extends Model
         return $this->belongsTo(Cita::class);
     }
 
+    /** Producto de inventario (fuente actual). */
     public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'producto_id');
+    }
+
+    /** Producto de catálogo legado (solo filas creadas antes de vender directo del inventario). */
+    public function productoCatalogo()
     {
         return $this->belongsTo(ProductoCatalogo::class, 'producto_catalogo_id');
     }
