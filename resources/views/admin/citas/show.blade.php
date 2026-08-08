@@ -165,7 +165,9 @@
         <a href="{{ route('admin.citas.calendario') }}" class="btn btn-sm btn-outline">← Calendario</a>
         <div style="display:flex;gap:0.5rem;">
             <a href="{{ route('admin.citas.seguimiento.show', $cita) }}" class="btn btn-sm btn-outline">Hacer seguimiento</a>
-            <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-sm btn-accent">Editar cita</a>
+            @can('editar citas')
+                <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-sm btn-accent">Editar cita</a>
+            @endcan
         </div>
     </div>
 
@@ -286,8 +288,51 @@
                             <span class="servicio-total-val">Bs. {{ number_format($cita->precio_final, 2) }}</span>
                         </div>
                     @endif
+
+                    @if($cita->tipo_pago || $cita->tipo_pago_2)
+                        <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid rgba(0,0,0,0.05);font-size:0.85rem;color:var(--text-light);">
+                            <strong style="color:var(--text-dark);font-weight:400;">Forma de pago:</strong>
+                            @if($cita->tipo_pago_2)
+                                {{ ucfirst($cita->tipo_pago) }} (Bs. {{ number_format($cita->monto_tipo_pago_1, 2) }})
+                                + {{ ucfirst($cita->tipo_pago_2) }} (Bs. {{ number_format($cita->monto_2, 2) }})
+                            @else
+                                {{ ucfirst($cita->tipo_pago) }}
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
+
+            {{-- Productos --}}
+            @if($cita->citaProductos->isNotEmpty())
+                <div class="detail-card">
+                    <div class="detail-card-header">Productos</div>
+                    <div class="detail-card-body" style="padding-top:0.5rem;padding-bottom:0.5rem;">
+                        @foreach($cita->citaProductos as $cp)
+                            <div class="servicio-row">
+                                <div>
+                                    <div class="servicio-nombre">
+                                        {{ $cp->producto?->nombre ?? 'Producto eliminado' }}
+                                        <span style="font-size:0.8rem;color:var(--text-light);font-weight:300;">× {{ $cp->cantidad }}</span>
+                                        @if($cp->descuento_porcentaje > 0)
+                                            <span class="servicio-desc-badge">
+                                                -{{ rtrim(rtrim(number_format($cp->descuento_porcentaje, 2), '0'), '.') }}%
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="servicio-precio">
+                                    @if($cp->precio_unitario !== null)
+                                        Bs. {{ number_format($cp->precio_neto ?? $cp->precio_unitario, 2) }}
+                                    @else
+                                        —
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             {{-- Notas --}}
             @if($cita->notas)
@@ -351,9 +396,11 @@
             <div class="detail-card">
                 <div class="detail-card-header">Acciones</div>
                 <div class="detail-card-body" style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:0.6rem;">
-                    <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-accent" style="text-align:center;justify-content:center;">
-                        Editar cita
-                    </a>
+                    @can('editar citas')
+                        <a href="{{ route('admin.citas.edit', $cita) }}" class="btn btn-accent" style="text-align:center;justify-content:center;">
+                            Editar cita
+                        </a>
+                    @endcan
                     <a href="{{ route('admin.citas.informe', $cita) }}" class="btn btn-outline btn-sm" style="text-align:center;display:block;">
                         📋 Ver informe
                     </a>

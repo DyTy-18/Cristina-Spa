@@ -29,6 +29,8 @@ class Cita extends Model
         'estado',
         'precio_final',
         'tipo_pago',
+        'tipo_pago_2',
+        'monto_2',
         'notas',
     ];
 
@@ -36,7 +38,14 @@ class Cita extends Model
         'fecha' => 'date',
         'hora' => 'datetime:H:i',
         'precio_final' => 'decimal:2',
+        'monto_2' => 'decimal:2',
     ];
+
+    /** Monto correspondiente a tipo_pago cuando el pago está dividido (el resto del total). */
+    public function getMontoTipoPago1Attribute(): float
+    {
+        return round((float) $this->precio_final - (float) ($this->monto_2 ?? 0), 2);
+    }
 
     public function cliente()
     {

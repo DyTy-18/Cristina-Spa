@@ -156,7 +156,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver servicios',
             'ver citas',
             'crear citas',
+            'editar citas',
             'cancelar citas'
+        ]);
+
+        // EMPLEADO - Solo puede ver citas, calendario y clientes (sin crear/editar/eliminar)
+        $empleado = Role::create(['name' => 'empleado']);
+        $empleado->givePermissionTo([
+            'ver citas',
+            'ver clientes',
+            'ver historial clientes',
         ]);
 
         // ENCARGADO - Acceso total pero solo dentro de su sucursal asignada

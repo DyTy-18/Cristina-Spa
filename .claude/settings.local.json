@@ -16,7 +16,19 @@
       "Bash(node real_test.js)",
       "Bash(curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt http://127.0.0.1:8123/admin/clientes/1/historial -o /tmp/cliente_page.html -w \"%{http_code}\\\\n\")",
       "Bash(node real_test_cliente.js)",
-      "Bash(powershell -Command \"Stop-Process -Id 1544 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 1544 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 30908 -Force\")",
+      "Bash(curl -s -c /tmp/c3.txt -b /tmp/c3.txt \"http://127.0.0.1:8124/admin/citas?estado=completada\" -o /tmp/citas_list.html)",
+      "Bash(curl -s -c /tmp/c3.txt -b /tmp/c3.txt http://127.0.0.1:8124/admin/clientes/1/historial -o /tmp/hist.html)",
+      "Bash(curl -s -c /tmp/c3.txt -b /tmp/c3.txt http://127.0.0.1:8124/admin/citas/86 -o /tmp/show86.html)",
+      "Bash(powershell -Command \"Stop-Process -Id 7728 -Force\")",
+      "Bash(node real_test_cliente2.js)",
+      "Bash(powershell -Command \"Stop-Process -Id 28824 -Force\")",
+      "Bash(php -l app/Models/Cita.php)",
+      "Bash(curl -s -c /tmp/c5.txt -b /tmp/c5.txt http://127.0.0.1:8126/admin/citas/88 -o /tmp/show88.html)",
+      "Bash(curl -s -c /tmp/c5.txt -b /tmp/c5.txt \"http://127.0.0.1:8126/admin/ingresos?periodo=diario&fecha=2026-08-08&tipo_pago=qr\" -o /tmp/ing_qr.html)",
+      "Bash(curl -s -c /tmp/c5.txt -b /tmp/c5.txt \"http://127.0.0.1:8126/admin/ingresos?periodo=diario&fecha=2026-08-08&tipo_pago=efectivo\" -o /tmp/ing_ef.html)",
+      "Bash(powershell -Command \"Stop-Process -Id 10116 -Force\")"
     ]
   }
 }

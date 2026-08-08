@@ -474,7 +474,9 @@
 <div class="table-container">
     <div class="table-header">
         <h3 class="table-title">Todas las Citas</h3>
-        <button type="button" class="btn btn-primary" onclick="abrirModalNuevaCita()">+ Nueva Cita</button>
+        @can('crear citas')
+            <button type="button" class="btn btn-primary" onclick="abrirModalNuevaCita()">+ Nueva Cita</button>
+        @endcan
     </div>
 
     {{-- Filtros --}}
@@ -536,8 +538,18 @@
                                 @php
                                     $servicioNombres = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
                                     $empleadoNombres = $cita->citaServicios->map(fn($cs) => $cs->empleado?->nombre)->filter()->unique();
+                                    $productoNombres = $cita->citaProductos->map(fn($cp) => $cp->producto?->nombre)->filter();
                                 @endphp
-                                <span>{{ $servicioNombres->implode(' + ') ?: '—' }}</span>
+                                @if($servicioNombres->isNotEmpty())
+                                    <span>{{ $servicioNombres->implode(' + ') }}</span>
+                                @elseif($productoNombres->isNotEmpty())
+                                    <span>🛍️ {{ $productoNombres->implode(' + ') }}</span>
+                                @else
+                                    <span style="color:var(--text-light);">—</span>
+                                @endif
+                                @if($servicioNombres->isNotEmpty() && $productoNombres->isNotEmpty())
+                                    <div class="servicios-list">+ {{ $productoNombres->implode(', ') }}</div>
+                                @endif
                                 @if($empleadoNombres->isNotEmpty())
                                     <div class="servicios-list">{{ $empleadoNombres->implode(', ') }}</div>
                                 @endif
@@ -550,14 +562,18 @@
                                 @endif
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('admin.citas.estado', $cita) }}">
-                                    @csrf @method('PATCH')
-                                    <select name="estado" class="estado-select {{ $cita->estado }}" onchange="this.form.submit()" title="Cambiar estado">
-                                        @foreach(['pendiente','confirmada','completada','cancelada'] as $est)
-                                            <option value="{{ $est }}" @selected($cita->estado === $est)>{{ ucfirst($est) }}</option>
-                                        @endforeach
-                                    </select>
-                                </form>
+                                @canany(['editar citas', 'confirmar citas', 'cancelar citas'])
+                                    <form method="POST" action="{{ route('admin.citas.estado', $cita) }}">
+                                        @csrf @method('PATCH')
+                                        <select name="estado" class="estado-select {{ $cita->estado }}" onchange="this.form.submit()" title="Cambiar estado">
+                                            @foreach(['pendiente','confirmada','completada','cancelada'] as $est)
+                                                <option value="{{ $est }}" @selected($cita->estado === $est)>{{ ucfirst($est) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                @else
+                                    <span class="estado-select {{ $cita->estado }}" style="display:inline-block;">{{ ucfirst($cita->estado) }}</span>
+                                @endcanany
                             </td>
                             <td>
                                 <div class="action-btns">
@@ -566,18 +582,20 @@
                                        style="padding:0.25rem 0.6rem;font-size:0.8rem;"
                                        title="Ver detalles">Ver</a>
 
-                                    @if($cita->estado === 'completada')
-                                        <button type="button"
-                                                class="btn btn-primary"
-                                                style="padding:0.25rem 0.6rem;font-size:0.8rem;"
-                                                onclick="abrirModalEditar('{{ route('admin.citas.verificarEdicion', $cita) }}')"
-                                                title="Editar (requiere contraseña)">Editar</button>
-                                    @else
-                                        <a href="{{ route('admin.citas.edit', $cita) }}"
-                                           class="btn btn-primary"
-                                           style="padding:0.25rem 0.6rem;font-size:0.8rem;"
-                                           title="Editar">Editar</a>
-                                    @endif
+                                    @can('editar citas')
+                                        @if($cita->estado === 'completada')
+                                            <button type="button"
+                                                    class="btn btn-primary"
+                                                    style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                                    onclick="abrirModalEditar('{{ route('admin.citas.verificarEdicion', $cita) }}')"
+                                                    title="Editar (requiere contraseña)">Editar</button>
+                                        @else
+                                            <a href="{{ route('admin.citas.edit', $cita) }}"
+                                               class="btn btn-primary"
+                                               style="padding:0.25rem 0.6rem;font-size:0.8rem;"
+                                               title="Editar">Editar</a>
+                                        @endif
+                                    @endcan
 
                                     @hasanyrole('admin|encargado|developer')
                                         <button type="button"
@@ -798,7 +816,7 @@
                         </div>
                         <div id="ncServicioCardsGrid" class="servicio-cards-grid"></div>
                         <div id="ncErrorMsg" style="display:none;color:var(--error-color);font-size:0.78rem;margin-top:0.4rem;">
-                            Selecciona al menos un servicio para continuar.
+                            Elegí al menos un servicio o un producto para continuar.
                         </div>
 
                         <div id="ncPreciosPanel" style="margin-top:0.9rem;display:none;">
@@ -898,6 +916,27 @@
                         <option value="tarjeta" {{ old('tipo_pago') === 'tarjeta' ? 'selected' : '' }}>Tarjeta</option>
                         <option value="qr" {{ old('tipo_pago') === 'qr' ? 'selected' : '' }}>QR</option>
                     </select>
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;cursor:pointer;">
+                        <input type="checkbox" id="ncPagoDividirCheck" {{ old('tipo_pago_2') ? 'checked' : '' }}>
+                        Dividir el pago entre 2 métodos
+                    </label>
+                    <div id="ncPagoMetodo2Wrap" style="display:{{ old('tipo_pago_2') ? 'grid' : 'none' }};grid-template-columns:1fr 1fr;gap:0.6rem;margin-top:0.5rem;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">Segundo método</label>
+                            <select name="tipo_pago_2" id="ncPagoMetodo2" class="form-control">
+                                <option value="">— Seleccionar —</option>
+                                <option value="efectivo" {{ old('tipo_pago_2') === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
+                                <option value="tarjeta"  {{ old('tipo_pago_2') === 'tarjeta'  ? 'selected' : '' }}>Tarjeta</option>
+                                <option value="qr"       {{ old('tipo_pago_2') === 'qr'       ? 'selected' : '' }}>QR</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">Monto 2do método (Bs.)</label>
+                            <input type="number" name="monto_2" id="ncPagoMonto2" class="form-control"
+                                   step="0.01" min="0.01" value="{{ old('monto_2') }}" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div id="ncPagoMetodo1Info" style="font-size:0.7rem;color:var(--text-light);margin-top:0.4rem;"></div>
                 </div>
 
                 <div class="form-group">
@@ -1618,8 +1657,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const ncSucursalSelect = document.querySelector('#formNuevaCita select[name="sucursal_id"]');
     if (ncSucursalSelect) ncRefreshProductosPorSucursal(ncSucursalSelect.value);
 
+    // ── Pago dividido (2 métodos) ───────────────────────────────────────────
+    function ncCalcularTotalActual() {
+        let total = 0;
+        ncScSelected.forEach(({ precio, descuento }) => {
+            total += (parseFloat(precio) || 0) * (1 - (parseFloat(descuento) || 0) / 100);
+        });
+        ncPcSelected.forEach(({ precio, descuento, cantidad }) => {
+            total += (parseFloat(precio) || 0) * (1 - (parseFloat(descuento) || 0) / 100) * (parseInt(cantidad) || 1);
+        });
+        return Math.round(total * 100) / 100;
+    }
+
+    function ncActualizarInfoPagoDividido() {
+        const info = document.getElementById('ncPagoMetodo1Info');
+        if (!document.getElementById('ncPagoDividirCheck').checked) {
+            info.textContent = '';
+            return;
+        }
+        const monto2 = parseFloat(document.getElementById('ncPagoMonto2').value) || 0;
+        const resto  = Math.max(0, ncCalcularTotalActual() - monto2);
+        info.textContent = `El resto (Bs. ${resto.toFixed(2)}) se registra como el primer método de pago.`;
+    }
+
+    document.getElementById('ncPagoDividirCheck').addEventListener('change', function () {
+        const wrap = document.getElementById('ncPagoMetodo2Wrap');
+        wrap.style.display = this.checked ? 'grid' : 'none';
+        if (!this.checked) {
+            document.getElementById('ncPagoMetodo2').value = '';
+            document.getElementById('ncPagoMonto2').value = '';
+        }
+        ncActualizarInfoPagoDividido();
+    });
+    document.getElementById('ncPagoMonto2').addEventListener('input', ncActualizarInfoPagoDividido);
+
     document.getElementById('formNuevaCita')?.addEventListener('submit', function (e) {
-        if (ncScSelected.size === 0) {
+        if (ncScSelected.size === 0 && ncPcSelected.size === 0) {
             e.preventDefault();
             document.getElementById('ncErrorMsg').style.display = 'block';
             document.getElementById('ncServicioCardsGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });

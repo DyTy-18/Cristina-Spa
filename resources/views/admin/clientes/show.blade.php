@@ -725,19 +725,25 @@
     <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;">
         <a href="{{ route('admin.clientes.index') }}" class="btn btn-sm btn-outline">← Todos los clientes</a>
         <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-            <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-outline">
-                Editar datos
-            </a>
+            @can('editar clientes')
+                <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-outline">
+                    Editar datos
+                </a>
+            @endcan
             <a href="{{ route('admin.contratos.index', ['cliente_id' => $cliente->id]) }}" class="btn btn-sm btn-outline">
                 📋 Contratos
             </a>
-            <button type="button" class="btn btn-sm btn-outline" onclick="generarEnlaceRecomendacion()"
-                    id="btnGenRecomendacion" data-url="{{ route('admin.clientes.recomendacion.generar', $cliente) }}">
-                🔗 Recomendar
-            </button>
-            <button type="button" class="btn btn-accent btn-sm" onclick="document.getElementById('modalVisita').classList.add('open')">
-                + Registrar visita
-            </button>
+            @can('editar clientes')
+                <button type="button" class="btn btn-sm btn-outline" onclick="generarEnlaceRecomendacion()"
+                        id="btnGenRecomendacion" data-url="{{ route('admin.clientes.recomendacion.generar', $cliente) }}">
+                    🔗 Recomendar
+                </button>
+            @endcan
+            @can('crear citas')
+                <button type="button" class="btn btn-accent btn-sm" onclick="document.getElementById('modalVisita').classList.add('open')">
+                    + Registrar visita
+                </button>
+            @endcan
         </div>
     </div>
 
@@ -891,6 +897,7 @@
                     @php
                         $fechaCita    = \Carbon\Carbon::parse($cita->fecha);
                         $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
+                        $nombresProds = $cita->citaProductos->map(fn($cp) => $cp->producto?->nombre)->filter();
                         $nombresEmps  = $cita->citaServicios
                                             ->filter(fn($cs) => $cs->empleado)
                                             ->map(fn($cs) => $cs->empleado->nombre)
@@ -910,11 +917,20 @@
                         {{-- Columna cuerpo --}}
                         <div class="agenda-body-col">
                             <div class="agenda-service-name">
-                                {{ $nombresServs->isNotEmpty() ? $nombresServs->implode(' · ') : 'Servicio no registrado' }}
+                                @if($nombresServs->isNotEmpty())
+                                    {{ $nombresServs->implode(' · ') }}
+                                @elseif($nombresProds->isNotEmpty())
+                                    🛍️ {{ $nombresProds->implode(' · ') }}
+                                @else
+                                    Servicio no registrado
+                                @endif
                                 @foreach($descuentos as $cs)
                                     <span class="desc-badge">-{{ rtrim(rtrim(number_format($cs->descuento_porcentaje, 2), '0'), '.') }}%</span>
                                 @endforeach
                             </div>
+                            @if($nombresServs->isNotEmpty() && $nombresProds->isNotEmpty())
+                                <div class="agenda-sub">+ {{ $nombresProds->implode(', ') }}</div>
+                            @endif
                             @if($nombresEmps->isNotEmpty())
                                 <div class="agenda-sub">con {{ $nombresEmps->implode(', ') }}</div>
                             @endif
@@ -1172,7 +1188,7 @@
                             </div>
                             <div id="servicioCardsGrid" class="servicio-cards-grid"></div>
                         <div id="scErrorMsg" style="display:none;color:var(--error-color);font-size:0.78rem;margin-top:0.4rem;">
-                            Selecciona al menos un servicio para continuar.
+                            Elegí al menos un servicio o un producto para continuar.
                         </div>
 
                         {{-- Price editing panel (visible when ≥1 card selected) --}}
@@ -1206,24 +1222,26 @@
 
                         {{-- Panel: Productos --}}
                         <div id="mPanelProductos" style="display:none;">
-                            <p id="modalProductosEmpty" style="font-size:.78rem;color:var(--text-light);font-style:italic;display:none;"></p>
+                            <div id="modalPcCountBadge" style="display:none;font-size:.72rem;font-weight:400;color:var(--accent-color);letter-spacing:0.5px;margin-bottom:0.4rem;"></div>
+                            <div id="modalProductoCardsGrid" class="servicio-cards-grid"></div>
+                            <p id="modalProductosEmpty" style="font-size:.78rem;color:var(--text-light);font-style:italic;margin-top:.5rem;display:none;"></p>
 
-                            <div id="modalProductosPicker">
-                                <div style="display:grid;grid-template-columns:1fr 70px 90px 78px auto;gap:0.5rem;margin-bottom:0.4rem;padding:0 0.75rem;">
-                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Producto</span>
-                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Cant.</span>
-                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Precio (Bs.)</span>
-                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-light);">Desc.</span>
-                                    <span></span>
+                            <div id="modalProductosPreciosPanel" style="margin-top:0.9rem;display:none;">
+                                <div style="display:grid;grid-template-columns:1fr 80px 100px 88px auto;gap:0.5rem;padding:0 0.7rem;margin-bottom:0.3rem;">
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Producto</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Cant.</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Precio</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);">Descuento</span>
+                                    <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-light);text-align:right;">Neto</span>
                                 </div>
-                                <div id="modalProductosContainer"></div>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="addModalProducto()" style="margin-top:0.25rem;">
-                                    + Agregar producto
-                                </button>
-                                <p style="font-size:.72rem;color:var(--text-light);margin-top:.65rem;font-style:italic;">
-                                    Solo productos de reventa con stock disponible en la sucursal seleccionada. Al guardar se descuenta el stock automáticamente.
-                                </p>
+                                <div id="modalProductosPreciosContainer"></div>
                             </div>
+
+                            <div id="modalProductosHiddenInputs"></div>
+
+                            <p style="font-size:.72rem;color:var(--text-light);margin-top:.65rem;font-style:italic;">
+                                Solo productos de reventa con stock disponible en la sucursal seleccionada. Al guardar se descuenta el stock automáticamente.
+                            </p>
                         </div>
                     </div>{{-- end form-group tabs --}}
 
@@ -1271,6 +1289,27 @@
                             <option value="tarjeta">Tarjeta</option>
                             <option value="qr">QR</option>
                         </select>
+                        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;cursor:pointer;">
+                            <input type="checkbox" id="mPagoDividirCheck">
+                            Dividir el pago entre 2 métodos
+                        </label>
+                        <div id="mPagoMetodo2Wrap" style="display:none;grid-template-columns:1fr 1fr;gap:0.6rem;margin-top:0.5rem;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Segundo método</label>
+                                <select name="tipo_pago_2" id="mPagoMetodo2" class="form-control">
+                                    <option value="">— Seleccionar —</option>
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="tarjeta">Tarjeta</option>
+                                    <option value="qr">QR</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Monto 2do método (Bs.)</label>
+                                <input type="number" name="monto_2" id="mPagoMonto2" class="form-control"
+                                       step="0.01" min="0.01" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div id="mPagoMetodo1Info" style="font-size:0.7rem;color:var(--text-light);margin-top:0.4rem;"></div>
                     </div>
 
                     <div class="form-group">
@@ -1438,24 +1477,6 @@
     const MODAL_PRODUCTOS_POR_SUCURSAL = @json($productosPorSucursalJson);
     const MODAL_MODO_GLOBAL = @json($modoGlobal ?? false);
 
-    function refrescarProductosPorSucursal(sucursalId) {
-        MODAL_PRODUCTOS = MODAL_PRODUCTOS_POR_SUCURSAL[sucursalId] || [];
-        document.getElementById('modalProductosContainer').innerHTML = '';
-
-        const empty  = document.getElementById('modalProductosEmpty');
-        const picker = document.getElementById('modalProductosPicker');
-        if (MODAL_PRODUCTOS.length === 0) {
-            empty.textContent = MODAL_MODO_GLOBAL
-                ? 'No hay productos de reventa con stock registrado en ninguna sucursal.'
-                : 'No hay productos de reventa con stock en esta sucursal.';
-            empty.style.display = '';
-            picker.style.display = 'none';
-        } else {
-            empty.style.display = 'none';
-            picker.style.display = '';
-        }
-    }
-
     // ── Pestañas Servicios / Paquetes / Productos en modal ─────────────────────
     let modalPkgCat      = 'todos';
     let modalPkgAplicado = null;
@@ -1472,41 +1493,157 @@
         }
     }
 
-    // ── Sección Productos del modal ─────────────────────────────────────────
-    let modalProductoIdx = 0;
+    // ── Sección Productos del modal (misma vista previa que Nueva Cita) ────────
+    const modalPcSelected = new Map(); // Map<producto_id (string) → { nombre, precio, descuento, cantidad }>
 
-    function buildModalProductoOptions() {
-        return '<option value="">— Seleccionar —</option>' +
-            MODAL_PRODUCTOS.map(p => `<option value="${p.id}" data-precio="${p.precio}" data-stock="${p.stock}">${p.nombre} (Stock: ${p.stock})</option>`).join('');
+    function refrescarProductosPorSucursal(sucursalId) {
+        MODAL_PRODUCTOS = MODAL_PRODUCTOS_POR_SUCURSAL[sucursalId] || [];
+        modalPcSelected.clear();
+        renderModalProductoCards();
+        renderModalProductosPreciosPanel();
+        updateModalPcCountBadge();
+
+        const empty = document.getElementById('modalProductosEmpty');
+        if (MODAL_PRODUCTOS.length === 0) {
+            empty.textContent = MODAL_MODO_GLOBAL
+                ? 'No hay productos de reventa con stock registrado en ninguna sucursal.'
+                : 'No hay productos de reventa con stock en esta sucursal.';
+            empty.style.display = '';
+        } else {
+            empty.style.display = 'none';
+        }
     }
 
-    function onModalProductoChange(sel) {
-        const row       = sel.closest('.modal-linea-producto');
-        const opt       = sel.options[sel.selectedIndex];
-        const precioInp = row.querySelector('input[name*="[precio]"]');
-        const cantInp   = row.querySelector('input[name*="[cantidad]"]');
-        if (opt.value && precioInp && !precioInp.value) {
-            precioInp.value = parseFloat(opt.dataset.precio || 0).toFixed(2);
+    function renderModalProductoCards() {
+        const grid = document.getElementById('modalProductoCardsGrid');
+        grid.innerHTML = '';
+        MODAL_PRODUCTOS.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'servicio-card' + (modalPcSelected.has(String(p.id)) ? ' sel' : '');
+            card.dataset.id     = p.id;
+            card.dataset.nombre = p.nombre;
+            card.dataset.precio = p.precio;
+
+            const precioFmt = `Bs. ${parseFloat(p.precio || 0).toFixed(0)}`;
+            card.innerHTML = `
+                <span class="sc-check">✓</span>
+                <span class="sc-icon">🛍️</span>
+                <div class="sc-name">${p.nombre}</div>
+                <div class="sc-price">${precioFmt}</div>`;
+            card.addEventListener('click', () => toggleModalProductoCard(card));
+            grid.appendChild(card);
+        });
+    }
+
+    function toggleModalProductoCard(card) {
+        const id     = String(card.dataset.id);
+        const nombre = card.dataset.nombre;
+        const precio = parseFloat(card.dataset.precio || 0).toFixed(2);
+
+        if (modalPcSelected.has(id)) {
+            modalPcSelected.delete(id);
+            card.classList.remove('sel');
+        } else {
+            modalPcSelected.set(id, { nombre, precio, descuento: '', cantidad: 1 });
+            card.classList.add('sel');
         }
-        if (opt.value && cantInp) {
-            cantInp.max = opt.dataset.stock || 0;
+        renderModalProductosPreciosPanel();
+        updateModalPcCountBadge();
+    }
+
+    function updateModalPcCountBadge() {
+        const badge = document.getElementById('modalPcCountBadge');
+        const n = modalPcSelected.size;
+        if (n > 0) {
+            badge.textContent = `${n} producto${n > 1 ? 's' : ''} seleccionado${n > 1 ? 's' : ''}`;
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
         }
     }
 
-    function addModalProducto() {
-        const idx = String(modalProductoIdx++);
-        const div = document.createElement('div');
-        div.className = 'modal-linea-producto';
-        div.style.cssText = 'display:grid;grid-template-columns:1fr 70px 90px 78px auto;gap:0.5rem;margin-bottom:0.4rem;align-items:center;';
-        div.innerHTML = `
-            <select name="productos[${idx}][producto_id]" class="form-control" onchange="onModalProductoChange(this)">
-                ${buildModalProductoOptions()}
-            </select>
-            <input type="number" name="productos[${idx}][cantidad]" class="form-control" min="1" step="1" value="1">
-            <input type="number" name="productos[${idx}][precio]" class="form-control" step="0.01" min="0" placeholder="0.00">
-            <input type="number" name="productos[${idx}][descuento]" class="form-control" step="1" min="0" max="100" placeholder="0">
-            <button type="button" class="btn-remove-linea" onclick="this.closest('.modal-linea-producto').remove()" title="Quitar">✕</button>`;
-        document.getElementById('modalProductosContainer').appendChild(div);
+    function calcModalProductoNeto(precio, descuento, cantidad) {
+        const p = parseFloat(precio) || 0;
+        const d = parseFloat(descuento) || 0;
+        const c = parseInt(cantidad) || 1;
+        return Math.round(p * (1 - d / 100) * c * 100) / 100;
+    }
+
+    function updateModalProductoNetoLabel(id) {
+        const row = document.querySelector(`#modalProductosPreciosContainer .pc-precio-row[data-id="${id}"]`);
+        if (!row) return;
+        const state = modalPcSelected.get(id);
+        const neto  = calcModalProductoNeto(state.precio, state.descuento, state.cantidad);
+        row.querySelector('.pc-neto').textContent = `Bs. ${neto.toFixed(2)}`;
+    }
+
+    function renderModalProductosPreciosPanel() {
+        const panel     = document.getElementById('modalProductosPreciosPanel');
+        const container = document.getElementById('modalProductosPreciosContainer');
+
+        if (modalPcSelected.size === 0) {
+            panel.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        panel.style.display = 'block';
+        const existing = new Set([...container.querySelectorAll('.pc-precio-row')].map(r => r.dataset.id));
+
+        modalPcSelected.forEach(({ nombre, precio, descuento, cantidad }, id) => {
+            if (!existing.has(id)) {
+                const row = document.createElement('div');
+                row.className = 'pc-precio-row';
+                row.dataset.id = id;
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 80px 100px 88px auto;gap:0.5rem;align-items:center;padding:0.35rem 0.7rem;';
+                row.innerHTML = `
+                    <span style="font-size:0.85rem;color:var(--text-dark);">${nombre}</span>
+                    <input type="number" class="form-control pc-cantidad-input" data-id="${id}" min="1" step="1" value="${cantidad}">
+                    <div class="sc-precio-wrap">
+                        <span class="sc-precio-prefix">Bs.</span>
+                        <input type="number" class="form-control pc-precio-input" data-id="${id}" step="0.01" min="0" value="${precio}" placeholder="0.00">
+                    </div>
+                    <div class="sc-desc-wrap">
+                        <input type="number" class="form-control pc-desc-input" data-id="${id}" step="1" min="0" max="100" value="${descuento || ''}" placeholder="0">
+                        <span class="sc-desc-suffix">%</span>
+                    </div>
+                    <span class="pc-neto" style="text-align:right;font-size:0.85rem;">Bs. ${parseFloat(precio).toFixed(2)}</span>`;
+
+                row.querySelector('.pc-cantidad-input').addEventListener('input', e => {
+                    modalPcSelected.get(id).cantidad = e.target.value || 1;
+                    updateModalProductoNetoLabel(id);
+                });
+                row.querySelector('.pc-precio-input').addEventListener('input', e => {
+                    modalPcSelected.get(id).precio = e.target.value;
+                    updateModalProductoNetoLabel(id);
+                });
+                row.querySelector('.pc-desc-input').addEventListener('input', e => {
+                    modalPcSelected.get(id).descuento = e.target.value;
+                    updateModalProductoNetoLabel(id);
+                });
+                container.appendChild(row);
+                updateModalProductoNetoLabel(id);
+            }
+        });
+
+        container.querySelectorAll('.pc-precio-row').forEach(row => {
+            if (!modalPcSelected.has(row.dataset.id)) row.remove();
+        });
+    }
+
+    function injectModalProductosHiddenInputs() {
+        const wrap = document.getElementById('modalProductosHiddenInputs');
+        wrap.innerHTML = '';
+        let i = 0;
+        modalPcSelected.forEach(({ precio, descuento, cantidad }, id) => {
+            const d = parseFloat(descuento) || 0;
+            wrap.innerHTML += `
+                <input type="hidden" name="productos[${i}][producto_id]" value="${id}">
+                <input type="hidden" name="productos[${i}][cantidad]" value="${cantidad || 1}">
+                <input type="hidden" name="productos[${i}][precio]" value="${precio || 0}">
+                <input type="hidden" name="productos[${i}][descuento]" value="${d}">`;
+            i++;
+        });
     }
 
     function modalFilterCat(cat) {
@@ -1824,14 +1961,49 @@
             document.getElementById('modalVisita').classList.add('open');
         @endif
 
+        // ── Pago dividido (2 métodos) ───────────────────────────────────────
+        function mCalcularTotalActual() {
+            let total = 0;
+            scSelected.forEach(({ precio, descuento }) => {
+                total += (parseFloat(precio) || 0) * (1 - (parseFloat(descuento) || 0) / 100);
+            });
+            modalPcSelected.forEach(({ precio, descuento, cantidad }) => {
+                total += (parseFloat(precio) || 0) * (1 - (parseFloat(descuento) || 0) / 100) * (parseInt(cantidad) || 1);
+            });
+            return Math.round(total * 100) / 100;
+        }
+
+        function mActualizarInfoPagoDividido() {
+            const info = document.getElementById('mPagoMetodo1Info');
+            if (!document.getElementById('mPagoDividirCheck').checked) {
+                info.textContent = '';
+                return;
+            }
+            const monto2 = parseFloat(document.getElementById('mPagoMonto2').value) || 0;
+            const resto  = Math.max(0, mCalcularTotalActual() - monto2);
+            info.textContent = `El resto (Bs. ${resto.toFixed(2)}) se registra como el primer método de pago.`;
+        }
+
+        document.getElementById('mPagoDividirCheck').addEventListener('change', function () {
+            const wrap = document.getElementById('mPagoMetodo2Wrap');
+            wrap.style.display = this.checked ? 'grid' : 'none';
+            if (!this.checked) {
+                document.getElementById('mPagoMetodo2').value = '';
+                document.getElementById('mPagoMonto2').value = '';
+            }
+            mActualizarInfoPagoDividido();
+        });
+        document.getElementById('mPagoMonto2').addEventListener('input', mActualizarInfoPagoDividido);
+
         document.querySelector('#modalVisita form').addEventListener('submit', function(e) {
-            if (scSelected.size === 0) {
+            if (scSelected.size === 0 && modalPcSelected.size === 0) {
                 e.preventDefault();
                 document.getElementById('scErrorMsg').style.display = 'block';
                 document.getElementById('servicioCardsGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
             injectHiddenInputs();
+            injectModalProductosHiddenInputs();
         });
     });
 

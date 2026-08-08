@@ -111,7 +111,7 @@ class ClienteController extends Controller
         $periodo = $request->get('periodo', 'recientes');
 
         $query = $cliente->citas()
-            ->with(['citaServicios.servicio', 'citaServicios.empleado', 'sucursal'])
+            ->with(['citaServicios.servicio', 'citaServicios.empleado', 'citaProductos.producto', 'sucursal'])
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc');
 
@@ -276,8 +276,10 @@ class ClienteController extends Controller
             'hora'                          => 'required',
             'estado'                        => 'required|in:pendiente,confirmada,completada,cancelada',
             'tipo_pago'                     => 'nullable|in:efectivo,tarjeta,qr',
+            'tipo_pago_2'                   => 'nullable|in:efectivo,tarjeta,qr|different:tipo_pago|required_with:monto_2',
+            'monto_2'                       => 'nullable|numeric|min:0.01|required_with:tipo_pago_2',
             'notas'                         => 'nullable|string',
-            'servicios'                     => 'required|array|min:1',
+            'servicios'                     => 'nullable|array',
             'servicios.*.servicio_id'       => 'required|exists:servicios,id',
             'servicios.*.precio'            => 'nullable|numeric|min:0',
             'servicios.*.descuento'         => 'nullable|numeric|min:0|max:100',
@@ -293,11 +295,19 @@ class ClienteController extends Controller
             'sucursal_id'                   => 'nullable|exists:sucursales,id',
         ], $this->contratoValidationRules()));
 
+        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
+
+        if (empty($data['servicios']) && $productosData->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'servicios' => 'Elegí al menos un servicio o un producto.',
+            ]);
+        }
+
         $sucursalId = $request->integer('sucursal_id')
             ?: session('sucursal_activa_id')
             ?? auth()->user()->sucursal_id;
 
-        $serviciosBase = Servicio::whereIn('id', collect($data['servicios'])->pluck('servicio_id'))->pluck('precio', 'id');
+        $serviciosBase = Servicio::whereIn('id', collect($data['servicios'] ?? [])->pluck('servicio_id'))->pluck('precio', 'id');
 
         $empleadoPorServicio = [];
         foreach ($data['profesionales'] ?? [] as $prof) {
@@ -306,11 +316,10 @@ class ClienteController extends Controller
             }
         }
 
-        $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
         $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
 
         // Total = suma de precios netos (precio_unitario aplicando descuento)
-        $precioTotal = collect($data['servicios'])->sum(function ($s) use ($serviciosBase) {
+        $precioTotal = collect($data['servicios'] ?? [])->sum(function ($s) use ($serviciosBase) {
             $precio = (float) ($s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? 0));
             $desc   = (float) ($s['descuento'] ?? 0);
             return round($precio * (1 - $desc / 100), 2);
@@ -323,6 +332,12 @@ class ClienteController extends Controller
             return round($precio * (1 - $desc / 100), 2) * $cantidad;
         });
 
+        if (!empty($data['monto_2']) && (float) $data['monto_2'] >= $precioTotal) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'monto_2' => 'El monto del segundo método no puede ser mayor o igual al total.',
+            ]);
+        }
+
         $cita = DB::transaction(function () use ($cliente, $sucursalId, $data, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
             $cita = Cita::create([
                 'cliente_id'   => $cliente->id,
@@ -332,11 +347,13 @@ class ClienteController extends Controller
                 'hora'         => $data['hora'],
                 'estado'       => $data['estado'],
                 'precio_final' => $precioTotal ?: null,
+                'tipo_pago_2'  => $data['tipo_pago_2'] ?? null,
+                'monto_2'      => $data['monto_2'] ?? null,
                 'tipo_pago'    => $data['tipo_pago'] ?? null,
                 'notas'        => $data['notas'] ?? null,
             ]);
 
-            foreach ($data['servicios'] as $s) {
+            foreach ($data['servicios'] ?? [] as $s) {
                 $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
                 CitaServicio::create([
                     'cita_id'              => $cita->id,
@@ -363,9 +380,9 @@ class ClienteController extends Controller
             return $cita;
         });
 
-        // Auto-aplicar cupón de recomendación si el cliente tiene uno pendiente
+        // Auto-aplicar cupón de recomendación si el cliente tiene uno pendiente (solo aplica a servicios)
         $cuponReco = $cliente->cuponRecomendacionActivo();
-        if ($cuponReco) {
+        if ($cuponReco && $cita->citaServicios->isNotEmpty()) {
             $nuevoPrecio = 0;
             foreach ($cita->citaServicios as $cs) {
                 $descFinal = max((float) ($cs->descuento_porcentaje ?? 0), (float) $cuponReco->valor);

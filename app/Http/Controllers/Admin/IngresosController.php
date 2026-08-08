@@ -174,7 +174,9 @@ class IngresosController extends Controller
                 if ($tipoPago === 'sin_especificar') {
                     $q->whereNull('tipo_pago');
                 } else {
-                    $q->where('tipo_pago', $tipoPago);
+                    // Una cita con pago dividido cuenta para el filtro si cualquiera
+                    // de los dos métodos coincide (el monto se desglosa en resumenPorTipo/fila).
+                    $q->where(fn ($sub) => $sub->where('tipo_pago', $tipoPago)->orWhere('tipo_pago_2', $tipoPago));
                 }
             });
     }
@@ -186,18 +188,33 @@ class IngresosController extends Controller
             ->sum('monto');
     }
 
+    /**
+     * Suma por método de pago considerando pagos divididos: el monto de tipo_pago
+     * es monto_tipo_pago_1 (el resto del total) y el de tipo_pago_2 es monto_2.
+     * Una cita dividida aporta a los dos métodos y cuenta en el "cantidad" de ambos.
+     */
+    private function montoPorMetodo($citas, string $metodo): float
+    {
+        $total = 0.0;
+        foreach ($citas as $c) {
+            if ($c->tipo_pago === $metodo) $total += $c->monto_tipo_pago_1;
+            if ($c->tipo_pago_2 === $metodo) $total += (float) $c->monto_2;
+        }
+        return round($total, 2);
+    }
+
     private function resumenPorTipo($citas): array
     {
         $result = [];
         foreach (['efectivo', 'tarjeta', 'qr', 'sin_especificar'] as $tipo) {
-            $grupo = $tipo === 'sin_especificar'
-                ? $citas->filter(fn($c) => is_null($c->tipo_pago))
-                : $citas->where('tipo_pago', $tipo);
+            if ($tipo === 'sin_especificar') {
+                $grupo = $citas->filter(fn($c) => is_null($c->tipo_pago));
+                $result[$tipo] = ['cantidad' => $grupo->count(), 'total' => (float) $grupo->sum('precio_final')];
+                continue;
+            }
 
-            $result[$tipo] = [
-                'cantidad' => $grupo->count(),
-                'total'    => (float) $grupo->sum('precio_final'),
-            ];
+            $cantidad = $citas->filter(fn($c) => $c->tipo_pago === $tipo || $c->tipo_pago_2 === $tipo)->count();
+            $result[$tipo] = ['cantidad' => $cantidad, 'total' => $this->montoPorMetodo($citas, $tipo)];
         }
         return $result;
     }
@@ -207,9 +224,9 @@ class IngresosController extends Controller
         return [
             'cantidad'        => $grupo->count(),
             'total'           => (float) $grupo->sum('precio_final'),
-            'efectivo'        => (float) $grupo->where('tipo_pago', 'efectivo')->sum('precio_final'),
-            'tarjeta'         => (float) $grupo->where('tipo_pago', 'tarjeta')->sum('precio_final'),
-            'qr'              => (float) $grupo->where('tipo_pago', 'qr')->sum('precio_final'),
+            'efectivo'        => $this->montoPorMetodo($grupo, 'efectivo'),
+            'tarjeta'         => $this->montoPorMetodo($grupo, 'tarjeta'),
+            'qr'              => $this->montoPorMetodo($grupo, 'qr'),
             'sin_especificar' => (float) $grupo->filter(fn($c) => is_null($c->tipo_pago))->sum('precio_final'),
         ];
     }

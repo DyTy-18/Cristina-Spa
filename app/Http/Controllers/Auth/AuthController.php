@@ -50,6 +50,8 @@ class AuthController extends Controller
                 return redirect()->intended('/admin/comisiones');
             } elseif ($user->hasRole('estilista')) {
                 return redirect()->intended('/admin/mis-citas');
+            } elseif ($user->hasRole('empleado')) {
+                return redirect()->intended('/admin/citas');
             } else {
                 return redirect()->intended('/mi-cuenta');
             }

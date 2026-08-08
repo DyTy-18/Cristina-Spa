@@ -45,7 +45,9 @@
                         Ocultos ({{ $totalOcultos }})
                     </a>
                 @endif
-                <a href="{{ route('admin.clientes.create') }}" class="btn btn-primary btn-sm">+ Nuevo Cliente</a>
+                @can('crear clientes')
+                    <a href="{{ route('admin.clientes.create') }}" class="btn btn-primary btn-sm">+ Nuevo Cliente</a>
+                @endcan
             </div>
         </div>
 
@@ -162,9 +164,11 @@
                                     <a href="{{ route('admin.clientes.show', $cliente) }}" class="btn btn-sm btn-outline">
                                         Historial
                                     </a>
-                                    <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-accent">
-                                        Editar
-                                    </a>
+                                    @can('editar clientes')
+                                        <a href="{{ route('admin.clientes.edit', $cliente) }}" class="btn btn-sm btn-accent">
+                                            Editar
+                                        </a>
+                                    @endcan
                                     {{-- @if($esAdmin)
                                         <form method="POST" action="{{ route('admin.clientes.toggleOculto', $cliente) }}" style="display:inline;">
                                             @csrf

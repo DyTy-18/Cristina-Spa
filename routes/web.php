@@ -80,16 +80,22 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     
     // Citas
     Route::get('/citas', [CitaController::class, 'index'])->name('citas.index');
-    Route::get('/citas/crear', [CitaController::class, 'create'])->name('citas.create');
-    Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');
     Route::get('/citas/calendario', [CitaController::class, 'calendario'])->name('citas.calendario');
     Route::get('/citas/calendario/datos', [CitaController::class, 'calendarDatos'])->name('citas.calendarDatos');
     Route::get('/citas/{cita}', [CitaController::class, 'show'])->name('citas.show');
     Route::get('/citas/{cita}/informe', [CitaController::class, 'informe'])->name('citas.informe');
-    Route::get('/citas/{cita}/editar', [CitaController::class, 'edit'])->name('citas.edit');
-    Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
-    Route::patch('/citas/{cita}/estado', [CitaController::class, 'updateEstado'])->name('citas.estado');
-    Route::post('/citas/{cita}/verificar-edicion', [CitaController::class, 'verificarEdicion'])->name('citas.verificarEdicion');
+    Route::middleware('permission:editar citas|confirmar citas|cancelar citas')->group(function () {
+        Route::patch('/citas/{cita}/estado', [CitaController::class, 'updateEstado'])->name('citas.estado');
+    });
+    Route::middleware('permission:crear citas')->group(function () {
+        Route::get('/citas/crear', [CitaController::class, 'create'])->name('citas.create');
+        Route::post('/citas', [CitaController::class, 'store'])->name('citas.store');
+    });
+    Route::middleware('permission:editar citas')->group(function () {
+        Route::get('/citas/{cita}/editar', [CitaController::class, 'edit'])->name('citas.edit');
+        Route::put('/citas/{cita}', [CitaController::class, 'update'])->name('citas.update');
+        Route::post('/citas/{cita}/verificar-edicion', [CitaController::class, 'verificarEdicion'])->name('citas.verificarEdicion');
+    });
     Route::middleware('role:admin|encargado|developer')->group(function () {
         Route::delete('/citas/{cita}', [CitaController::class, 'destroy'])->name('citas.destroy');
     });
@@ -104,16 +110,24 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
 
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
-    Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
-    Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
     Route::get('/clientes/{cliente}/historial', [ClienteController::class, 'show'])->name('clientes.show');
-    Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
-    Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
-    Route::post('/clientes/{cliente}/visita', [ClienteController::class, 'storeCita'])->name('clientes.storeCita');
-    Route::patch('/clientes/{cliente}/citas/{cita}/estado', [ClienteController::class, 'updateCitaEstado'])->name('clientes.cita.estado');
-    Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
     Route::get('/clientes/ocultos', [ClienteController::class, 'ocultos'])->name('clientes.ocultos');
-    Route::post('/clientes/{cliente}/ocultar', [ClienteController::class, 'toggleOculto'])->name('clientes.toggleOculto');
+    Route::middleware('permission:crear clientes')->group(function () {
+        Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
+        Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+    });
+    Route::middleware('permission:editar clientes')->group(function () {
+        Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
+        Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
+        Route::post('/clientes/{cliente}/recomendacion/generar', [RecomendacionController::class, 'generar'])->name('clientes.recomendacion.generar');
+        Route::post('/clientes/{cliente}/ocultar', [ClienteController::class, 'toggleOculto'])->name('clientes.toggleOculto');
+    });
+    Route::middleware('permission:crear citas')->group(function () {
+        Route::post('/clientes/{cliente}/visita', [ClienteController::class, 'storeCita'])->name('clientes.storeCita');
+    });
+    Route::middleware('permission:editar citas|confirmar citas|cancelar citas')->group(function () {
+        Route::patch('/clientes/{cliente}/citas/{cita}/estado', [ClienteController::class, 'updateCitaEstado'])->name('clientes.cita.estado');
+    });
     Route::middleware('role:admin|encargado|developer')->group(function () {
         Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     });

@@ -596,6 +596,27 @@
                                 <option value="tarjeta"  {{ old('tipo_pago') === 'tarjeta'  ? 'selected' : '' }}>Tarjeta</option>
                                 <option value="qr"       {{ old('tipo_pago') === 'qr'       ? 'selected' : '' }}>QR</option>
                             </select>
+                            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;cursor:pointer;">
+                                <input type="checkbox" id="pagoDividirCheck" {{ old('tipo_pago_2') ? 'checked' : '' }}>
+                                Dividir el pago entre 2 métodos
+                            </label>
+                            <div id="pagoMetodo2Wrap" style="display:{{ old('tipo_pago_2') ? 'grid' : 'none' }};grid-template-columns:1fr 1fr;gap:0.6rem;margin-top:0.5rem;">
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label">Segundo método</label>
+                                    <select name="tipo_pago_2" id="pagoMetodo2" class="form-control">
+                                        <option value="">— Seleccionar —</option>
+                                        <option value="efectivo" {{ old('tipo_pago_2') === 'efectivo' ? 'selected' : '' }}>Efectivo</option>
+                                        <option value="tarjeta"  {{ old('tipo_pago_2') === 'tarjeta'  ? 'selected' : '' }}>Tarjeta</option>
+                                        <option value="qr"       {{ old('tipo_pago_2') === 'qr'       ? 'selected' : '' }}>QR</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label">Monto 2do método (Bs.)</label>
+                                    <input type="number" name="monto_2" id="pagoMonto2" class="form-control"
+                                           step="0.01" min="0.01" value="{{ old('monto_2') }}" placeholder="0.00">
+                                </div>
+                            </div>
+                            <div id="pagoMetodo1Info" style="font-size:0.7rem;color:var(--text-light);margin-top:0.4rem;"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Notas</label>
@@ -1118,7 +1139,35 @@
             ahorroEl.style.display = 'none';
         }
         document.getElementById('resumePrecio').textContent = totalNeto > 0 ? 'Bs. ' + totalNeto.toFixed(2) : '—';
+
+        ultimoTotalCita = totalNeto;
+        actualizarInfoPagoDividido();
     }
+
+    // ── Pago dividido (2 métodos) ───────────────────────────────────────────
+    let ultimoTotalCita = 0;
+
+    function actualizarInfoPagoDividido() {
+        const info = document.getElementById('pagoMetodo1Info');
+        if (!document.getElementById('pagoDividirCheck').checked) {
+            info.textContent = '';
+            return;
+        }
+        const monto2 = parseFloat(document.getElementById('pagoMonto2').value) || 0;
+        const resto  = Math.max(0, ultimoTotalCita - monto2);
+        info.textContent = `El resto (Bs. ${resto.toFixed(2)}) se registra como el primer método de pago.`;
+    }
+
+    document.getElementById('pagoDividirCheck').addEventListener('change', function () {
+        const wrap = document.getElementById('pagoMetodo2Wrap');
+        wrap.style.display = this.checked ? 'grid' : 'none';
+        if (!this.checked) {
+            document.getElementById('pagoMetodo2').value = '';
+            document.getElementById('pagoMonto2').value = '';
+        }
+        actualizarInfoPagoDividido();
+    });
+    document.getElementById('pagoMonto2').addEventListener('input', actualizarInfoPagoDividido);
 
     document.querySelectorAll('[name="nuevo_nombre"],[name="nuevo_apellido"]').forEach(el => {
         el.addEventListener('input', updateResume);
