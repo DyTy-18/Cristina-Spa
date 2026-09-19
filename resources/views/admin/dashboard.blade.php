@@ -105,4 +105,59 @@
             </div>
         @endif
     </div>
+
+    @hasrole('admin')
+        <div class="table-container">
+            <div class="table-header">
+                <h3 class="table-title">Actividad API WhatsApp</h3>
+                <a href="{{ route('admin.wpp-logs.index') }}" class="btn btn-outline btn-sm">Ver todo</a>
+            </div>
+
+            @if ($wppLogsRecientes->isNotEmpty())
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Dirección</th>
+                            <th>Tipo</th>
+                            <th>Cita</th>
+                            <th>Resultado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($wppLogsRecientes as $log)
+                            <tr>
+                                <td style="font-size:.82rem;color:var(--text-light);white-space:nowrap;">
+                                    {{ $log->created_at->format('d/m H:i') }}
+                                </td>
+                                <td>
+                                    <span class="badge {{ $log->direccion === 'saliente' ? 'badge-info' : 'badge-warning' }}">
+                                        {{ $log->direccion === 'saliente' ? '→ A WPP' : '← Desde WPP' }}
+                                    </span>
+                                </td>
+                                <td style="font-size:.85rem">{{ $log->tipo }}</td>
+                                <td style="font-size:.85rem">
+                                    @if ($log->cita)
+                                        <a href="{{ route('admin.citas.show', $log->cita) }}">#{{ $log->cita->id }}</a>
+                                    @else
+                                        <span style="color:var(--text-light)">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge {{ $log->resultado === 'ok' ? 'badge-success' : 'badge-danger' }}">
+                                        {{ strtoupper($log->resultado) }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state">
+                    <div class="empty-state-icon">📱</div>
+                    <p class="empty-state-text">Todavía no hay actividad registrada con la API de WhatsApp.</p>
+                </div>
+            @endif
+        </div>
+    @endhasrole
 @endsection

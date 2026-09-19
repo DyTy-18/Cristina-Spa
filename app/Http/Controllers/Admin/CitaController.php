@@ -414,12 +414,12 @@ class CitaController extends Controller
             $this->sincronizarVentaReventa($cita, $productosData, $cita->sucursal_id);
         });
 
-        if ($estadoAnterior !== $cita->estado) {
-            app(WppService::class)->notificarSegunEstado($cita);
+        // Se avisa a WPP en cualquier edición (no solo cambio de estado), para que
+        // fecha/hora/servicios reprogramados también queden reflejados allá.
+        app(WppService::class)->notificarSegunEstado($cita);
 
-            if ($cita->estado === 'completada') {
-                app(MaterialConsumptionService::class)->procesarCita($cita);
-            }
+        if ($estadoAnterior !== $cita->estado && $cita->estado === 'completada') {
+            app(MaterialConsumptionService::class)->procesarCita($cita);
         }
 
         return redirect()->route('admin.citas.show', $cita)
@@ -532,6 +532,8 @@ class CitaController extends Controller
         if ($request->password !== config('app.edit_completada_password')) {
             return back()->withErrors(['password' => 'Contraseña incorrecta.'])->with('confirmar_eliminar_cita_id', $cita->id);
         }
+
+        app(WppService::class)->notificarEliminacion($cita);
 
         $cita->citaServicios()->delete();
         $cita->delete();

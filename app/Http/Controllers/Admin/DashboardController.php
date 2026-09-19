@@ -9,6 +9,7 @@ use App\Models\Gasto;
 use App\Models\PagoSueldo;
 use App\Models\Producto;
 use App\Models\Servicio;
+use App\Models\WppSyncLog;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -73,6 +74,8 @@ class DashboardController extends Controller
                 ->get()->count();
         }
 
+        $wppLogsRecientes = WppSyncLog::with('cita.cliente')->latest()->take(10)->get();
+
         return view('admin.dashboard', compact(
             'citasHoy',
             'totalClientes',
@@ -80,7 +83,8 @@ class DashboardController extends Controller
             'ingresosMes',
             'proximasCitas',
             'totalProductos',
-            'productosStockBajo'
+            'productosStockBajo',
+            'wppLogsRecientes'
         ));
     }
 
@@ -162,11 +166,14 @@ class DashboardController extends Controller
                 ->get()->count();
         }
 
+        $wppLogsRecientes = WppSyncLog::with('cita.cliente')->latest()->take(10)->get();
+
         return view('admin.resumen', compact(
             'citasHoy', 'citasMes', 'citasPendientes', 'citasCompletadasMes',
             'ingresosMes', 'gastosMes', 'pagosMes', 'netoMes',
             'totalClientes', 'nuevosMes',
-            'totalProductos', 'productosStockBajo'
+            'totalProductos', 'productosStockBajo',
+            'wppLogsRecientes'
         ));
     }
 }

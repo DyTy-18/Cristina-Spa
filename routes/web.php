@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\MigracionSucursalController;
 use App\Http\Controllers\Admin\IngresosController;
 use App\Http\Controllers\Admin\GastosController;
+use App\Http\Controllers\Admin\WppSyncLogController;
 
 // Página pública
 Route::get('/', function () {
@@ -238,6 +239,11 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/niveles', [PaqueteController::class, 'storeNivel'])->name('niveles.store');
         Route::put('/niveles/{nivel}', [PaqueteController::class, 'updateNivel'])->name('niveles.update');
         Route::delete('/niveles/{nivel}', [PaqueteController::class, 'destroyNivel'])->name('niveles.destroy');
+    });
+
+    // Auditoría API WPP / WhatsApp (solo admin)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/wpp-logs', [WppSyncLogController::class, 'index'])->name('wpp-logs.index');
     });
 
     // Contratos de paquetes

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Cita;
+use App\Models\WppSyncLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -26,20 +27,51 @@ class WppService
      */
     public function notificarSegunEstado(Cita $cita): void
     {
-        $body = ['cita' => $this->buildPayload($cita)];
+        $this->enviar($cita, 'actualizada');
+    }
+
+    /** Avisa al servidor WPP que la cita fue eliminada, para que cancele recordatorios pendientes. */
+    public function notificarEliminacion(Cita $cita): void
+    {
+        $this->enviar($cita, 'eliminada');
+    }
+
+    private function enviar(Cita $cita, string $accion): void
+    {
+        $body = ['cita' => $this->payloadCita($cita) + ['accion' => $accion]];
 
         Log::debug('WppService → process-cita', $body);
 
         try {
-            Http::withToken($this->token)
+            $response = Http::withToken($this->token)
                 ->timeout(5)
                 ->post("{$this->baseUrl}/api/citas/citas/process-cita", $body);
+
+            WppSyncLog::create([
+                'direccion'   => 'saliente',
+                'tipo'        => 'push',
+                'cita_id'     => $cita->id,
+                'payload'     => $body,
+                'resultado'   => $response->successful() ? 'ok' : 'error',
+                'status_code' => $response->status(),
+                'mensaje'     => $response->successful() ? null : substr($response->body(), 0, 2000),
+            ]);
         } catch (\Throwable $e) {
             Log::warning("WppService cita#{$cita->id}: {$e->getMessage()}");
+
+            WppSyncLog::create([
+                'direccion' => 'saliente',
+                'tipo'      => 'push',
+                'cita_id'   => $cita->id,
+                'payload'   => $body,
+                'resultado' => 'error',
+                'mensaje'   => $e->getMessage(),
+            ]);
         }
     }
 
-    private function buildPayload(Cita $cita): array
+    /** Payload de una cita en el formato compartido entre el push saliente y la consulta por rango de fechas. */
+    public function payloadCita(Cita $cita): array
     {
         $cita->loadMissing(['cliente', 'citaServicios.servicio', 'citaServicios.empleado']);
 

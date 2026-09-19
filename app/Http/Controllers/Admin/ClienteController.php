@@ -265,6 +265,13 @@ class ClienteController extends Controller
 
         $cliente->update($data);
 
+        // Si cambió el teléfono/nombre, WPP necesita enterarse para sus citas futuras.
+        $cliente->citas()
+            ->whereIn('estado', ['pendiente', 'confirmada'])
+            ->where('fecha', '>=', today())
+            ->get()
+            ->each(fn(Cita $cita) => app(WppService::class)->notificarSegunEstado($cita));
+
         return redirect()->route('admin.clientes.show', $cliente)
             ->with('success', 'Cliente actualizado exitosamente.');
     }

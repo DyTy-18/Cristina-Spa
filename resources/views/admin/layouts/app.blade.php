@@ -264,6 +264,14 @@
                             <span class="nav-icon">📋</span>
                             <span>Registro de actividad</span>
                         </a>
+
+                        @if (auth()->user()->hasRole('admin'))
+                            <a href="{{ route('admin.wpp-logs.index') }}"
+                                class="nav-item nav-subitem {{ request()->routeIs('admin.wpp-logs.*') ? 'active' : '' }}">
+                                <span class="nav-icon">📱</span>
+                                <span>Actividad API WhatsApp</span>
+                            </a>
+                        @endif
                     @endif
                 @endif {{-- fin @else estilista --}}
             </nav>
