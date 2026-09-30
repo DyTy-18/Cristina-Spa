@@ -325,4 +325,51 @@ class SeguimientoConsumoTest extends TestCase
 
         $this->assertSame(['V1'], Producto::reventaConStock()->pluck('codigo_barras')->all());
     }
+
+    // ─── Casilla "Producto de reventa" ───────────────────────────────────────
+
+    public function test_formulario_nuevo_oculta_las_opciones_hasta_marcar_reventa(): void
+    {
+        $html = $this->actingAs($this->admin)->get(route('admin.inventario.productos.create'))
+            ->assertOk()
+            ->assertSee('Producto de reventa')
+            ->getContent();
+
+        $this->assertMatchesRegularExpression('/<input type="checkbox" id="es_reventa"[^>]*>/', $html);
+        $this->assertDoesNotMatchRegularExpression('/id="es_reventa"[^>]*checked/', $html);
+        $this->assertMatchesRegularExpression('/id="tipoProductoGroup" style="display:none;"/', $html);
+    }
+
+    public function test_editar_producto_de_seguimiento_muestra_la_casilla_marcada_y_opciones(): void
+    {
+        $html = $this->actingAs($this->admin)->get(route('admin.inventario.productos.edit', $this->tinte))
+            ->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/id="es_reventa"[^>]*checked/', $html);
+        $this->assertMatchesRegularExpression('/id="tipoProductoGroup" style=""/', $html);
+        $this->assertMatchesRegularExpression('/value="seguimiento"\s+checked/', $html);
+    }
+
+    public function test_sin_marcar_reventa_el_producto_queda_generico(): void
+    {
+        // Lo que envía el navegador con la casilla sin marcar: solo el hidden tipo=generico.
+        $this->actingAs($this->admin)->post(route('admin.inventario.productos.store'), [
+            'codigo_barras' => 'G2', 'nombre' => 'Toallas', 'costo' => 1, 'stock_minimo' => 0,
+            'tipo' => 'generico', 'peso_gramos' => 100,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('productos', ['codigo_barras' => 'G2', 'tipo' => 'generico', 'es_reventa' => false, 'peso_gramos' => null]);
+    }
+
+    public function test_desmarcar_reventa_al_editar_pasa_el_producto_a_generico(): void
+    {
+        $this->actingAs($this->admin)->put(route('admin.inventario.productos.update', $this->tinte), [
+            'codigo_barras' => 'TIN100', 'nombre' => 'Producto TIN100', 'costo' => 10, 'stock_minimo' => 0,
+            'tipo' => 'generico',
+        ])->assertRedirect();
+
+        $this->tinte->refresh();
+        $this->assertSame('generico', $this->tinte->tipo);
+        $this->assertNull($this->tinte->peso_gramos);
+    }
 }

@@ -5,15 +5,27 @@
         'seguimiento' => ['Seguimiento', 'Se aplica al cliente en el servicio. Se registra en gramos en el seguimiento y descuenta del inventario.'],
         'generico'    => ['Genérico', 'Solo se ve en inventario. No aparece en vitrina ni en seguimiento.'],
     ];
+    $esReventaMarcado = (bool) old('es_reventa', $tipoActual !== 'generico');
 @endphp
 
-<div class="form-group">
+{{-- Sin la casilla marcada el producto queda como genérico (solo inventario).
+     Si se marca, los radios de abajo (mismo name) reemplazan este valor. --}}
+<input type="hidden" name="tipo" value="generico">
+
+<div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+    <input type="checkbox" id="es_reventa" name="es_reventa" value="1"
+           {{ $esReventaMarcado ? 'checked' : '' }} onchange="toggleTipoProducto()">
+    <label class="form-label" for="es_reventa" style="margin:0;">Producto de reventa</label>
+</div>
+
+<div class="form-group" id="tipoProductoGroup" style="{{ $esReventaMarcado ? '' : 'display:none;' }}">
     <label class="form-label">Tipo de producto *</label>
     <div class="tipo-producto-opciones">
         @foreach ($opcionesTipo as $valor => [$titulo, $desc])
             <label class="tipo-producto-opcion">
                 <input type="radio" name="tipo" value="{{ $valor }}"
-                       {{ $tipoActual === $valor ? 'checked' : '' }}
+                       {{ $esReventaMarcado && $tipoActual === $valor ? 'checked' : '' }}
+                       {{ $esReventaMarcado ? '' : 'disabled' }}
                        onchange="toggleTipoProducto()" required>
                 <span class="tipo-producto-card">
                     <strong>{{ $titulo }}</strong>
@@ -24,7 +36,7 @@
     </div>
 </div>
 
-<div class="form-row" id="pesoGramosRow" style="{{ $tipoActual === 'seguimiento' ? '' : 'display:none;' }}">
+<div class="form-row" id="pesoGramosRow" style="{{ $esReventaMarcado && $tipoActual === 'seguimiento' ? '' : 'display:none;' }}">
     <div class="form-group">
         <label class="form-label" for="peso_gramos">Peso del producto (gramos) *</label>
         <input type="number" id="peso_gramos" name="peso_gramos"
@@ -51,8 +63,13 @@
 
 <script>
     function toggleTipoProducto() {
-        const sel = document.querySelector('input[name="tipo"]:checked');
-        const esSeguimiento = sel && sel.value === 'seguimiento';
+        const reventa = document.getElementById('es_reventa').checked;
+        document.getElementById('tipoProductoGroup').style.display = reventa ? '' : 'none';
+        // Radios deshabilitados no se envían: queda el hidden "generico".
+        document.querySelectorAll('input[type="radio"][name="tipo"]').forEach(r => r.disabled = !reventa);
+
+        const sel = document.querySelector('input[type="radio"][name="tipo"]:checked');
+        const esSeguimiento = reventa && sel && sel.value === 'seguimiento';
         document.getElementById('pesoGramosRow').style.display = esSeguimiento ? '' : 'none';
         document.getElementById('peso_gramos').required = esSeguimiento;
     }
