@@ -13,6 +13,11 @@ class SeguimientoProducto extends Model
         'producto_catalogo_id',
         'producto_id',
         'nombre_personalizado',
+        'gramos',
+    ];
+
+    protected $casts = [
+        'gramos' => 'decimal:2',
     ];
 
     /** Nombre a mostrar: el del producto vinculado (inventario o catálogo legado), si no el personalizado del cliente. */

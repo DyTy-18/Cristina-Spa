@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\Producto;
 use App\Models\SeguimientoProducto;
+use App\Services\SeguimientoConsumoService;
 use Illuminate\Http\Request;
 
 class SeguimientoController extends Controller
 {
+    public function __construct(private SeguimientoConsumoService $consumo)
+    {
+    }
+
     public function show(Cita $cita)
     {
         $cita->load([
@@ -26,7 +31,8 @@ class SeguimientoController extends Controller
             ->unique('id')
             ->values();
 
-        $catalogoProductos = Producto::reventaConStock(session('sucursal_activa_id'));
+        // Solo productos marcados como "Seguimiento" en inventario, con stock de la sucursal de la cita.
+        $catalogoProductos = Producto::seguimientoConStock($cita->sucursal_id ?? session('sucursal_activa_id'));
 
         return view('admin.citas.seguimiento', compact('cita', 'productosDeServicios', 'catalogoProductos'));
     }
@@ -50,15 +56,27 @@ class SeguimientoController extends Controller
         $data = $request->validate([
             'modo'          => 'required|in:existente,nuevo',
             'producto_id'   => 'required_if:modo,existente|nullable|exists:productos,id',
+            'gramos'        => 'required_if:modo,existente|nullable|numeric|min:0.01',
             'nombre'        => 'required_if:modo,nuevo|nullable|string|max:255',
+        ], [
+            'gramos.required_if' => 'Indica cuántos gramos del producto se usaron.',
         ]);
 
         if ($data['modo'] === 'existente') {
+            $producto = Producto::findOrFail($data['producto_id']);
+
+            if ($producto->tipo !== Producto::TIPO_SEGUIMIENTO || ! $producto->peso_gramos) {
+                return back()->withErrors(['producto_id' => 'Este producto no está marcado como "Seguimiento" o no tiene peso en gramos.']);
+            }
+
             $cita->seguimientoProductos()->create([
-                'producto_id' => $data['producto_id'],
+                'producto_id' => $producto->id,
+                'gramos'      => $data['gramos'],
             ]);
 
-            return back()->with('success', 'Producto agregado al seguimiento.');
+            $this->consumo->recalcular($producto, $cita->sucursal_id);
+
+            return back()->with('success', 'Producto agregado al seguimiento. Se descontará del inventario según los gramos usados.');
         }
 
         $cita->seguimientoProductos()->create([
@@ -72,7 +90,12 @@ class SeguimientoController extends Controller
     {
         abort_if($seguimientoProducto->cita_id !== $cita->id, 404);
 
+        $producto = $seguimientoProducto->producto;
         $seguimientoProducto->delete();
+
+        if ($producto && $seguimientoProducto->gramos) {
+            $this->consumo->recalcular($producto, $cita->sucursal_id);
+        }
 
         return back()->with('success', 'Producto quitado del seguimiento.');
     }

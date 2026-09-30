@@ -138,13 +138,15 @@ class InventarioController extends Controller
             'costo'               => 'required|numeric|min:0',
             'precio_venta'        => 'nullable|numeric|min:0',
             'stock_minimo'        => 'required|integer|min:0',
-            'es_reventa'          => 'nullable|boolean',
+            'tipo'                => 'required|in:vitrina,seguimiento,generico',
+            'peso_gramos'         => 'required_if:tipo,seguimiento|nullable|numeric|min:0.01',
             'unidades_iniciales'  => 'nullable|integer|min:0',
             'fecha_inicial'       => 'nullable|date',
         ], [
             'codigo_barras.unique' => 'Ese código de barras ya está registrado en el catálogo (puede pertenecer a otra sucursal, por eso no aparece en tus filtros). No se puede duplicar.',
+            'peso_gramos.required_if' => 'Indica el peso en gramos del producto (se usa para descontar el inventario en seguimiento).',
         ]);
-        $esReventa         = $request->boolean('es_reventa');
+        $esReventa         = $validated['tipo'] === Producto::TIPO_VITRINA;
         $unidadesIniciales = (int) ($request->input('unidades_iniciales') ?? 0);
         $fechaInicial      = $request->input('fecha_inicial') ?: now()->toDateString();
 
@@ -157,6 +159,8 @@ class InventarioController extends Controller
             'precio_venta'  => $validated['precio_venta'] ?? null,
             'stock_minimo'  => $validated['stock_minimo'],
             'es_reventa'    => $esReventa,
+            'tipo'          => $validated['tipo'],
+            'peso_gramos'   => $validated['tipo'] === Producto::TIPO_SEGUIMIENTO ? $validated['peso_gramos'] : null,
         ]);
 
         $sid = session('sucursal_activa_id');
@@ -196,9 +200,13 @@ class InventarioController extends Controller
             'costo'         => 'required|numeric|min:0',
             'precio_venta'  => 'nullable|numeric|min:0',
             'stock_minimo'  => 'required|integer|min:0',
-            'es_reventa'    => 'nullable|boolean',
+            'tipo'          => 'required|in:vitrina,seguimiento,generico',
+            'peso_gramos'   => 'required_if:tipo,seguimiento|nullable|numeric|min:0.01',
+        ], [
+            'peso_gramos.required_if' => 'Indica el peso en gramos del producto (se usa para descontar el inventario en seguimiento).',
         ]);
-        $validated['es_reventa'] = $request->boolean('es_reventa');
+        $validated['es_reventa']  = $validated['tipo'] === Producto::TIPO_VITRINA;
+        $validated['peso_gramos'] = $validated['tipo'] === Producto::TIPO_SEGUIMIENTO ? $validated['peso_gramos'] : null;
 
         $producto->update($validated);
 
@@ -390,7 +398,7 @@ class InventarioController extends Controller
 
         // La transferencia habilita el pool de reventa para este producto.
         if (! $producto->es_reventa) {
-            $producto->update(['es_reventa' => true]);
+            $producto->update(['es_reventa' => true, 'tipo' => Producto::TIPO_VITRINA, 'peso_gramos' => null]);
         }
 
         return redirect()->route('admin.inventario.index', ['tipo' => 'reventa'])

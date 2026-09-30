@@ -38,6 +38,13 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if($errors->any())
+        <div class="alert alert-error">
+            @foreach($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
 
     <div class="card" style="margin-bottom:1.5rem;">
         <div class="card-header">
@@ -94,6 +101,7 @@
                 <thead>
                     <tr>
                         <th>Producto</th>
+                        <th>Cantidad usada</th>
                         <th>Origen</th>
                         <th></th>
                     </tr>
@@ -102,6 +110,18 @@
                     @foreach($cita->seguimientoProductos as $sp)
                         <tr>
                             <td>{{ $sp->nombre }}</td>
+                            <td>
+                                @if($sp->gramos)
+                                    {{ rtrim(rtrim(number_format($sp->gramos, 2, '.', ''), '0'), '.') }} g
+                                    @if($sp->producto?->peso_gramos)
+                                        <span style="font-size:0.75rem;color:var(--text-light);">
+                                            de {{ rtrim(rtrim(number_format($sp->producto->peso_gramos, 2, '.', ''), '0'), '.') }} g
+                                        </span>
+                                    @endif
+                                @else
+                                    <span style="color:var(--text-light);">—</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($sp->producto_id || $sp->producto_catalogo_id)
                                     <span style="font-size:0.75rem;color:var(--text-light);">Inventario</span>
@@ -133,14 +153,35 @@
                     @csrf
                     <input type="hidden" name="modo" id="segModoInput" value="existente">
 
-                    <div id="segPanelExistente" class="form-group">
-                        <label class="form-label">Producto de inventario (reventa)</label>
-                        <select name="producto_id" class="form-control">
-                            <option value="">— seleccionar producto —</option>
-                            @foreach($catalogoProductos as $p)
-                                <option value="{{ $p->id }}">{{ $p->nombre }} (Stock: {{ $p->stock_actual }})</option>
-                            @endforeach
-                        </select>
+                    <div id="segPanelExistente">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Producto de seguimiento</label>
+                                <select name="producto_id" id="segProductoSelect" class="form-control" onchange="segActualizarPeso()">
+                                    <option value="">— seleccionar producto —</option>
+                                    @foreach($catalogoProductos as $p)
+                                        <option value="{{ $p->id }}" data-peso="{{ (float) $p->peso_gramos }}"
+                                                {{ old('producto_id') == $p->id ? 'selected' : '' }}>
+                                            {{ $p->nombre }} ({{ rtrim(rtrim(number_format($p->peso_gramos, 2, '.', ''), '0'), '.') }} g · Stock: {{ $p->stock_actual }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @if($catalogoProductos->isEmpty())
+                                    <small style="font-size:0.78rem;color:var(--text-light);">
+                                        No hay productos marcados como "Seguimiento" en el inventario de esta sucursal.
+                                    </small>
+                                @endif
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cantidad usada (gramos)</label>
+                                <input type="number" name="gramos" id="segGramosInput" class="form-control"
+                                       step="0.01" min="0.01" value="{{ old('gramos') }}" placeholder="Ej: 50">
+                                <small id="segPesoHint" style="font-size:0.78rem;color:var(--text-light);"></small>
+                            </div>
+                        </div>
+                        <p style="font-size:0.78rem;color:var(--text-light);margin:0;">
+                            Los gramos se acumulan: cada vez que se completa el peso de una unidad, se descuenta 1 del inventario.
+                        </p>
                     </div>
 
                     <div id="segPanelNuevo" class="form-group" style="display:none;">
@@ -210,5 +251,18 @@
         document.getElementById('segPanelExistente').style.display = modo === 'existente' ? '' : 'none';
         document.getElementById('segPanelNuevo').style.display     = modo === 'nuevo' ? '' : 'none';
     }
+
+    function segActualizarPeso() {
+        const opt  = document.getElementById('segProductoSelect').selectedOptions[0];
+        const peso = opt ? parseFloat(opt.dataset.peso || 0) : 0;
+        document.getElementById('segPesoHint').textContent = peso ? `1 unidad = ${peso} g` : '';
+    }
+
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleAddProductoForm();
+            segActualizarPeso();
+        });
+    @endif
 </script>
 @endpush

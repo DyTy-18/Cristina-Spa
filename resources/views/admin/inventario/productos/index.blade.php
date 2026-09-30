@@ -74,8 +74,10 @@
                             <td><code style="font-size:0.8rem;">{{ $producto->codigo_barras }}</code></td>
                             <td>
                                 {{ $producto->nombre }}
-                                @if ($producto->es_reventa)
-                                    <span class="badge badge-success" style="font-size:0.65rem;">Reventa</span>
+                                @if ($producto->tipo === 'vitrina')
+                                    <span class="badge badge-success" style="font-size:0.65rem;">Vitrina</span>
+                                @elseif ($producto->tipo === 'seguimiento')
+                                    <span class="badge badge-info" style="font-size:0.65rem;">Seguimiento{{ $producto->peso_gramos ? ' · ' . rtrim(rtrim(number_format($producto->peso_gramos, 2, '.', ''), '0'), '.') . ' g' : '' }}</span>
                                 @endif
                             </td>
                             <td>{{ $producto->marca ?? '—' }}</td>
