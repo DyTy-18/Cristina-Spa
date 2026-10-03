@@ -28,6 +28,8 @@ use App\Http\Controllers\Admin\MigracionSucursalController;
 use App\Http\Controllers\Admin\IngresosController;
 use App\Http\Controllers\Admin\GastosController;
 use App\Http\Controllers\Admin\WppSyncLogController;
+use App\Http\Controllers\Admin\SolicitudCitaController;
+use App\Http\Controllers\AgendarCitaController;
 
 // Página pública
 Route::get('/', function () {
@@ -40,6 +42,11 @@ Route::get('/nosotros', function () {
 
 // Leads desde formulario público (sin auth)
 Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+
+// Agendamiento público de citas (sin auth)
+Route::get('/agendar', [AgendarCitaController::class, 'show'])->name('agendar');
+Route::post('/agendar', [AgendarCitaController::class, 'store'])->middleware('throttle:5,1')->name('agendar.store');
+Route::get('/agendar/gracias', [AgendarCitaController::class, 'gracias'])->name('agendar.gracias');
 
 // Formulario de recomendación (público, sin auth)
 Route::get('/r/{token}', [RecomendacionPublicController::class, 'show'])->name('recomendacion.form');
@@ -276,6 +283,13 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
     Route::middleware('role:admin|secretario')->group(function () {
         Route::get('/leads', [AdminLeadController::class, 'index'])->name('leads.index');
         Route::put('/leads/{lead}', [AdminLeadController::class, 'update'])->name('leads.update');
+    });
+
+    // Solicitudes de cita desde la web pública (+ polling de notificaciones)
+    Route::middleware('role:' . implode('|', \App\Models\SolicitudCita::ROLES_GESTION))->group(function () {
+        Route::get('/solicitudes-cita', [SolicitudCitaController::class, 'index'])->name('solicitudes-cita.index');
+        Route::get('/solicitudes-cita/notificaciones', [SolicitudCitaController::class, 'notificaciones'])->name('solicitudes-cita.notificaciones');
+        Route::patch('/solicitudes-cita/{solicitud}/estado', [SolicitudCitaController::class, 'updateEstado'])->name('solicitudes-cita.estado');
     });
 
     // Alertas de Stock

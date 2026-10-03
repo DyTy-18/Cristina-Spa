@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Panel Admin') - Cristina Spa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -107,6 +108,15 @@
                                 class="nav-item {{ request()->routeIs('admin.clientes.*') ? 'active' : '' }}">
                                 <span class="nav-icon">👥</span>
                                 <span>Clientes</span>
+                            </a>
+                        @endif
+
+                        @if ($puedeVerSolicitudesCita ?? false)
+                            <a href="{{ route('admin.solicitudes-cita.index') }}"
+                                class="nav-item {{ request()->routeIs('admin.solicitudes-cita.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🔔</span>
+                                <span>Solicitudes de cita</span>
+                                <span id="solCitaNavBadge" class="sol-nav-badge" @if(!($solicitudesPendientesCount ?? 0)) hidden @endif>{{ $solicitudesPendientesCount ?? 0 }}</span>
                             </a>
                         @endif
 
@@ -326,6 +336,25 @@
                         </span>
                     @endif
 
+                    @if ($puedeVerSolicitudesCita ?? false)
+                        <div class="sol-bell-wrap" id="solBellWrap">
+                            <button type="button" class="sol-bell" id="solBell" title="Solicitudes de cita">
+                                🔔
+                                <span id="solBellBadge" class="sol-bell-badge" @if(!($solicitudesPendientesCount ?? 0)) hidden @endif>{{ $solicitudesPendientesCount ?? 0 }}</span>
+                            </button>
+                            <div class="sol-bell-panel" id="solBellPanel">
+                                <div class="sol-bell-head">
+                                    <span>Solicitudes de cita</span>
+                                    <span id="solBellPendientes">{{ $solicitudesPendientesCount ?? 0 }} pendientes</span>
+                                </div>
+                                <div id="solBellList" class="sol-bell-list">
+                                    <p class="sol-bell-empty">Sin solicitudes nuevas en esta sesión.</p>
+                                </div>
+                                <a href="{{ route('admin.solicitudes-cita.index') }}" class="sol-bell-all">Ver todas →</a>
+                            </div>
+                        </div>
+                    @endif
+
                     <a href="{{ route('home') }}" class="btn-view-site" target="_blank">
                         Ver Sitio ↗
                     </a>
@@ -356,6 +385,9 @@
             document.querySelector('.sidebar').classList.toggle('active');
         });
     </script>
+    @if ($puedeVerSolicitudesCita ?? false)
+        @include('admin.partials.solicitudes_cita_polling')
+    @endif
     @stack('scripts')
 </body>
 

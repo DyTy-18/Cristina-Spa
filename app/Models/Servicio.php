@@ -20,6 +20,20 @@ class Servicio extends Model
             ->useLogName('servicios');
     }
 
+    /** Etiquetas legibles de cada categoría, en el orden en que se muestran */
+    public const CATEGORIAS = [
+        'peluqueria'   => 'Peluquería',
+        'peinados'     => 'Peinados',
+        'coloracion'   => 'Coloración',
+        'alisado'      => 'Alisado u Ondulación',
+        'depilacion'   => 'Depilado con Cera',
+        'maquillaje'   => 'Maquillaje, Cejas y Pestañas',
+        'pies_manos'   => 'Pies y Manos',
+        'extensiones'  => 'Extensiones de Uñas',
+        'spa'          => 'Spa',
+        'tratamientos' => 'Tratamientos Capilares',
+    ];
+
     protected $fillable = [
         'nombre',
         'descripcion',

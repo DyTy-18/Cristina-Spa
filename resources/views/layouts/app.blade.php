@@ -10,6 +10,16 @@
     })(window,document,'script','dataLayer','GTM-NLLGX42L');</script>
     <!-- End Google Tag Manager -->
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YN1YSZXW5Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-YN1YSZXW5Z');
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -95,20 +105,22 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
+    @php $inicio = request()->routeIs('home') ? '' : route('home'); @endphp
     <header class="header">
         <nav class="nav">
             <div class="logo">
-                <a href="#inicio">
+                <a href="{{ $inicio }}#inicio">
                     <img src="{{ asset('images/logos/logo-cristina_spa_black.png') }}" alt="Cristina Spa" class="logo-img">
                 </a>
             </div>
             <ul class="nav-menu">
-                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="{{ $inicio }}#inicio">Inicio</a></li>
                 <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
-                <li><a href="#servicios">Servicios</a></li>
-                <li><a href="#sucursales">Sucursales</a></li>
-                <li><a href="#galeria">Galería</a></li>
-                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="{{ $inicio }}#servicios">Servicios</a></li>
+                <li><a href="{{ $inicio }}#sucursales">Sucursales</a></li>
+                <li><a href="{{ $inicio }}#galeria">Galería</a></li>
+                <li><a href="{{ $inicio }}#contacto">Contacto</a></li>
+                <li><a href="{{ route('agendar') }}" class="{{ request()->routeIs('agendar*') ? 'active' : '' }}">Agendar</a></li>
                 @auth
                     <li><a href="{{ route('admin.dashboard') }}" class="nav-login">Panel</a></li>
                     <li>
@@ -162,19 +174,19 @@
             <div class="footer-section">
                 <h4>Servicios</h4>
                 <ul>
-                    <li><a href="#servicios">Peluquería</a></li>
-                    <li><a href="#servicios">Spa & Bienestar</a></li>
-                    <li><a href="#servicios">Estética</a></li>
-                    <li><a href="#servicios">Facial</a></li>
+                    <li><a href="{{ $inicio }}#servicios">Peluquería</a></li>
+                    <li><a href="{{ $inicio }}#servicios">Spa & Bienestar</a></li>
+                    <li><a href="{{ $inicio }}#servicios">Estética</a></li>
+                    <li><a href="{{ $inicio }}#servicios">Facial</a></li>
                 </ul>
             </div>
             <div class="footer-section">
                 <h4>Especiales</h4>
                 <ul>
-                    <li><a href="#contacto">Paquete Novias</a></li>
-                    <li><a href="#contacto">Quinceañeras</a></li>
-                    <li><a href="#contacto">Eventos</a></li>
-                    <li><a href="#contacto">Empresas</a></li>
+                    <li><a href="{{ $inicio }}#contacto">Paquete Novias</a></li>
+                    <li><a href="{{ $inicio }}#contacto">Quinceañeras</a></li>
+                    <li><a href="{{ $inicio }}#contacto">Eventos</a></li>
+                    <li><a href="{{ $inicio }}#contacto">Empresas</a></li>
                 </ul>
             </div>
             <div class="footer-section">

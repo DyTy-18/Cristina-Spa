@@ -19,5 +19,14 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('alertasStockCount', \App\Models\AlertaStock::where('leida', false)->count());
             }
         });
+
+        // Notificaciones de solicitudes de cita (solo el layout, que incluye la campana y el polling)
+        View::composer('admin.layouts.app', function ($view) {
+            if (auth()->check()) {
+                $puedeVerSolicitudes = auth()->user()->hasAnyRole(\App\Models\SolicitudCita::ROLES_GESTION);
+                $view->with('puedeVerSolicitudesCita', $puedeVerSolicitudes);
+                $view->with('solicitudesPendientesCount', $puedeVerSolicitudes ? \App\Models\SolicitudCita::pendientes()->count() : 0);
+            }
+        });
     }
 }
