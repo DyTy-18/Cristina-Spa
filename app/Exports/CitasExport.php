@@ -44,7 +44,7 @@ class CitasExport implements FromCollection, WithHeadings, WithStyles, WithTitle
             $cita->fecha->format('d/m/Y'),
             $cita->hora ? \Carbon\Carbon::parse($cita->hora)->format('H:i') : '—',
             $cita->cliente ? $cita->cliente->nombre . ' ' . $cita->cliente->apellido : '—',
-            $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->implode(' + ') ?: '—',
+            $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique()->implode(' + ') ?: '—',
             number_format((float) $cita->precio_final, 2, '.', ''),
             match ($cita->tipo_pago) {
                 'efectivo' => 'Efectivo',

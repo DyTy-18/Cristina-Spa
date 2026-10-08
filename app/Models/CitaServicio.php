@@ -29,6 +29,19 @@ class CitaServicio extends Model
         return round((float) $this->precio_unitario * (1 - $desc / 100), 2);
     }
 
+    /**
+     * Mapa "cita_id-servicio_id" → cantidad de profesionales que comparten ese servicio.
+     * Cada co-participante tiene su propia fila con el precio completo; la comisión se divide.
+     */
+    public static function participantesPorLinea($citaIds)
+    {
+        return static::whereIn('cita_id', $citaIds)
+            ->whereNotNull('empleado_id')
+            ->get(['cita_id', 'servicio_id'])
+            ->groupBy(fn($cs) => $cs->cita_id . '-' . $cs->servicio_id)
+            ->map(fn($g) => $g->count());
+    }
+
     public function cita()
     {
         return $this->belongsTo(Cita::class);

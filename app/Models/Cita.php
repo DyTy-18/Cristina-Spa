@@ -67,6 +67,23 @@ class Cita extends Model
         return $this->hasMany(CitaServicio::class);
     }
 
+    /**
+     * Un registro por servicio: cuando varios profesionales comparten un servicio
+     * existen varias filas en cita_servicios (una por empleado, mismo precio).
+     * Cada item expone ->empleados con todos los co-participantes.
+     */
+    public function getServiciosAgrupadosAttribute()
+    {
+        return $this->citaServicios
+            ->groupBy('servicio_id')
+            ->map(function ($grupo) {
+                $cs = $grupo->first();
+                $cs->setRelation('empleados', $grupo->pluck('empleado')->filter()->unique('id')->values());
+                return $cs;
+            })
+            ->values();
+    }
+
     public function citaProductos()
     {
         return $this->hasMany(CitaProducto::class);

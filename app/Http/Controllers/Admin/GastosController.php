@@ -260,13 +260,19 @@ class GastosController extends Controller
                   ->when($sid, fn($q2) => $q2->where('sucursal_id', $sid));
             })
             ->orderBy('created_at')
-            ->get()
-            ->map(function ($cs) use ($comisionesEmp, $comisionesGen) {
+            ->get();
+
+        $participantesPorLinea = CitaServicio::participantesPorLinea($filas->pluck('cita_id')->unique());
+
+        $filas = $filas
+            ->map(function ($cs) use ($comisionesEmp, $comisionesGen, $participantesPorLinea) {
                 $precioNeto = $cs->precio_neto ?? (float) $cs->precio_unitario;
                 $pct = $comisionesEmp[$cs->servicio_id]
                     ?? $comisionesGen[$cs->servicio_id]
                     ?? 0;
-                $comisionMonto = round($precioNeto * $pct / 100, 2);
+                // Dividir la comisión entre todos los co-participantes del servicio
+                $participantes = $participantesPorLinea[$cs->cita_id . '-' . $cs->servicio_id] ?? 1;
+                $comisionMonto = round(($precioNeto * $pct / 100) / $participantes, 2);
 
                 return [
                     'cita_id'        => $cs->cita_id,

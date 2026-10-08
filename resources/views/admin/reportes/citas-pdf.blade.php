@@ -55,7 +55,7 @@
             <td>{{ $cita->fecha->format('d/m/Y') }}</td>
             <td>{{ $cita->hora ? \Carbon\Carbon::parse($cita->hora)->format('H:i') : '—' }}</td>
             <td>{{ $cita->cliente ? $cita->cliente->nombre . ' ' . $cita->cliente->apellido : '—' }}</td>
-            <td>{{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->implode(' · ') ?: '—' }}</td>
+            <td>{{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique()->implode(' · ') ?: '—' }}</td>
             <td style="text-align:right;">{{ number_format($cita->precio_final, 2) }}</td>
             <td>{{ ucfirst($cita->tipo_pago ?? '—') }}</td>
             <td>{{ $cita->sucursal?->nombre ?? '—' }}</td>

@@ -228,7 +228,7 @@
                         </div>
 
                         <div id="serviciosContainer">
-                            @foreach($cita->citaServicios as $i => $cs)
+                            @foreach($cita->servicios_agrupados as $i => $cs)
                                 <div class="linea-servicio" data-index="{{ $i }}">
                                     <div class="form-group" style="margin:0;">
                                         <select name="servicios[{{ $i }}][servicio_id]" class="form-control select-servicio" required
@@ -501,7 +501,7 @@
     const EMPLEADOS = @json($empleadosJson);
     const PRODUCTOS = @json($productosJson);
 
-    let servicioIdx = {{ $cita->citaServicios->count() }};
+    let servicioIdx = {{ $cita->servicios_agrupados->count() }};
     let profIdx     = {{ $cita->citaServicios->whereNotNull('empleado_id')->count() }};
     let productoIdx = {{ $cita->citaProductos->count() }};
 

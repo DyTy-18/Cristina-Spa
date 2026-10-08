@@ -57,7 +57,7 @@
         </div>
         <div class="card-body">
             <div style="font-size:0.9rem;color:var(--text-dark);">
-                {{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->implode(' · ') ?: 'Sin servicios' }}
+                {{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique()->implode(' · ') ?: 'Sin servicios' }}
             </div>
         </div>
     </div>

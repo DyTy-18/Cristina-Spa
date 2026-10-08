@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AsignaProfesionales;
 use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
 use App\Http\Controllers\Admin\Concerns\VendeProductosReventa;
 use App\Http\Controllers\Controller;
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
-    use CreaContratoPaquete, VendeProductosReventa;
+    use AsignaProfesionales, CreaContratoPaquete, VendeProductosReventa;
     public function index(Request $request)
     {
         $ordenar = $request->get('ordenar', 'recientes');
@@ -159,6 +160,7 @@ class ClienteController extends Controller
         $ultimoServicio = $ultimaCitaCompletada?->citaServicios
             ->map(fn($cs) => $cs->servicio?->nombre)
             ->filter()
+            ->unique()
             ->implode(' + ');
 
         $servicioFavorito = null;
@@ -176,7 +178,7 @@ class ClienteController extends Controller
         $frecuencias = \DB::table('cita_servicios')
             ->join('citas', 'cita_servicios.cita_id', '=', 'citas.id')
             ->where('citas.estado', 'completada')
-            ->selectRaw('cita_servicios.servicio_id, COUNT(*) as total')
+            ->selectRaw('cita_servicios.servicio_id, COUNT(DISTINCT cita_servicios.cita_id) as total')
             ->groupBy('cita_servicios.servicio_id')
             ->pluck('total', 'servicio_id');
 
@@ -316,12 +318,8 @@ class ClienteController extends Controller
 
         $serviciosBase = Servicio::whereIn('id', collect($data['servicios'] ?? [])->pluck('servicio_id'))->pluck('precio', 'id');
 
-        $empleadoPorServicio = [];
-        foreach ($data['profesionales'] ?? [] as $prof) {
-            if (!empty($prof['empleado_id']) && !empty($prof['servicio_id'])) {
-                $empleadoPorServicio[$prof['servicio_id']] = $prof['empleado_id'];
-            }
-        }
+        // Mapa servicio_id → [empleado_id, ...]: un servicio puede tener varios profesionales
+        $empleadosPorServicio = $this->empleadosPorServicio($data['profesionales'] ?? []);
 
         $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
 
@@ -345,7 +343,7 @@ class ClienteController extends Controller
             ]);
         }
 
-        $cita = DB::transaction(function () use ($cliente, $sucursalId, $data, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+        $cita = DB::transaction(function () use ($cliente, $sucursalId, $data, $precioTotal, $serviciosBase, $empleadosPorServicio, $productosData, $productosBase) {
             $cita = Cita::create([
                 'cliente_id'   => $cliente->id,
                 'sucursal_id'  => $sucursalId,
@@ -362,13 +360,16 @@ class ClienteController extends Controller
 
             foreach ($data['servicios'] ?? [] as $s) {
                 $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-                CitaServicio::create([
-                    'cita_id'              => $cita->id,
-                    'servicio_id'          => $s['servicio_id'],
-                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                    'descuento_porcentaje' => $desc,
-                ]);
+                // Una fila por profesional (mismo precio); la comisión se divide entre co-participantes en reportes
+                foreach ($empleadosPorServicio[$s['servicio_id']] ?? [null] as $empleadoId) {
+                    CitaServicio::create([
+                        'cita_id'              => $cita->id,
+                        'servicio_id'          => $s['servicio_id'],
+                        'empleado_id'          => $empleadoId,
+                        'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                        'descuento_porcentaje' => $desc,
+                    ]);
+                }
             }
 
             foreach ($productosData as $p) {
@@ -394,7 +395,10 @@ class ClienteController extends Controller
             foreach ($cita->citaServicios as $cs) {
                 $descFinal = max((float) ($cs->descuento_porcentaje ?? 0), (float) $cuponReco->valor);
                 $cs->update(['descuento_porcentaje' => $descFinal]);
-                $nuevoPrecio += round((float) $cs->precio_unitario * (1 - $descFinal / 100), 2);
+            }
+            // Co-participantes generan varias filas del mismo servicio: el precio se cuenta una vez
+            foreach ($cita->servicios_agrupados as $cs) {
+                $nuevoPrecio += (float) $cs->precio_neto;
             }
             $cita->update(['precio_final' => $nuevoPrecio ?: null]);
 

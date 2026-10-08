@@ -219,20 +219,22 @@
     <div class="informe-section">
         <div class="informe-section-title">Servicios Realizados</div>
 
-        @forelse($cita->citaServicios as $cs)
+        @forelse($cita->servicios_agrupados as $cs)
             <div class="informe-row">
                 <div class="informe-row-icon">✂</div>
                 <div class="informe-row-main">
                     <div class="informe-row-nombre">
                         {{ $cs->servicio?->nombre ?? 'Servicio eliminado' }}
                     </div>
-                    @if($cs->empleado)
-                        <div class="informe-row-sub">
-                            Atendido por <strong style="color:var(--text-dark);font-weight:500;">{{ $cs->empleado->nombre_completo }}</strong>
-                            @if($cs->empleado->cargo)
-                                · {{ ucfirst($cs->empleado->cargo) }}
-                            @endif
-                        </div>
+                    @if($cs->empleados->isNotEmpty())
+                        @foreach($cs->empleados as $emp)
+                            <div class="informe-row-sub">
+                                Atendido por <strong style="color:var(--text-dark);font-weight:500;">{{ $emp->nombre_completo }}</strong>
+                                @if($emp->cargo)
+                                    · {{ ucfirst($emp->cargo) }}
+                                @endif
+                            </div>
+                        @endforeach
                     @else
                         <div class="informe-row-sub" style="font-style:italic;">Sin empleado asignado</div>
                     @endif
@@ -279,7 +281,7 @@
         <div class="informe-section-title">Materiales Utilizados</div>
 
         @if($hayMateriales)
-            @foreach($cita->citaServicios as $cs)
+            @foreach($cita->servicios_agrupados as $cs)
                 @if($cs->servicio && $cs->servicio->materiales->isNotEmpty())
                     @foreach($cs->servicio->materiales as $material)
                         @php

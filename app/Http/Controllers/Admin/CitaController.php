@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\AsignaProfesionales;
 use App\Http\Controllers\Admin\Concerns\CreaContratoPaquete;
 use App\Http\Controllers\Admin\Concerns\VendeProductosReventa;
 use App\Http\Controllers\Controller;
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 class CitaController extends Controller
 {
-    use CreaContratoPaquete, VendeProductosReventa;
+    use AsignaProfesionales, CreaContratoPaquete, VendeProductosReventa;
     /** Devuelve un mapa [servicio_id => porcentaje] con los descuentos vigentes. */
     private function descuentosVigentesMapa(): array
     {
@@ -189,13 +190,8 @@ class CitaController extends Controller
 
         $serviciosBase = Servicio::whereIn('id', collect($data['servicios'] ?? [])->pluck('servicio_id'))->pluck('precio', 'id');
 
-        // Mapa servicio_id → empleado_id desde la sección de profesionales
-        $empleadoPorServicio = [];
-        foreach ($data['profesionales'] ?? [] as $prof) {
-            if (!empty($prof['empleado_id']) && !empty($prof['servicio_id'])) {
-                $empleadoPorServicio[$prof['servicio_id']] = $prof['empleado_id'];
-            }
-        }
+        // Mapa servicio_id → [empleado_id, ...]: un servicio puede tener varios profesionales
+        $empleadosPorServicio = $this->empleadosPorServicio($data['profesionales'] ?? []);
 
         $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
 
@@ -222,7 +218,7 @@ class CitaController extends Controller
             ?: session('sucursal_activa_id')
             ?? auth()->user()->sucursal_id;
 
-        $cita = DB::transaction(function () use ($data, $clienteId, $sucursalId, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+        $cita = DB::transaction(function () use ($data, $clienteId, $sucursalId, $precioTotal, $serviciosBase, $empleadosPorServicio, $productosData, $productosBase) {
             $cita = Cita::create([
                 'cliente_id'   => $clienteId,
                 'sucursal_id'  => $sucursalId,
@@ -239,13 +235,16 @@ class CitaController extends Controller
 
             foreach ($data['servicios'] ?? [] as $s) {
                 $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-                CitaServicio::create([
-                    'cita_id'              => $cita->id,
-                    'servicio_id'          => $s['servicio_id'],
-                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                    'descuento_porcentaje' => $desc,
-                ]);
+                // Una fila por profesional (mismo precio); la comisión se divide entre co-participantes en reportes
+                foreach ($empleadosPorServicio[$s['servicio_id']] ?? [null] as $empleadoId) {
+                    CitaServicio::create([
+                        'cita_id'              => $cita->id,
+                        'servicio_id'          => $s['servicio_id'],
+                        'empleado_id'          => $empleadoId,
+                        'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                        'descuento_porcentaje' => $desc,
+                    ]);
+                }
             }
 
             foreach ($productosData as $p) {
@@ -351,12 +350,8 @@ class CitaController extends Controller
 
         $serviciosBase = Servicio::whereIn('id', collect($data['servicios'] ?? [])->pluck('servicio_id'))->pluck('precio', 'id');
 
-        $empleadoPorServicio = [];
-        foreach ($data['profesionales'] ?? [] as $prof) {
-            if (!empty($prof['empleado_id']) && !empty($prof['servicio_id'])) {
-                $empleadoPorServicio[$prof['servicio_id']] = $prof['empleado_id'];
-            }
-        }
+        // Mapa servicio_id → [empleado_id, ...]: un servicio puede tener varios profesionales
+        $empleadosPorServicio = $this->empleadosPorServicio($data['profesionales'] ?? []);
 
         $productosData = collect($data['productos'] ?? [])->filter(fn($p) => !empty($p['producto_id']))->values();
         $productosBase = Producto::whereIn('id', $productosData->pluck('producto_id'))->pluck('precio_venta', 'id');
@@ -376,7 +371,7 @@ class CitaController extends Controller
 
         $estadoAnterior = $cita->estado;
 
-        DB::transaction(function () use ($cita, $data, $precioTotal, $serviciosBase, $empleadoPorServicio, $productosData, $productosBase) {
+        DB::transaction(function () use ($cita, $data, $precioTotal, $serviciosBase, $empleadosPorServicio, $productosData, $productosBase) {
             $cita->update([
                 'campana_id'   => $data['campana_id'] ?? null,
                 'fecha'        => $data['fecha'],
@@ -391,13 +386,16 @@ class CitaController extends Controller
 
             foreach ($data['servicios'] ?? [] as $s) {
                 $desc = isset($s['descuento']) && $s['descuento'] > 0 ? $s['descuento'] : null;
-                CitaServicio::create([
-                    'cita_id'              => $cita->id,
-                    'servicio_id'          => $s['servicio_id'],
-                    'empleado_id'          => $empleadoPorServicio[$s['servicio_id']] ?? null,
-                    'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
-                    'descuento_porcentaje' => $desc,
-                ]);
+                // Una fila por profesional (mismo precio); la comisión se divide entre co-participantes en reportes
+                foreach ($empleadosPorServicio[$s['servicio_id']] ?? [null] as $empleadoId) {
+                    CitaServicio::create([
+                        'cita_id'              => $cita->id,
+                        'servicio_id'          => $s['servicio_id'],
+                        'empleado_id'          => $empleadoId,
+                        'precio_unitario'      => $s['precio'] ?? ($serviciosBase[$s['servicio_id']] ?? null),
+                        'descuento_porcentaje' => $desc,
+                    ]);
+                }
             }
 
             foreach ($productosData as $p) {

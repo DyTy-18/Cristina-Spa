@@ -30,7 +30,7 @@
                 </a>
             </td>
             <td style="color:var(--text-light);font-size:0.78rem;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                {{ $cita->citaServicios->pluck('servicio.nombre')->filter()->implode(', ') ?: '—' }}
+                {{ $cita->citaServicios->pluck('servicio.nombre')->filter()->unique()->implode(', ') ?: '—' }}
             </td>
             <td>
                 @if($cita->tipo_pago === 'efectivo')

@@ -230,11 +230,12 @@
                 <div class="detail-card-header">Servicios</div>
                 <div class="detail-card-body" style="padding-top:0.5rem;padding-bottom:0.5rem;">
                     @php
-                        $totalOriginal  = $cita->citaServicios->sum(fn($cs) => (float)($cs->precio_unitario ?? 0));
-                        $totalAhorro    = $cita->citaServicios->sum(fn($cs) => (float)($cs->precio_unitario ?? 0) - (float)($cs->precio_neto ?? $cs->precio_unitario ?? 0));
-                        $hayDescuentos  = $cita->citaServicios->contains(fn($cs) => $cs->descuento_porcentaje > 0);
+                        $serviciosAgrupados = $cita->servicios_agrupados;
+                        $totalOriginal  = $serviciosAgrupados->sum(fn($cs) => (float)($cs->precio_unitario ?? 0));
+                        $totalAhorro    = $serviciosAgrupados->sum(fn($cs) => (float)($cs->precio_unitario ?? 0) - (float)($cs->precio_neto ?? $cs->precio_unitario ?? 0));
+                        $hayDescuentos  = $serviciosAgrupados->contains(fn($cs) => $cs->descuento_porcentaje > 0);
                     @endphp
-                    @forelse($cita->citaServicios as $cs)
+                    @forelse($serviciosAgrupados as $cs)
                         <div class="servicio-row">
                             <div>
                                 <div class="servicio-nombre">
@@ -245,9 +246,9 @@
                                         </span>
                                     @endif
                                 </div>
-                                @if($cs->empleado)
+                                @if($cs->empleados->isNotEmpty())
                                     <div class="servicio-info">
-                                        Realizado por {{ $cs->empleado->nombre_completo }}
+                                        Realizado por {{ $cs->empleados->pluck('nombre_completo')->implode(', ') }}
                                     </div>
                                 @endif
                             </div>

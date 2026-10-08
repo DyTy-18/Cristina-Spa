@@ -41,9 +41,8 @@ class ReporteController extends Controller
 
         // Mapa cita_id+servicio_id → cuántos empleados comparten ese servicio
         // (necesario para dividir la comisión cuando hay co-participantes)
-        $participantesPorLinea = $lineas
-            ->groupBy(fn($cs) => $cs->cita_id . '-' . $cs->servicio_id)
-            ->map(fn($g) => $g->count());
+        // Se cuenta sin el filtro de empleado para no perder a los otros co-participantes
+        $participantesPorLinea = CitaServicio::participantesPorLinea($lineas->pluck('cita_id')->unique());
 
         $porEmpleado = $lineas
             ->groupBy('empleado_id')

@@ -896,13 +896,13 @@
                 @foreach($citasDelMes as $cita)
                     @php
                         $fechaCita    = \Carbon\Carbon::parse($cita->fecha);
-                        $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
+                        $nombresServs = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique();
                         $nombresProds = $cita->citaProductos->map(fn($cp) => $cp->producto?->nombre)->filter();
                         $nombresEmps  = $cita->citaServicios
                                             ->filter(fn($cs) => $cs->empleado)
                                             ->map(fn($cs) => $cs->empleado->nombre)
                                             ->unique();
-                        $descuentos   = $cita->citaServicios->filter(fn($cs) => $cs->descuento_porcentaje > 0);
+                        $descuentos   = $cita->servicios_agrupados->filter(fn($cs) => $cs->descuento_porcentaje > 0);
                         $updateUrl    = route('admin.clientes.cita.estado', [$cliente, $cita]);
                     @endphp
                     <div class="agenda-row" id="row-cita-{{ $cita->id }}">

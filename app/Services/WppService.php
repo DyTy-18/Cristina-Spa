@@ -78,6 +78,7 @@ class WppService
         $servicios = $cita->citaServicios
             ->map(fn($cs) => $cs->servicio?->nombre)
             ->filter()
+            ->unique()
             ->values()
             ->toArray();
 

@@ -536,7 +536,7 @@
                             </td>
                             <td>
                                 @php
-                                    $servicioNombres = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter();
+                                    $servicioNombres = $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique();
                                     $empleadoNombres = $cita->citaServicios->map(fn($cs) => $cs->empleado?->nombre)->filter()->unique();
                                     $productoNombres = $cita->citaProductos->map(fn($cp) => $cp->producto?->nombre)->filter();
                                 @endphp

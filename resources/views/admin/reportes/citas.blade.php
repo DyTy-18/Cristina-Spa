@@ -117,7 +117,7 @@
                         @endif
                     </td>
                     <td style="max-width:220px;font-size:.8rem;color:var(--text-light);">
-                        {{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->implode(' · ') ?: '—' }}
+                        {{ $cita->citaServicios->map(fn($cs) => $cs->servicio?->nombre)->filter()->unique()->implode(' · ') ?: '—' }}
                     </td>
                     <td>
                         <span class="rpt-monto">Bs. {{ number_format($cita->precio_final, 2) }}</span>

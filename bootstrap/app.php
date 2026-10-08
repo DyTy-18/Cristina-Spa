@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'sucursal'         => \App\Http\Middleware\SucursalContext::class,
             'wpp.auth'         => \App\Http\Middleware\VerifyWppToken::class,
         ]);
+
+        // Respaldo de todo lo enviado (POST/PUT/PATCH/DELETE) en registro_envios
+        $middleware->appendToGroup('web', \App\Http\Middleware\RegistrarEnvio::class);
+        $middleware->appendToGroup('api', \App\Http\Middleware\RegistrarEnvio::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
