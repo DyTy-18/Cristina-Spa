@@ -1,16 +1,15 @@
-{{-- Selector de tipo de producto (create/edit). Espera $tipoActual y $pesoActual. --}}
+{{-- Catálogo y tipo de producto (create/edit). Espera $esReventaActual, $tipoActual y $pesoActual. --}}
 @php
     $opcionesTipo = [
         'vitrina'     => ['Vitrina', 'Se vende al cliente. Aparece en el módulo Productos y tiene su propio stock de venta.'],
         'seguimiento' => ['Seguimiento', 'Se aplica al cliente en el servicio. Se registra en gramos en el seguimiento y descuenta del inventario.'],
-        'generico'    => ['Genérico', 'Solo se ve en inventario. No aparece en vitrina ni en seguimiento.'],
+        'generico'    => ['Genérico', 'Producto de reventa que solo se controla en inventario. No aparece en vitrina ni en seguimiento.'],
     ];
-    $esReventaMarcado = (bool) old('es_reventa', $tipoActual !== 'generico');
+    $esReventaMarcado = (bool) old('es_reventa', $esReventaActual ?? false);
 @endphp
 
-{{-- Sin la casilla marcada el producto queda como genérico (solo inventario).
-     Si se marca, los radios de abajo (mismo name) reemplazan este valor. --}}
-<input type="hidden" name="tipo" value="generico">
+{{-- Sin la casilla marcada el producto es técnico (sin tipo). --}}
+<input type="hidden" name="es_reventa" value="0">
 
 <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
     <input type="checkbox" id="es_reventa" name="es_reventa" value="1"
@@ -65,7 +64,7 @@
     function toggleTipoProducto() {
         const reventa = document.getElementById('es_reventa').checked;
         document.getElementById('tipoProductoGroup').style.display = reventa ? '' : 'none';
-        // Radios deshabilitados no se envían: queda el hidden "generico".
+        // Radios deshabilitados no se envían: un producto técnico no lleva tipo.
         document.querySelectorAll('input[type="radio"][name="tipo"]').forEach(r => r.disabled = !reventa);
 
         const sel = document.querySelector('input[type="radio"][name="tipo"]:checked');

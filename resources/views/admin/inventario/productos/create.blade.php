@@ -21,6 +21,7 @@
 
             <form action="{{ route('admin.inventario.productos.store') }}" method="POST">
                 @csrf
+                @include('admin.partials.sucursal_selector')
 
                 <div class="form-row">
                     <div class="form-group">
@@ -90,28 +91,22 @@
                         <label class="form-label" for="unidades_iniciales">Stock inicial (opcional)</label>
                         <input type="number" id="unidades_iniciales" name="unidades_iniciales"
                                class="form-control" value="{{ old('unidades_iniciales', 0) }}"
-                               min="0" {{ ($modoGlobal ?? true) ? 'disabled' : '' }}>
-                        @if ($modoGlobal ?? true)
-                            <small style="color:#888; font-size:0.75rem;">
-                                Cambia a una sucursal específica desde el encabezado para poder registrar stock inicial aquí.
-                            </small>
-                        @else
-                            <small style="color:#888; font-size:0.75rem;">
-                                Se registrará como entrada técnica en {{ $sucursalActiva->nombre ?? 'la sucursal activa' }}.
-                            </small>
-                        @endif
+                               min="0">
+                        <small style="color:#888; font-size:0.75rem;">
+                            Se registra en el stock técnico, o en el de reventa si es un producto de reventa.
+                        </small>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="fecha_inicial">Fecha del stock inicial</label>
                         <input type="date" id="fecha_inicial" name="fecha_inicial"
-                               class="form-control" value="{{ old('fecha_inicial', date('Y-m-d')) }}"
-                               {{ ($modoGlobal ?? true) ? 'disabled' : '' }}>
+                               class="form-control" value="{{ old('fecha_inicial', date('Y-m-d')) }}">
                     </div>
                 </div>
 
                 @include('admin.inventario.productos._tipo', [
-                    'tipoActual' => old('tipo', 'generico'),
+                    'esReventaActual' => false,
+                    'tipoActual' => old('tipo', 'vitrina'),
                     'pesoActual' => old('peso_gramos'),
                 ])
 

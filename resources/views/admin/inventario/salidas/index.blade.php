@@ -49,6 +49,8 @@
                 @endforeach
             </select>
 
+            @include('admin.inventario._filtro_tipo')
+
             <div class="filter-group">
                 <label>Desde</label>
                 <input type="date" name="desde" class="filter-date" value="{{ $desde ?? '' }}">
@@ -63,7 +65,7 @@
                    style="min-width:120px; max-width:160px;">
 
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-            @if ($q || $marca || $linea || $desde || $hasta || $destino)
+            @if ($q || $marca || $linea || $tipoProducto || $desde || $hasta || $destino)
                 <a href="{{ route('admin.inventario.salidas', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
@@ -108,7 +110,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📤</div>
                 <p class="empty-state-text">
-                    @if ($q || $marca || $linea || $desde || $hasta || $destino)
+                    @if ($q || $marca || $linea || $tipoProducto || $desde || $hasta || $destino)
                         No se encontraron salidas con los filtros aplicados
                     @else
                         No hay salidas registradas

@@ -40,16 +40,16 @@
                     @include('admin.partials.sucursal_selector')
 
                     <div class="form-group">
-                        <label class="form-label" for="codigo_barras">Producto (reventa) *</label>
-                        <select id="codigo_barras" name="codigo_barras" class="form-control" required>
+                        <label class="form-label" for="producto_id">Producto (reventa) *</label>
+                        <select id="producto_id" name="producto_id" class="form-control" required>
                             <option value="">— Seleccionar producto —</option>
                             @foreach ($productos as $producto)
-                                <option value="{{ $producto->codigo_barras }}"
+                                <option value="{{ $producto->id }}"
                                         data-stock="{{ $producto->stock_actual }}"
-                                    {{ old('codigo_barras') == $producto->codigo_barras ? 'selected' : '' }}>
+                                    {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
                                     {{ $producto->nombre }}
                                     @if ($producto->marca) — {{ $producto->marca }} @endif
-                                    ({{ $producto->codigo_barras }})
+                                    ({{ $producto->codigo_barras }})@if ($modoGlobal ?? false) · {{ $producto->sucursal->nombre ?? 'Sin sucursal' }}@endif
                                 </option>
                             @endforeach
                         </select>
@@ -87,7 +87,7 @@
 @push('scripts')
 <script>
 function stockSeleccionado() {
-    const select = document.getElementById('codigo_barras');
+    const select = document.getElementById('producto_id');
     const opt    = select.options[select.selectedIndex];
     return (opt && opt.value) ? (parseInt(opt.dataset.stock, 10) || 0) : null;
 }
@@ -115,7 +115,7 @@ function validarUnidades() {
     warning.style.display = (stock !== null && unidades > stock) ? 'block' : 'none';
 }
 
-document.getElementById('codigo_barras').addEventListener('change', mostrarStock);
+document.getElementById('producto_id').addEventListener('change', mostrarStock);
 document.getElementById('unidades').addEventListener('input', validarUnidades);
 
 mostrarStock();

@@ -168,7 +168,7 @@
                             <option value="">— seleccionar producto —</option>
                             @foreach ($productos as $producto)
                                 <option value="{{ $producto->id }}" data-nombre="{{ $producto->nombre }}" data-marca="{{ $producto->marca }}">
-                                    {{ $producto->nombre }} ({{ $producto->marca }})
+                                    {{ $producto->nombre }} ({{ $producto->marca }})@if ($modoGlobal ?? false) · {{ $producto->sucursal->nombre ?? 'Sin sucursal' }}@endif
                                 </option>
                             @endforeach
                         </select>

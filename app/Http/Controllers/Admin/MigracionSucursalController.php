@@ -7,9 +7,12 @@ use App\Models\Cita;
 use App\Models\Cliente;
 use App\Models\Empleado;
 use App\Models\Entrada;
+use App\Models\Producto;
 use App\Models\Salida;
 use App\Models\Sucursal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class MigracionSucursalController extends Controller
@@ -82,23 +85,45 @@ class MigracionSucursalController extends Controller
         }
 
         if (in_array('inventario', $migrar)) {
-            $ent = Entrada::when($sinAsignar, fn($q) => $q->whereNull('sucursal_id'), fn($q) => $q->where('sucursal_id', $origen->id))
-                ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
-                ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
-                ->update(['sucursal_id' => $destino->id]);
-
-            $sal = Salida::when($sinAsignar, fn($q) => $q->whereNull('sucursal_id'), fn($q) => $q->where('sucursal_id', $origen->id))
-                ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
-                ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta))
-                ->update(['sucursal_id' => $destino->id]);
-
-            $resultados['inventario'] = ['entradas' => $ent, 'salidas' => $sal];
+            $resultados['inventario'] = DB::transaction(
+                fn () => $this->migrarInventario($sinAsignar, $origen, $destino, $desde, $hasta)
+            );
         }
 
         return redirect()->route('admin.sucursales.migracion')
             ->with('migracion_resultados', $resultados)
             ->with('migracion_origen', $sinAsignar ? 'Sin sucursal asignada' : $origen->nombre)
             ->with('migracion_destino', $destino->nombre);
+    }
+
+    /**
+     * Cada sucursal tiene su propio catálogo: los movimientos se pasan al producto
+     * con el mismo código de barras en la sucursal destino (se crea si no existe).
+     */
+    private function migrarInventario(bool $sinAsignar, ?Sucursal $origen, Sucursal $destino, ?string $desde, ?string $hasta): array
+    {
+        $resultado = ['entradas' => 0, 'salidas' => 0];
+
+        $movimientos = fn (string $modelo) => $modelo::when($sinAsignar, fn($q) => $q->whereNull('sucursal_id'), fn($q) => $q->where('sucursal_id', $origen->id))
+            ->when($desde, fn($q) => $q->where('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->where('fecha', '<=', $hasta));
+
+        $productoIds = $movimientos(Entrada::class)->pluck('producto_id')
+            ->merge($movimientos(Salida::class)->pluck('producto_id'))
+            ->filter()->unique();
+
+        foreach (Producto::whereIn('id', $productoIds)->get() as $producto) {
+            $enDestino = Producto::firstOrCreate(
+                ['sucursal_id' => $destino->id, 'codigo_barras' => $producto->codigo_barras],
+                Arr::except($producto->getAttributes(), ['id', 'sucursal_id', 'codigo_barras', 'created_at', 'updated_at'])
+            );
+
+            $cambios = ['producto_id' => $enDestino->id, 'sucursal_id' => $destino->id];
+            $resultado['entradas'] += $movimientos(Entrada::class)->where('producto_id', $producto->id)->update($cambios);
+            $resultado['salidas']  += $movimientos(Salida::class)->where('producto_id', $producto->id)->update($cambios);
+        }
+
+        return $resultado;
     }
 
     private function calcularPreview(bool $sinAsignar, ?Sucursal $origen, Sucursal $destino, array $migrar, ?string $desde, ?string $hasta): array

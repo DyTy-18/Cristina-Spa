@@ -85,7 +85,8 @@
                 </div>
 
                 @include('admin.inventario.productos._tipo', [
-                    'tipoActual' => old('tipo', $producto->tipo ?? 'generico'),
+                    'esReventaActual' => $producto->es_reventa,
+                    'tipoActual' => old('tipo', $producto->tipo ?? 'vitrina'),
                     'pesoActual' => old('peso_gramos', $producto->peso_gramos),
                 ])
 

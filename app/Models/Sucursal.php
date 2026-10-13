@@ -42,6 +42,11 @@ class Sucursal extends Model
         return $this->belongsToMany(Empleado::class, 'empleado_sucursal');
     }
 
+    public function productos()
+    {
+        return $this->hasMany(Producto::class);
+    }
+
     public function entradas()
     {
         return $this->hasMany(Entrada::class);

@@ -8,7 +8,7 @@ use App\Models\SeguimientoProducto;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Descuenta del inventario técnico los productos de seguimiento según los gramos usados.
+ * Descuenta del stock de reventa los productos de seguimiento según los gramos usados.
  *
  * Los gramos se acumulan por producto y sucursal: cada vez que el total usado alcanza
  * otro múltiplo del peso del producto se descuenta 1 unidad. Ej: peso 100 g, se usan
@@ -33,10 +33,9 @@ class SeguimientoConsumoService
             // Pequeña tolerancia para que 3 × 33.33 g sobre 99.99 g cuente como unidad completa.
             $unidadesEsperadas = (int) floor(($gramosTotales + 0.0001) / (float) $producto->peso_gramos);
 
-            $salidas = Salida::where('codigo_barras', $producto->codigo_barras)
-                ->where('tipo_stock', 'tecnico')
+            $salidas = Salida::where('producto_id', $producto->id)
+                ->where('tipo_stock', 'reventa')
                 ->where('destino', self::DESTINO)
-                ->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId), fn ($q) => $q->whereNull('sucursal_id'))
                 ->lockForUpdate()
                 ->orderByDesc('id')
                 ->get();
@@ -45,12 +44,11 @@ class SeguimientoConsumoService
 
             if ($diferencia > 0) {
                 Salida::create([
-                    'codigo_barras' => $producto->codigo_barras,
-                    'sucursal_id'   => $sucursalId,
-                    'tipo_stock'    => 'tecnico',
-                    'unidades'      => $diferencia,
-                    'fecha'         => today(),
-                    'destino'       => self::DESTINO,
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => 'reventa',
+                    'unidades'    => $diferencia,
+                    'fecha'       => today(),
+                    'destino'     => self::DESTINO,
                 ]);
             } elseif ($diferencia < 0) {
                 // Se quitaron gramos: devolver unidades anulando las salidas más recientes.

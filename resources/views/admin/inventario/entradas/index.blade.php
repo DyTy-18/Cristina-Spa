@@ -49,6 +49,8 @@
                 @endforeach
             </select>
 
+            @include('admin.inventario._filtro_tipo')
+
             <div class="filter-group">
                 <label>Desde</label>
                 <input type="date" name="desde" class="filter-date" value="{{ $desde ?? '' }}">
@@ -59,7 +61,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-            @if ($q || $marca || $linea || $desde || $hasta)
+            @if ($q || $marca || $linea || $tipoProducto || $desde || $hasta)
                 <a href="{{ route('admin.inventario.entradas', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
@@ -102,7 +104,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📥</div>
                 <p class="empty-state-text">
-                    @if ($q || $marca || $linea || $desde || $hasta)
+                    @if ($q || $marca || $linea || $tipoProducto || $desde || $hasta)
                         No se encontraron entradas con los filtros aplicados
                     @else
                         No hay entradas registradas

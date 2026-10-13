@@ -6,6 +6,7 @@ use App\Models\AlertaStock;
 use App\Models\Cita;
 use App\Models\ConsumoMaterial;
 use App\Models\Entrada;
+use App\Models\Producto;
 use App\Models\Salida;
 use App\Models\ServicioMaterial;
 
@@ -43,7 +44,7 @@ class MaterialConsumptionService
                     'usos_reales'          => 1,
                 ]);
 
-                $this->aplicarDelta($material, 0, 1);
+                $this->aplicarDelta($material, 0, 1, $cita->sucursal_id);
             }
         }
     }
@@ -61,7 +62,7 @@ class MaterialConsumptionService
         }
 
         $material = ServicioMaterial::with('producto')->findOrFail($consumo->servicio_material_id);
-        $this->aplicarDelta($material, $usosViejos, $usosNuevos);
+        $this->aplicarDelta($material, $usosViejos, $usosNuevos, Cita::whereKey($consumo->cita_id)->value('sucursal_id'));
         $consumo->update(['usos_reales' => $usosNuevos]);
     }
 
@@ -92,14 +93,21 @@ class MaterialConsumptionService
     }
 
     /**
-     * Returns the current stock for a product by its barcode.
+     * Producto del material en la sucursal de la cita (mismo código de barras).
+     * El material del servicio apunta a la fila de una sucursal; cada sucursal
+     * descuenta de su propio inventario. Null si esa sucursal no tiene el producto.
      */
-    public function calcularStock(string $codigoBarras): int
+    public function productoEnSucursal(ServicioMaterial $material, ?int $sucursalId): ?Producto
     {
-        $entradas = Entrada::where('codigo_barras', $codigoBarras)->sum('unidades');
-        $salidas  = Salida::where('codigo_barras', $codigoBarras)->sum('unidades');
+        return $material->producto?->enSucursal($sucursalId);
+    }
 
-        return (int) ($entradas - $salidas);
+    /**
+     * Stock técnico actual del producto (en su propia sucursal).
+     */
+    public function calcularStock(?Producto $producto): int
+    {
+        return $producto ? $producto->stock('tecnico') : 0;
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
@@ -108,8 +116,10 @@ class MaterialConsumptionService
      * Core delta logic: adjusts total_usos_procesados and creates Salidas as needed.
      * Uses the material's running total so results are always consistent across re-entries.
      */
-    private function aplicarDelta(ServicioMaterial $material, int $usosViejos, int $usosNuevos): void
+    private function aplicarDelta(ServicioMaterial $material, int $usosViejos, int $usosNuevos, ?int $sucursalId): void
     {
+        $producto = $this->productoEnSucursal($material, $sucursalId);
+
         $material->refresh();
         $usosPorUnidad  = max(1, (int) ($material->usos_por_unidad ?? 1));
         $totalAntes     = (int) $material->total_usos_procesados;
@@ -120,37 +130,39 @@ class MaterialConsumptionService
         $nuevasSalidas  = $salidasDespues - $salidasAntes;
 
 
-        if ($nuevasSalidas > 0 && $material->producto) {
-            // Incremento: descontar del inventario
+        if ($nuevasSalidas > 0 && $producto) {
+            // Incremento: descontar del inventario de la sucursal de la cita
             for ($i = 0; $i < $nuevasSalidas; $i++) {
                 Salida::create([
-                    'codigo_barras' => $material->producto->codigo_barras,
-                    'unidades'      => 1,
-                    'fecha'         => today(),
-                    'destino'       => 'consumo_servicio',
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => 'tecnico',
+                    'unidades'    => 1,
+                    'fecha'       => today(),
+                    'destino'     => 'consumo_servicio',
                 ]);
             }
 
-            $stockActual = $this->calcularStock($material->producto->codigo_barras);
+            $stockActual = $this->calcularStock($producto);
 
-            if ($stockActual <= $material->producto->stock_minimo) {
-                $yaExiste = AlertaStock::where('producto_id', $material->producto_id)
+            if ($stockActual <= $producto->stock_minimo) {
+                $yaExiste = AlertaStock::where('producto_id', $producto->id)
                                       ->where('leida', false)
                                       ->exists();
                 if (!$yaExiste) {
                     AlertaStock::create([
-                        'producto_id'  => $material->producto_id,
+                        'producto_id'  => $producto->id,
                         'stock_actual' => $stockActual,
                     ]);
                 }
             }
-        } elseif ($nuevasSalidas < 0 && $material->producto) {
+        } elseif ($nuevasSalidas < 0 && $producto) {
             // Reversa: devolver unidades al inventario como entrada de corrección
             for ($i = 0; $i < abs($nuevasSalidas); $i++) {
                 Entrada::create([
-                    'codigo_barras' => $material->producto->codigo_barras,
-                    'unidades'      => 1,
-                    'fecha'         => today(),
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => 'tecnico',
+                    'unidades'    => 1,
+                    'fecha'       => today(),
                 ]);
             }
         }

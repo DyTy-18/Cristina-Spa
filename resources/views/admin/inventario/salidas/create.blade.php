@@ -66,22 +66,22 @@
 
                 {{-- ── Select de producto (el que se envía) ── --}}
                 <div class="form-group">
-                    <label class="form-label" for="codigo_barras">Producto * <small style="text-transform:none; letter-spacing:0;">(selecciona después de filtrar)</small></label>
-                    <select id="codigo_barras" name="codigo_barras" class="form-control" required
+                    <label class="form-label" for="producto_id">Producto * <small style="text-transform:none; letter-spacing:0;">(selecciona después de filtrar)</small></label>
+                    <select id="producto_id" name="producto_id" class="form-control" required
                             style="max-height:220px; overflow-y:auto;">
                         <option value="">— Seleccionar producto —</option>
                         @foreach ($productos as $producto)
-                            <option value="{{ $producto->codigo_barras }}"
+                            <option value="{{ $producto->id }}"
                                     data-nombre="{{ $producto->nombre }}"
                                     data-marca="{{ $producto->marca ?? '' }}"
                                     data-linea="{{ $producto->linea ?? '' }}"
                                     data-codigo="{{ $producto->codigo_barras }}"
                                     data-stock="{{ $producto->stock_actual }}"
-                                {{ old('codigo_barras') == $producto->codigo_barras ? 'selected' : '' }}>
+                                {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
                                 {{ $producto->nombre }}
                                 @if ($producto->marca) — {{ $producto->marca }} @endif
                                 @if ($producto->linea) / {{ $producto->linea }} @endif
-                                ({{ $producto->codigo_barras }})
+                                ({{ $producto->codigo_barras }})@if ($modoGlobal ?? false) · {{ $producto->sucursal->nombre ?? 'Sin sucursal' }}@endif
                             </option>
                         @endforeach
                     </select>
@@ -131,7 +131,7 @@ function filtrarProductos() {
     const q     = document.getElementById('filtro_q').value.toLowerCase().trim();
     const marca = document.getElementById('filtro_marca').value;
     const linea = document.getElementById('filtro_linea').value;
-    const select = document.getElementById('codigo_barras');
+    const select = document.getElementById('producto_id');
     let visible = 0;
 
     Array.from(select.options).forEach(opt => {
@@ -176,7 +176,7 @@ function limpiarFiltros() {
 }
 
 function stockSeleccionado() {
-    const select = document.getElementById('codigo_barras');
+    const select = document.getElementById('producto_id');
     const opt    = select.options[select.selectedIndex];
     return (opt && opt.value) ? (parseInt(opt.dataset.stock, 10) || 0) : null;
 }
@@ -204,7 +204,7 @@ function validarUnidades() {
     warning.style.display = (stock !== null && unidades > stock) ? 'block' : 'none';
 }
 
-document.getElementById('codigo_barras').addEventListener('change', mostrarStock);
+document.getElementById('producto_id').addEventListener('change', mostrarStock);
 document.getElementById('unidades').addEventListener('input', validarUnidades);
 
 // Inicializar contador

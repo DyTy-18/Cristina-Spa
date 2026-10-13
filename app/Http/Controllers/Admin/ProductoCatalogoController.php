@@ -31,6 +31,8 @@ class ProductoCatalogoController extends Controller
 
     public function edit(Producto $producto)
     {
+        $this->autorizarSucursal($producto);
+
         $servicios = Servicio::orderBy('nombre')->get();
         $servicioIdsSeleccionados = $producto->servicios()->pluck('servicios.id')->toArray();
 
@@ -39,6 +41,8 @@ class ProductoCatalogoController extends Controller
 
     public function update(Request $request, Producto $producto)
     {
+        $this->autorizarSucursal($producto);
+
         $validated = $request->validate([
             'precio_venta' => 'nullable|numeric|min:0',
             'servicios'    => 'array',
@@ -52,5 +56,12 @@ class ProductoCatalogoController extends Controller
 
         return redirect()->route('admin.productos.index')
             ->with('success', 'Producto actualizado correctamente.');
+    }
+
+    /** Desde una sucursal no se pueden editar productos de otra. */
+    private function autorizarSucursal(Producto $producto): void
+    {
+        $sid = session('sucursal_activa_id');
+        abort_if($sid && (int) $producto->sucursal_id !== (int) $sid, 404);
     }
 }

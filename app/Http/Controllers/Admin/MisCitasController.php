@@ -102,7 +102,7 @@ class MisCitasController extends Controller
             foreach ($cs->servicio?->materiales ?? [] as $material) {
                 if ($material->producto && !isset($stockPorProducto[$material->producto_id])) {
                     $stockPorProducto[$material->producto_id] = $service->calcularStock(
-                        $material->producto->codigo_barras
+                        $service->productoEnSucursal($material, $cita->sucursal_id)
                     );
                 }
                 $usosRestantesPorMaterial[$material->id] = $service->calcularUsosRestantesEnUnidad($material);
@@ -152,7 +152,7 @@ class MisCitasController extends Controller
                 $salidasExtra = $service->calcularSalidasExtra($material, $usosViejos, $usosNuevos);
 
                 if ($salidasExtra > 0) {
-                    $stock = $service->calcularStock($material->producto->codigo_barras);
+                    $stock = $service->calcularStock($service->productoEnSucursal($material, $cita->sucursal_id));
 
                     if ($stock < $salidasExtra) {
                         $nombre = $material->producto->nombre;

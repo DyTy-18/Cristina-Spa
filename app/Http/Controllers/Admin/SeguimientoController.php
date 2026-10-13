@@ -65,7 +65,11 @@ class SeguimientoController extends Controller
         if ($data['modo'] === 'existente') {
             $producto = Producto::findOrFail($data['producto_id']);
 
-            if ($producto->tipo !== Producto::TIPO_SEGUIMIENTO || ! $producto->peso_gramos) {
+            if ($cita->sucursal_id && (int) $producto->sucursal_id !== (int) $cita->sucursal_id) {
+                return back()->withErrors(['producto_id' => 'Ese producto pertenece al inventario de otra sucursal.']);
+            }
+
+            if (! $producto->es_reventa || $producto->tipo !== Producto::TIPO_SEGUIMIENTO || ! $producto->peso_gramos) {
                 return back()->withErrors(['producto_id' => 'Este producto no está marcado como "Seguimiento" o no tiene peso en gramos.']);
             }
 

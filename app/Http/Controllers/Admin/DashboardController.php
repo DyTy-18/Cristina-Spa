@@ -24,7 +24,6 @@ class DashboardController extends Controller
         }
 
         $sid    = session('sucursal_activa_id');
-        $sidSql = $sid ? " AND sucursal_id = {$sid}" : '';
 
         $citasHoy = Cita::hoy()
             ->when($sid, fn($q) => $q->where('sucursal_id', $sid))
@@ -51,28 +50,11 @@ class DashboardController extends Controller
             ->get();
 
         // Productos: solo los con movimientos en esta sucursal
-        if ($sid) {
-            $codigosConActividad = DB::table('entradas')->where('sucursal_id', $sid)->pluck('codigo_barras')
-                ->merge(DB::table('salidas')->where('sucursal_id', $sid)->pluck('codigo_barras'))
-                ->unique()->values()->toArray();
-
-            $totalProductos     = Producto::whereIn('codigo_barras', $codigosConActividad)->count();
-            $productosStockBajo = empty($codigosConActividad) ? 0 : DB::table('productos as p')
-                ->selectRaw('COUNT(*) as total')
-                ->whereIn('p.codigo_barras', $codigosConActividad)
-                ->whereRaw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql})
-                          - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql})
-                          < p.stock_minimo")
-                ->get()->count();
-        } else {
-            $totalProductos     = Producto::count();
-            $productosStockBajo = DB::table('productos as p')
-                ->selectRaw('COUNT(*) as total')
-                ->whereRaw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras)
-                          - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras)
-                          < p.stock_minimo")
-                ->get()->count();
-        }
+        // Cada sucursal tiene su propio catálogo; en modo global se suman todos.
+        $totalProductos     = Producto::deSucursal($sid)->count();
+        $productosStockBajo = Producto::deSucursal($sid)
+            ->whereRaw('(CASE WHEN productos.es_reventa THEN (' . Producto::stockSql('reventa') . ') ELSE (' . Producto::stockSql('tecnico') . ') END) < productos.stock_minimo')
+            ->count();
 
         $wppLogsRecientes = WppSyncLog::with('cita.cliente')->latest()->take(10)->get();
 
@@ -91,7 +73,6 @@ class DashboardController extends Controller
     private function resumenCristina()
     {
         $sid    = session('sucursal_activa_id');
-        $sidSql = $sid ? " AND sucursal_id = {$sid}" : '';
 
         // ── Citas ─────────────────────────────────────────────────────────────
         $citasHoy = Cita::hoy()
@@ -143,28 +124,11 @@ class DashboardController extends Controller
             ->count();
 
         // ── Inventario ────────────────────────────────────────────────────────
-        if ($sid) {
-            $codigosConActividad = DB::table('entradas')->where('sucursal_id', $sid)->pluck('codigo_barras')
-                ->merge(DB::table('salidas')->where('sucursal_id', $sid)->pluck('codigo_barras'))
-                ->unique()->values()->toArray();
-
-            $totalProductos     = Producto::whereIn('codigo_barras', $codigosConActividad)->count();
-            $productosStockBajo = empty($codigosConActividad) ? 0 : DB::table('productos as p')
-                ->selectRaw('COUNT(*) as total')
-                ->whereIn('p.codigo_barras', $codigosConActividad)
-                ->whereRaw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras{$sidSql})
-                          - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras{$sidSql})
-                          < p.stock_minimo")
-                ->get()->count();
-        } else {
-            $totalProductos     = Producto::count();
-            $productosStockBajo = DB::table('productos as p')
-                ->selectRaw('COUNT(*) as total')
-                ->whereRaw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE codigo_barras = p.codigo_barras)
-                          - (SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE codigo_barras = p.codigo_barras)
-                          < p.stock_minimo")
-                ->get()->count();
-        }
+        // Cada sucursal tiene su propio catálogo; en modo global se suman todos.
+        $totalProductos     = Producto::deSucursal($sid)->count();
+        $productosStockBajo = Producto::deSucursal($sid)
+            ->whereRaw('(CASE WHEN productos.es_reventa THEN (' . Producto::stockSql('reventa') . ') ELSE (' . Producto::stockSql('tecnico') . ') END) < productos.stock_minimo')
+            ->count();
 
         $wppLogsRecientes = WppSyncLog::with('cita.cliente')->latest()->take(10)->get();
 

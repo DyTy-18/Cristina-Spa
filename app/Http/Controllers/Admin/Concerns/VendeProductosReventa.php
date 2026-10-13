@@ -68,12 +68,11 @@ trait VendeProductosReventa
         foreach ($productosData as $p) {
             $producto = $stockPorId->get($p['producto_id']);
             Salida::create([
-                'codigo_barras' => $producto->codigo_barras,
-                'sucursal_id'   => $sucursalId,
-                'tipo_stock'    => 'reventa',
-                'unidades'      => (int) ($p['cantidad'] ?? 1),
-                'fecha'         => $cita->fecha,
-                'cita_id'       => $cita->id,
+                'producto_id' => $producto->id,
+                'tipo_stock'  => 'reventa',
+                'unidades'    => (int) ($p['cantidad'] ?? 1),
+                'fecha'       => $cita->fecha,
+                'cita_id'     => $cita->id,
             ]);
         }
     }

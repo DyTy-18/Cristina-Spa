@@ -62,7 +62,9 @@ class ServicioController extends Controller
     public function edit(Servicio $servicio)
     {
         $materiales = $servicio->materiales()->with('producto')->get();
-        $productos = \App\Models\Producto::orderBy('nombre')->get();
+        // Los materiales se guardan contra un producto, pero al consumir cada sucursal
+        // descuenta su propio producto con el mismo código de barras.
+        $productos = \App\Models\Producto::with('sucursal')->deSucursal(session('sucursal_activa_id'))->where('es_reventa', false)->orderBy('nombre')->get();
 
         $productosServicio  = $servicio->productosInventario()->get();
         $catalogoProductos  = \App\Models\Producto::reventaConStock(session('sucursal_activa_id'));

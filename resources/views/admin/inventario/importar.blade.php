@@ -66,6 +66,15 @@
 
             <form action="{{ route('admin.inventario.importar.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                @if ($modoGlobal ?? false)
+                    <div style="padding:0.75rem 1rem; background:#fff3cd; border:1px solid #ffc107; color:#856404; margin-bottom:1rem;">
+                        Estás viendo todas las sucursales. Elige una sucursal en el encabezado: el Excel se importa al inventario de esa sucursal.
+                    </div>
+                @else
+                    <p style="font-size:0.85rem; color:#555; margin-bottom:1rem;">
+                        Se importará al inventario de <strong>{{ $sucursalActiva->nombre ?? 'la sucursal activa' }}</strong>.
+                    </p>
+                @endif
 
                 <div class="form-group">
                     <label class="form-label" for="excel">Archivo Excel (.xlsx o .xls) *</label>

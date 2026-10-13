@@ -45,8 +45,10 @@
                 @endforeach
             </select>
 
+            @include('admin.inventario._filtro_tipo')
+
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-            @if ($q || $marca || $linea)
+            @if ($q || $marca || $linea || $tipoProducto)
                 <a href="{{ route('admin.inventario.productos', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
@@ -60,6 +62,9 @@
                 <thead>
                     <tr>
                         <th>Código de Barras</th>
+                        @if ($modoGlobal ?? false)
+                            <th>Sucursal</th>
+                        @endif
                         <th>Nombre</th>
                         <th>Marca</th>
                         <th>Línea</th>
@@ -72,12 +77,13 @@
                     @foreach ($productos as $producto)
                         <tr>
                             <td><code style="font-size:0.8rem;">{{ $producto->codigo_barras }}</code></td>
+                            @if ($modoGlobal ?? false)
+                                <td>{{ $producto->sucursal->nombre ?? '—' }}</td>
+                            @endif
                             <td>
                                 {{ $producto->nombre }}
-                                @if ($producto->tipo === 'vitrina')
-                                    <span class="badge badge-success" style="font-size:0.65rem;">Vitrina</span>
-                                @elseif ($producto->tipo === 'seguimiento')
-                                    <span class="badge badge-info" style="font-size:0.65rem;">Seguimiento{{ $producto->peso_gramos ? ' · ' . rtrim(rtrim(number_format($producto->peso_gramos, 2, '.', ''), '0'), '.') . ' g' : '' }}</span>
+                                @if ($producto->es_reventa)
+                                    @include('admin.inventario.productos._badge_tipo', ['p' => $producto])
                                 @endif
                             </td>
                             <td>{{ $producto->marca ?? '—' }}</td>
@@ -96,7 +102,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📦</div>
                 <p class="empty-state-text">
-                    @if ($q || $marca || $linea)
+                    @if ($q || $marca || $linea || $tipoProducto)
                         No se encontraron productos con los filtros aplicados
                     @elseif ($tipoStock === 'reventa')
                         No hay productos de reventa registrados (en esta sucursal)

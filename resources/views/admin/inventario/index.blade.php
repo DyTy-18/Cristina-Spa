@@ -149,8 +149,10 @@
                 @endforeach
             </select>
 
+            @include('admin.inventario._filtro_tipo')
+
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-            @if ($q || $marca || $linea)
+            @if ($q || $marca || $linea || $tipoProducto)
                 <a href="{{ route('admin.inventario.index', ['tipo' => $tipoStock]) }}" class="btn btn-outline btn-sm">Limpiar</a>
             @endif
         </form>
@@ -160,6 +162,9 @@
                 <thead>
                     <tr>
                         <th>Código</th>
+                        @if ($modoGlobal ?? false)
+                            <th>Sucursal</th>
+                        @endif
                         <th>Nombre</th>
                         <th>Marca</th>
                         <th>Línea</th>
@@ -179,10 +184,13 @@
                     @foreach ($stock as $item)
                         <tr>
                             <td><code style="font-size:0.8rem;">{{ $item->codigo_barras }}</code></td>
+                            @if ($modoGlobal ?? false)
+                                <td>{{ $item->sucursal_nombre ?? '—' }}</td>
+                            @endif
                             <td>
                                 {{ $item->nombre }}
-                                @if ($tipoStock === 'tecnico' && $item->es_reventa)
-                                    <span class="badge badge-success" style="font-size:0.65rem;">Reventa</span>
+                                @if ($item->es_reventa)
+                                    @include('admin.inventario.productos._badge_tipo', ['p' => $item])
                                 @endif
                             </td>
                             <td>{{ $item->marca ?? '—' }}</td>
@@ -218,7 +226,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📦</div>
                 <p class="empty-state-text">
-                    @if ($q || $marca || $linea)
+                    @if ($q || $marca || $linea || $tipoProducto)
                         No se encontraron productos con los filtros aplicados
                     @else
                         No hay productos en el inventario
