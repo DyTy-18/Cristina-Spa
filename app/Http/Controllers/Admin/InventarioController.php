@@ -44,8 +44,9 @@ class InventarioController extends Controller
             ])
             ->orderBy('p.nombre');
 
-        // Técnico y reventa son catálogos distintos: vitrina solo en reventa, el resto solo en técnico.
-        $query->where('p.es_reventa', $tipoStock === 'reventa');
+        // Técnico y reventa son catálogos distintos; un producto de reventa con sobrante
+        // técnico (transferencia parcial) aparece en ambos.
+        $query->whereRaw(Producto::catalogoSql($tipoStock, 'p'));
 
         if ($sid) {
             $query->where('p.sucursal_id', $sid);
@@ -140,28 +141,30 @@ class InventarioController extends Controller
         $unidadesIniciales = (int) ($request->input('unidades_iniciales') ?? 0);
         $fechaInicial      = $request->input('fecha_inicial') ?: now()->toDateString();
 
-        $producto = Producto::create([
-            'sucursal_id'   => $sid,
-            'codigo_barras' => $validated['codigo_barras'],
-            'nombre'        => $validated['nombre'],
-            'marca'         => $validated['marca'] ?? null,
-            'linea'         => $validated['linea'] ?? null,
-            'costo'         => $validated['costo'],
-            'precio_venta'  => $validated['precio_venta'] ?? null,
-            'stock_minimo'  => $validated['stock_minimo'],
-            'es_reventa'    => $esReventa,
-            'tipo'          => $tipo,
-            'peso_gramos'   => $peso,
-        ]);
-
-        if ($unidadesIniciales > 0) {
-            Entrada::create([
-                'producto_id' => $producto->id,
-                'tipo_stock'  => $esReventa ? 'reventa' : 'tecnico',
-                'unidades'    => $unidadesIniciales,
-                'fecha'       => $fechaInicial,
+        DB::transaction(function () use ($sid, $validated, $esReventa, $tipo, $peso, $unidadesIniciales, $fechaInicial) {
+            $producto = Producto::create([
+                'sucursal_id'   => $sid,
+                'codigo_barras' => $validated['codigo_barras'],
+                'nombre'        => $validated['nombre'],
+                'marca'         => $validated['marca'] ?? null,
+                'linea'         => $validated['linea'] ?? null,
+                'costo'         => $validated['costo'],
+                'precio_venta'  => $validated['precio_venta'] ?? null,
+                'stock_minimo'  => $validated['stock_minimo'],
+                'es_reventa'    => $esReventa,
+                'tipo'          => $tipo,
+                'peso_gramos'   => $peso,
             ]);
-        }
+
+            if ($unidadesIniciales > 0) {
+                Entrada::create([
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => $esReventa ? 'reventa' : 'tecnico',
+                    'unidades'    => $unidadesIniciales,
+                    'fecha'       => $fechaInicial,
+                ]);
+            }
+        });
 
         return redirect()->route('admin.inventario.productos', ['tipo' => $esReventa ? 'reventa' : 'tecnico'])
             ->with('success', 'Producto registrado correctamente.');
@@ -198,15 +201,14 @@ class InventarioController extends Controller
         ]);
         [$validated['es_reventa'], $validated['tipo'], $validated['peso_gramos']] = $this->catalogoYTipo($request, $validated);
 
-        // Cambiar entre técnico y reventa mueve el producto de catálogo; no se permite
-        // si deja stock en el catálogo que abandona (quedaría oculto).
-        if ($validated['es_reventa'] !== (bool) $producto->es_reventa) {
-            $poolQueDeja = $producto->es_reventa ? 'reventa' : 'tecnico';
-            $restante    = $producto->stock($poolQueDeja);
+        // Quitar la marca de reventa saca al producto del catálogo de reventa; no se permite
+        // si le queda stock de reventa (quedaría oculto). Al marcarlo de reventa, su stock
+        // técnico sigue visible en el catálogo técnico.
+        if (! $validated['es_reventa'] && $producto->es_reventa) {
+            $restante = $producto->stock('reventa');
             if ($restante !== 0) {
-                $catalogo = $poolQueDeja === 'reventa' ? 'reventa' : 'técnico';
                 return back()->withErrors([
-                    'es_reventa' => "No se puede cambiar de catálogo: el producto tiene {$restante} uds. en el stock {$catalogo}. Déjalo en 0 primero.",
+                    'es_reventa' => "No se puede quitar de reventa: el producto tiene {$restante} uds. en el stock de reventa. Déjalo en 0 primero.",
                 ])->withInput();
             }
         }
@@ -279,7 +281,7 @@ class InventarioController extends Controller
         ]);
 
         $producto = $this->productoDelFormulario($request);
-        if ($producto->es_reventa) {
+        if (! $producto->enCatalogoTecnico()) {
             return back()->withErrors(['producto_id' => 'Es un producto de reventa: registra su entrada en reventa.'])->withInput();
         }
 
@@ -354,8 +356,13 @@ class InventarioController extends Controller
         ]);
 
         $producto = $this->productoDelFormulario($request);
-        if ($producto->es_reventa) {
+        if (! $producto->enCatalogoTecnico()) {
             return back()->withErrors(['producto_id' => 'Es un producto de reventa: registra su salida en reventa.'])->withInput();
+        }
+
+        $disponible = $producto->stock('tecnico');
+        if ($validated['unidades'] > $disponible) {
+            return back()->withErrors(['unidades' => "Stock insuficiente: disponible {$disponible}."])->withInput();
         }
 
         Salida::create(array_merge($validated, ['tipo_stock' => 'tecnico']));
@@ -384,11 +391,11 @@ class InventarioController extends Controller
         ]);
 
         $producto = $this->productoDelFormulario($request);
-        if ($producto->es_reventa) {
+        $disponible = $producto->stock('tecnico');
+        if ($producto->es_reventa && $disponible <= 0) {
             return back()->withErrors(['producto_id' => 'Ese producto ya es de reventa: carga su stock con una entrada de reventa.'])->withInput();
         }
 
-        $disponible = $producto->stock('tecnico');
         if ($validated['unidades'] > $disponible) {
             return back()->withErrors(['unidades' => "Stock técnico insuficiente: disponible {$disponible}."])->withInput();
         }
@@ -408,15 +415,17 @@ class InventarioController extends Controller
                 'unidades'    => $validated['unidades'],
                 'fecha'       => $validated['fecha'],
             ]);
+
+            // La primera transferencia convierte el producto en vitrina (entra al catálogo de
+            // reventa). Lo que quede en stock técnico sigue visible en el catálogo técnico.
+            if (! $producto->es_reventa) {
+                $producto->update(['es_reventa' => true, 'tipo' => Producto::TIPO_VITRINA, 'peso_gramos' => null]);
+            }
         });
 
-        // La transferencia convierte el producto en vitrina: pasa al catálogo de reventa
-        // y sale del técnico.
-        $producto->update(['es_reventa' => true, 'tipo' => Producto::TIPO_VITRINA, 'peso_gramos' => null]);
-
         $restante = $disponible - $validated['unidades'];
-        $mensaje  = 'Transferencia a reventa registrada. El producto ahora es de vitrina.'
-            . ($restante > 0 ? " Le quedaron {$restante} uds. en stock técnico, que ya no se muestran en el catálogo técnico." : '');
+        $mensaje  = 'Transferencia a reventa registrada.'
+            . ($restante > 0 ? " Quedan {$restante} uds. en stock técnico." : '');
 
         return redirect()->route('admin.inventario.index', ['tipo' => 'reventa'])
             ->with('success', $mensaje);
@@ -469,6 +478,11 @@ class InventarioController extends Controller
             return back()->withErrors(['producto_id' => 'Este producto no está habilitado para reventa.'])->withInput();
         }
 
+        $disponible = $producto->stock('reventa');
+        if ($validated['unidades'] > $disponible) {
+            return back()->withErrors(['unidades' => "Stock de reventa insuficiente: disponible {$disponible}."])->withInput();
+        }
+
         Salida::create(array_merge($validated, ['tipo_stock' => 'reventa']));
 
         return redirect()->route('admin.inventario.salidas', ['tipo' => 'reventa'])
@@ -499,7 +513,7 @@ class InventarioController extends Controller
                 DB::raw("(SELECT MAX(fecha) FROM salidas WHERE salidas.producto_id = p.id AND tipo_stock = 'tecnico') AS ultima_salida"),
             ])
             ->when($sid, fn ($q) => $q->where('p.sucursal_id', $sid))
-            ->where('p.es_reventa', false)
+            ->whereRaw(Producto::catalogoSql('tecnico', 'p'))
             ->orderBy('p.nombre');
 
         if ($marca) $query->where('p.marca', $marca);
@@ -663,6 +677,18 @@ class InventarioController extends Controller
             return back()->withErrors(['excel' => 'Elige una sucursal en el encabezado antes de importar: el inventario se carga en esa sucursal.']);
         }
 
+        $stats = DB::transaction(fn () => $this->importarHojas($sheets, (int) $sucursalId));
+
+        return redirect()->route('admin.inventario.importar')
+            ->with('import_stats', $stats);
+    }
+
+    /**
+     * Carga REGISTRO / ENTRADA(S) / SALIDAS en el catálogo de la sucursal. Todo o nada:
+     * se llama dentro de una transacción.
+     */
+    private function importarHojas(array $sheets, int $sucursalId): array
+    {
         $stats = ['productos_nuevos' => 0, 'entradas' => 0, 'salidas' => 0, 'errores' => []];
 
         // INVENTARIO se ignora: es un dashboard con fórmulas, no aporta datos al import.
@@ -684,16 +710,21 @@ class InventarioController extends Controller
                     continue;
                 }
 
-                $producto = Producto::updateOrCreate(
-                    ['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo],
-                    [
-                        'nombre' => trim((string) $this->cellValue($regSheet, $colNombre, $r)),
-                        'marca'  => trim((string) $this->cellValue($regSheet, $colMarca, $r)) ?: null,
-                        'linea'  => trim((string) $this->cellValue($regSheet, $colLinea, $r)) ?: null,
-                        'uso'    => trim((string) $this->cellValue($regSheet, $colUso, $r)) ?: null,
-                        'costo'  => 0,
-                    ]
-                );
+                // Un producto existente solo actualiza los datos que vienen en el Excel;
+                // costo, precio y tipo cargados a mano no se pisan.
+                $producto = Producto::firstOrNew(['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo]);
+                $datos    = array_filter([
+                    'nombre' => trim((string) $this->cellValue($regSheet, $colNombre, $r)),
+                    'marca'  => trim((string) $this->cellValue($regSheet, $colMarca, $r)),
+                    'linea'  => trim((string) $this->cellValue($regSheet, $colLinea, $r)),
+                    'uso'    => trim((string) $this->cellValue($regSheet, $colUso, $r)),
+                ], fn ($v) => $v !== '');
+                $producto->fill($datos);
+                if (! $producto->exists) {
+                    $producto->nombre ??= $codigo;
+                    $producto->costo = 0;
+                }
+                $producto->save();
                 if ($producto->wasRecentlyCreated) {
                     $stats['productos_nuevos']++;
                 }
@@ -735,7 +766,12 @@ class InventarioController extends Controller
                     $stats['productos_nuevos']++;
                 }
 
-                Entrada::create(['producto_id' => $producto->id, 'unidades' => $unidades, 'fecha' => $fecha]);
+                Entrada::create([
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => $producto->es_reventa ? 'reventa' : 'tecnico',
+                    'unidades'    => $unidades,
+                    'fecha'       => $fecha,
+                ]);
                 $stats['entradas']++;
             }
         }
@@ -776,13 +812,18 @@ class InventarioController extends Controller
                     $stats['productos_nuevos']++;
                 }
 
-                Salida::create(['producto_id' => $producto->id, 'unidades' => $unidades, 'fecha' => $fecha, 'destino' => $destino]);
+                Salida::create([
+                    'producto_id' => $producto->id,
+                    'tipo_stock'  => $producto->es_reventa ? 'reventa' : 'tecnico',
+                    'unidades'    => $unidades,
+                    'fecha'       => $fecha,
+                    'destino'     => $destino,
+                ]);
                 $stats['salidas']++;
             }
         }
 
-        return redirect()->route('admin.inventario.importar')
-            ->with('import_stats', $stats);
+        return $stats;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -862,13 +903,13 @@ class InventarioController extends Controller
 
     /**
      * Restringe un query de productos a la sucursal activa (sin filtro en modo
-     * global) y al catálogo del pool: reventa = productos de vitrina, técnico = el resto.
+     * global) y al catálogo del pool (ver Producto::catalogoSql).
      */
     private function scopeSucursal($query, string $tipoStock)
     {
         return $query
             ->deSucursal(session('sucursal_activa_id'))
-            ->where('es_reventa', $tipoStock === 'reventa');
+            ->whereRaw(Producto::catalogoSql($tipoStock, $query->getModel()->getTable()));
     }
 
     /**

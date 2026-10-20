@@ -78,7 +78,7 @@ class SeguimientoController extends Controller
                 'gramos'      => $data['gramos'],
             ]);
 
-            $this->consumo->recalcular($producto, $cita->sucursal_id);
+            $this->consumo->recalcular($producto);
 
             return back()->with('success', 'Producto agregado al seguimiento. Se descontará del inventario según los gramos usados.');
         }
@@ -98,7 +98,7 @@ class SeguimientoController extends Controller
         $seguimientoProducto->delete();
 
         if ($producto && $seguimientoProducto->gramos) {
-            $this->consumo->recalcular($producto, $cita->sucursal_id);
+            $this->consumo->recalcular($producto);
         }
 
         return back()->with('success', 'Producto quitado del seguimiento.');

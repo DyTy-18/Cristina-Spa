@@ -16,8 +16,8 @@ class SucursalContext
             return $next($request);
         }
 
-        if ($user->hasRole(['admin', 'cristina'])) {
-            // Admin/Cristina: por defecto ve TODAS las sucursales (null = global), puede cambiar
+        if ($user->hasRole(['admin', 'developer', 'cristina'])) {
+            // Admin/Developer/Cristina: por defecto ve TODAS las sucursales (null = global), puede cambiar
             if (!session()->has('sucursal_activa_id')) {
                 session(['sucursal_activa_id' => null]);
             }

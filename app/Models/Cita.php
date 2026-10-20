@@ -41,6 +41,41 @@ class Cita extends Model
         'monto_2' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        // Los seguimientos se borran en cascada con la cita: el stock descontado por
+        // gramos se recalcula para devolver lo que ya no corresponde.
+        $productosSeguimiento = [];
+
+        static::deleting(function (Cita $cita) use (&$productosSeguimiento) {
+            $productosSeguimiento[$cita->id] = $cita->seguimientoProductos()
+                ->whereNotNull('producto_id')->pluck('producto_id')->unique()->all();
+        });
+
+        static::deleted(function (Cita $cita) use (&$productosSeguimiento) {
+            $ids = $productosSeguimiento[$cita->id] ?? [];
+            unset($productosSeguimiento[$cita->id]);
+
+            static::recalcularSeguimientos($ids);
+        });
+
+        // Cancelar (o reactivar) una cita devuelve (o vuelve a descontar) sus gramos de seguimiento.
+        static::updated(function (Cita $cita) {
+            if ($cita->wasChanged('estado') && in_array('cancelada', [$cita->getOriginal('estado'), $cita->estado], true)) {
+                static::recalcularSeguimientos(
+                    $cita->seguimientoProductos()->whereNotNull('producto_id')->pluck('producto_id')->unique()->all()
+                );
+            }
+        });
+    }
+
+    private static function recalcularSeguimientos(array $productoIds): void
+    {
+        foreach (Producto::whereIn('id', $productoIds)->get() as $producto) {
+            app(\App\Services\SeguimientoConsumoService::class)->recalcular($producto);
+        }
+    }
+
     /** Monto correspondiente a tipo_pago cuando el pago está dividido (el resto del total). */
     public function getMontoTipoPago1Attribute(): float
     {

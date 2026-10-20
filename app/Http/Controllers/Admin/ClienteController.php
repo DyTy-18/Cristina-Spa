@@ -452,7 +452,7 @@ class ClienteController extends Controller
         ]);
 
         $estadoAnterior = $cita->estado;
-        $cita->update(['estado' => $data['estado']]);
+        $this->cambiarEstadoCita($cita, $data['estado']);
 
         if ($estadoAnterior !== $cita->estado) {
             app(WppService::class)->notificarSegunEstado($cita);

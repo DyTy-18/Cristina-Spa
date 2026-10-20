@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\Salida;
 use App\Models\Sucursal;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -35,6 +36,26 @@ trait VendeProductosReventa
         });
     }
     /**
+     * Cambia el estado de la cita y ajusta el stock de reventa si entra o sale de
+     * "cancelada" (al cancelar se devuelven los productos; al reactivarla se vuelven a
+     * descontar, validando stock). Si no hay stock, el estado no cambia.
+     */
+    protected function cambiarEstadoCita(Cita $cita, string $estado): void
+    {
+        DB::transaction(function () use ($cita, $estado) {
+            $anterior = $cita->estado;
+            $cita->update(['estado' => $estado]);
+
+            if ($anterior !== $estado && in_array('cancelada', [$anterior, $estado], true)) {
+                $productosData = $cita->citaProductos()->whereNotNull('producto_id')->get()
+                    ->map(fn ($cp) => ['producto_id' => $cp->producto_id, 'cantidad' => $cp->cantidad]);
+
+                $this->sincronizarVentaReventa($cita, $productosData, $cita->sucursal_id);
+            }
+        });
+    }
+
+    /**
      * Descuenta stock de reventa por los productos vendidos en la cita.
      * Primero revierte las salidas que esta misma cita hubiera generado antes (soporta
      * crear y editar, donde citaProductos se borra y recrea en cada guardado), recalcula
@@ -44,7 +65,8 @@ trait VendeProductosReventa
     {
         Salida::where('cita_id', $cita->id)->where('tipo_stock', 'reventa')->delete();
 
-        if ($productosData->isEmpty()) {
+        // Una cita cancelada no descuenta: sus productos vuelven al stock.
+        if ($productosData->isEmpty() || $cita->estado === 'cancelada') {
             return;
         }
 

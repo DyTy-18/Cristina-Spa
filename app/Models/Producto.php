@@ -94,6 +94,26 @@ class Producto extends Model
              . " - (SELECT COALESCE(SUM(unidades),0) FROM salidas WHERE salidas.producto_id = {$alias}.id AND tipo_stock = '{$tipoStock}'{$extraSalidas})";
     }
 
+    /**
+     * Condición SQL de pertenencia al catálogo de un pool para la fila `$alias`.
+     * Reventa: productos marcados de reventa. Técnico: los no marcados, más los de
+     * reventa que aún tienen stock técnico (sobrante de una transferencia parcial).
+     */
+    public static function catalogoSql(string $tipoStock, string $alias = 'productos'): string
+    {
+        if ($tipoStock === 'reventa') {
+            return "{$alias}.es_reventa = 1";
+        }
+
+        return "({$alias}.es_reventa = 0 OR (" . static::stockSql('tecnico', $alias) . ') <> 0)';
+    }
+
+    /** Si el producto aparece en el catálogo técnico (ver catalogoSql). */
+    public function enCatalogoTecnico(): bool
+    {
+        return ! $this->es_reventa || $this->stock('tecnico') !== 0;
+    }
+
     /** Stock actual del producto en un pool (técnico por defecto). */
     public function stock(string $tipoStock = 'tecnico'): int
     {

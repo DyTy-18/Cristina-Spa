@@ -105,7 +105,7 @@ class MisCitasController extends Controller
                         $service->productoEnSucursal($material, $cita->sucursal_id)
                     );
                 }
-                $usosRestantesPorMaterial[$material->id] = $service->calcularUsosRestantesEnUnidad($material);
+                $usosRestantesPorMaterial[$material->id] = $service->calcularUsosRestantesEnUnidad($material, $cita->sucursal_id);
             }
         }
 
@@ -144,12 +144,13 @@ class MisCitasController extends Controller
 
         foreach ($request->materiales as $item) {
             $consumo    = ConsumoMaterial::with('servicioMaterial.producto')->findOrFail($item['consumo_id']);
+            abort_if((int) $consumo->cita_id !== (int) $cita->id, 403);
             $usosNuevos = (int) $item['usos_reales'];
             $usosViejos = $consumo->usos_reales ?? 1;
 
             if ($usosNuevos > $usosViejos) {
                 $material     = $consumo->servicioMaterial;
-                $salidasExtra = $service->calcularSalidasExtra($material, $usosViejos, $usosNuevos);
+                $salidasExtra = $service->calcularSalidasExtra($material, $usosViejos, $usosNuevos, $cita->sucursal_id);
 
                 if ($salidasExtra > 0) {
                     $stock = $service->calcularStock($service->productoEnSucursal($material, $cita->sucursal_id));

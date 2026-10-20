@@ -66,7 +66,7 @@ class MisCitasTest extends TestCase
         ]);
 
         Entrada::create([
-            'codigo_barras' => 'SH001',
+            'producto_id'   => $this->producto->id,
             'unidades'      => 10,
             'fecha'         => today(),
         ]);
@@ -105,6 +105,7 @@ class MisCitasTest extends TestCase
         return ConsumoMaterial::create([
             'servicio_material_id' => $this->material->id,
             'cita_id'              => $cita->id,
+            'usos_reales'          => 1,
         ]);
     }
 
@@ -195,8 +196,8 @@ class MisCitasTest extends TestCase
         $this->assertEquals(1, $consumo->fresh()->usos_reales);
     }
 
-    /** guardarConsumo con usos_reales=3 crea 2 ConsumoMaterial adicionales */
-    public function test_guardar_consumo_con_usos_3_crea_2_extras(): void
+    /** guardarConsumo con usos_reales=3 actualiza el mismo consumo (uno por cita y material) */
+    public function test_guardar_consumo_con_usos_3_actualiza_el_consumo(): void
     {
         $cita = $this->crearCitaHoy();
         $consumo = $this->crearConsumoParaCita($cita);
@@ -207,7 +208,7 @@ class MisCitasTest extends TestCase
             ],
         ])->assertRedirect('/admin/mis-citas');
 
-        $this->assertEquals(3, ConsumoMaterial::count());
+        $this->assertEquals(1, ConsumoMaterial::count());
         $this->assertEquals(3, $consumo->fresh()->usos_reales);
     }
 
@@ -225,6 +226,31 @@ class MisCitasTest extends TestCase
         ]);
 
         $this->assertEquals(1, Salida::count());
+    }
+
+    /** No se puede modificar un consumo de otra cita enviando su id */
+    public function test_no_puede_modificar_consumo_de_otra_cita(): void
+    {
+        $citaPropia = $this->crearCitaHoy();
+        $this->crearConsumoParaCita($citaPropia);
+
+        $otroEmpleado = Empleado::create([
+            'nombre'   => 'Pedro',
+            'apellido' => 'Ramirez',
+            'telefono' => '70000002',
+            'cargo'    => 'estilista',
+            'activo'   => true,
+        ]);
+        $consumoAjeno = $this->crearConsumoParaCita($this->crearCitaHoy('completada', $otroEmpleado));
+
+        $this->actingAs($this->estilista)->post("/admin/mis-citas/{$citaPropia->id}/consumo", [
+            'materiales' => [
+                ['consumo_id' => $consumoAjeno->id, 'usos_reales' => 9],
+            ],
+        ])->assertForbidden();
+
+        $this->assertEquals(1, $consumoAjeno->fresh()->usos_reales);
+        $this->assertEquals(0, Salida::count());
     }
 
     /** Usuario sin empleado vinculado es redirigido con error */

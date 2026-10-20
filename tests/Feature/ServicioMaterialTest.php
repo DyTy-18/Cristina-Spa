@@ -51,6 +51,7 @@ class ServicioMaterialTest extends TestCase
                 'producto_id' => $this->producto->id,
                 'cantidad' => 30.5,
                 'unidad' => 'ml',
+                'usos_por_unidad' => 10,
             ]);
 
         $response->assertStatus(201)
@@ -96,6 +97,7 @@ class ServicioMaterialTest extends TestCase
             ->putJson("/admin/servicios/{$this->servicio->id}/materiales/{$material->id}", [
                 'cantidad' => 50,
                 'unidad' => 'gr',
+                'usos_por_unidad' => 5,
             ]);
 
         $response->assertOk()
@@ -152,6 +154,7 @@ class ServicioMaterialTest extends TestCase
             ->putJson("/admin/servicios/{$this->servicio->id}/materiales/{$material->id}", [
                 'cantidad' => 50,
                 'unidad' => 'gr',
+                'usos_por_unidad' => 5,
             ]);
 
         $response->assertStatus(404);

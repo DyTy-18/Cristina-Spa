@@ -262,10 +262,8 @@
                                         &nbsp;·&nbsp; 1 unidad = {{ $material->usos_por_unidad }} uso{{ $material->usos_por_unidad != 1 ? 's' : '' }}
                                     </div>
                                     @php
-                                        $totalAcum      = (int)($material->total_usos_procesados ?? 0);
                                         $usosPorUnidad  = (int)$material->usos_por_unidad;
-                                        $usadosEnBote   = $usosPorUnidad > 0 ? ($totalAcum % $usosPorUnidad) : 0;
-                                        $restanEnBote   = $usosPorUnidad - $usadosEnBote;
+                                        $restanEnBote   = $usosRestantes;
                                     @endphp
                                     <div class="usos-restantes">
                                         Bote en uso: le quedan

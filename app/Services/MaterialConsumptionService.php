@@ -9,6 +9,7 @@ use App\Models\Entrada;
 use App\Models\Producto;
 use App\Models\Salida;
 use App\Models\ServicioMaterial;
+use Illuminate\Support\Facades\DB;
 
 class MaterialConsumptionService
 {
@@ -16,6 +17,9 @@ class MaterialConsumptionService
      * Called when a Cita is marked as 'completada'.
      * Creates ONE ConsumoMaterial per (cita, material) with usos_reales = 1
      * and adjusts inventory accordingly.
+     *
+     * Los usos se acumulan por sucursal: cada sucursal abre y agota sus propias
+     * unidades del material, así una sucursal nunca descuenta stock por usos de otra.
      */
     public function procesarCita(Cita $cita): void
     {
@@ -38,13 +42,16 @@ class MaterialConsumptionService
                     continue;
                 }
 
-                ConsumoMaterial::create([
-                    'servicio_material_id' => $material->id,
-                    'cita_id'              => $cita->id,
-                    'usos_reales'          => 1,
-                ]);
+                DB::transaction(function () use ($material, $cita) {
+                    // El delta se calcula antes de registrar el consumo (usa los usos ya acumulados).
+                    $this->aplicarDelta($material, 0, 1, $cita->sucursal_id);
 
-                $this->aplicarDelta($material, 0, 1, $cita->sucursal_id);
+                    ConsumoMaterial::create([
+                        'servicio_material_id' => $material->id,
+                        'cita_id'              => $cita->id,
+                        'usos_reales'          => 1,
+                    ]);
+                });
             }
         }
     }
@@ -62,34 +69,50 @@ class MaterialConsumptionService
         }
 
         $material = ServicioMaterial::with('producto')->findOrFail($consumo->servicio_material_id);
-        $this->aplicarDelta($material, $usosViejos, $usosNuevos, Cita::whereKey($consumo->cita_id)->value('sucursal_id'));
-        $consumo->update(['usos_reales' => $usosNuevos]);
+
+        DB::transaction(function () use ($material, $consumo, $usosViejos, $usosNuevos) {
+            $this->aplicarDelta($material, $usosViejos, $usosNuevos, Cita::whereKey($consumo->cita_id)->value('sucursal_id'));
+            $consumo->update(['usos_reales' => $usosNuevos]);
+        });
     }
 
     /**
      * Returns how many extra Salidas (positive) or reversed units (negative) would result
      * from changing usos_reales. Used for stock pre-validation before committing changes.
      */
-    public function calcularSalidasExtra(ServicioMaterial $material, int $usosViejos, int $usosNuevos): int
+    public function calcularSalidasExtra(ServicioMaterial $material, int $usosViejos, int $usosNuevos, ?int $sucursalId): int
     {
         $material->refresh();
         $usosPorUnidad = max(1, (int) ($material->usos_por_unidad ?? 1));
-        $totalAntes    = (int) $material->total_usos_procesados;
+        $totalAntes    = $this->usosEnSucursal($material, $sucursalId);
         $totalDespues  = $totalAntes - $usosViejos + $usosNuevos;
 
         return intdiv($totalDespues, $usosPorUnidad) - intdiv($totalAntes, $usosPorUnidad);
     }
 
     /**
-     * Returns how many uses remain in the currently open unit.
-     * Example: usos_por_unidad=50, total_usos_procesados=47 → 3 uses left in current bottle.
+     * Returns how many uses remain in the unit currently open in the sucursal.
+     * Example: usos_por_unidad=50, 47 usos acumulados en la sucursal → 3 uses left in current bottle.
      */
-    public function calcularUsosRestantesEnUnidad(ServicioMaterial $material): int
+    public function calcularUsosRestantesEnUnidad(ServicioMaterial $material, ?int $sucursalId): int
     {
         $usosPorUnidad = max(1, (int) ($material->usos_por_unidad ?? 1));
-        $consumidosEnUnidadActual = (int) $material->total_usos_procesados % $usosPorUnidad;
+        $consumidosEnUnidadActual = $this->usosEnSucursal($material, $sucursalId) % $usosPorUnidad;
 
         return $usosPorUnidad - $consumidosEnUnidadActual;
+    }
+
+    /**
+     * Usos del material registrados en citas de la sucursal (consumos_material).
+     * Es la base del cálculo de unidades consumidas: cada sucursal lleva su cuenta.
+     */
+    public function usosEnSucursal(ServicioMaterial $material, ?int $sucursalId): int
+    {
+        return (int) ConsumoMaterial::query()
+            ->join('citas', 'citas.id', '=', 'consumos_material.cita_id')
+            ->where('consumos_material.servicio_material_id', $material->id)
+            ->when($sucursalId, fn ($q) => $q->where('citas.sucursal_id', $sucursalId), fn ($q) => $q->whereNull('citas.sucursal_id'))
+            ->sum(DB::raw('COALESCE(consumos_material.usos_reales, 1)'));
     }
 
     /**
@@ -113,16 +136,18 @@ class MaterialConsumptionService
     // ── Private ───────────────────────────────────────────────────────────────
 
     /**
-     * Core delta logic: adjusts total_usos_procesados and creates Salidas as needed.
-     * Uses the material's running total so results are always consistent across re-entries.
+     * Core delta logic: creates Salidas (or correction Entradas) as needed.
+     * Uses the sucursal's accumulated uses (before this change is saved) so results
+     * are always consistent across re-entries. Must run inside a transaction.
      */
     private function aplicarDelta(ServicioMaterial $material, int $usosViejos, int $usosNuevos, ?int $sucursalId): void
     {
         $producto = $this->productoEnSucursal($material, $sucursalId);
 
-        $material->refresh();
+        // Bloquea el material para que dos citas simultáneas no calculen sobre el mismo total.
+        $material = ServicioMaterial::lockForUpdate()->findOrFail($material->id);
         $usosPorUnidad  = max(1, (int) ($material->usos_por_unidad ?? 1));
-        $totalAntes     = (int) $material->total_usos_procesados;
+        $totalAntes     = $this->usosEnSucursal($material, $sucursalId);
         $totalDespues   = $totalAntes - $usosViejos + $usosNuevos;
 
         $salidasAntes   = intdiv($totalAntes, $usosPorUnidad);
@@ -167,6 +192,7 @@ class MaterialConsumptionService
             }
         }
 
-        $material->update(['total_usos_procesados' => max(0, $totalDespues)]);
+        // Total global solo informativo; el cálculo usa los usos de cada sucursal.
+        $material->update(['total_usos_procesados' => max(0, (int) $material->total_usos_procesados - $usosViejos + $usosNuevos)]);
     }
 }

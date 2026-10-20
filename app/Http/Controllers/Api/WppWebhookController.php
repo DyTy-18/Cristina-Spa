@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Admin\Concerns\VendeProductosReventa;
 use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\CitaServicio;
@@ -25,6 +26,8 @@ use Illuminate\Validation\ValidationException;
  */
 class WppWebhookController extends Controller
 {
+    use VendeProductosReventa;
+
     /** PATCH /api/wpp/citas/{cita}/estado — el cliente confirma o cancela por WhatsApp. */
     public function updateEstado(Request $request, Cita $cita)
     {
@@ -39,7 +42,7 @@ class WppWebhookController extends Controller
                 ]);
             }
 
-            $cita->update(['estado' => $data['estado']]);
+            $this->cambiarEstadoCita($cita, $data['estado']);
 
             Log::info("WppWebhook: cita#{$cita->id} → estado {$data['estado']} (origen WPP)");
 

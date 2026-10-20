@@ -10,7 +10,7 @@
     $nombreSucursal = $sucursalActiva->nombre ?? null;
 @endphp
 
-@if($enModoGlobal && auth()->user()->hasRole('admin'))
+@if($enModoGlobal && auth()->user()->hasRole(['admin', 'developer', 'cristina']))
     {{-- Admin sin sucursal seleccionada: debe elegir --}}
     <div class="form-group" style="background:#fef9ec;border:1px solid #f5d87a;border-radius:6px;padding:0.85rem 1rem;margin-bottom:1.25rem;">
         <label class="form-label" style="color:#92600a;margin-bottom:0.4rem;display:block;">
@@ -38,7 +38,7 @@
             <span style="font-size:0.72rem;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.04em;font-weight:500;">Registrando en</span>
             <div style="font-size:0.88rem;color:#1e3a8a;font-weight:500;">{{ $nombreSucursal ?? 'Sin sucursal' }}</div>
         </div>
-        @if(auth()->user()->hasRole('admin'))
+        @if(auth()->user()->hasRole(['admin', 'developer', 'cristina']))
             <span style="font-size:0.7rem;color:#3b82f6;">
                 Cambia desde el encabezado
             </span>
