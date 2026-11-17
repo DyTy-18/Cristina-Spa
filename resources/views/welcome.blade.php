@@ -42,247 +42,86 @@
     <section id="servicios" class="services">
         <div class="container">
             <div class="services-intro">
-                <span class="section-label">Lo Que Ofrecemos</span>
-                <h2 class="section-title section-title-center">Nuestros Servicios</h2>
-                <p>Descubre nuestra amplia gama de servicios diseñados para realzar tu belleza natural y proporcionarte
-                    momentos de relajación absoluta.</p>
+                @if ($serviciosWeb['etiqueta'] ?? '')
+                    <span class="section-label">{{ $serviciosWeb['etiqueta'] }}</span>
+                @endif
+                <h2 class="section-title section-title-center">{{ $serviciosWeb['titulo'] ?? 'Nuestros Servicios' }}</h2>
+                @if ($serviciosWeb['descripcion'] ?? '')
+                    <p>{{ $serviciosWeb['descripcion'] }}</p>
+                @endif
             </div>
+
+            @php
+                // "310 Bs. (1cm)" → el texto entre paréntesis final se muestra en pequeño
+                $precioWeb = fn ($p) => ($p ?? '') === ''
+                    ? '—'
+                    : preg_replace('/\s*\(([^()]*)\)$/u', ' <small>($1)</small>', e($p));
+            @endphp
 
             <div class="accordion">
+                @foreach ($serviciosWeb['categorias'] ?? [] as $categoria)
+                    <div class="accordion-item">
+                        <button class="accordion-header">
+                            <span>{{ trim(($categoria['icono'] ?? '') . ' ' . $categoria['nombre']) }}</span>
+                            <span class="accordion-icon">+</span>
+                        </button>
+                        <div class="accordion-content">
+                            @foreach ($categoria['secciones'] ?? [] as $seccion)
+                                @php $columnas = $seccion['columnas'] ?? []; @endphp
+                                <div class="price-list-section">
+                                    @if ($seccion['titulo'] ?? '')
+                                        <h4 class="price-subtitle">{{ $seccion['titulo'] }}</h4>
+                                    @endif
 
-                <!-- 1. Peluquería -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>✂️ Peluquería</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="price-list-section">
-                            <h4 class="price-subtitle">Cortes</h4>
-                            <ul class="price-list">
-                                <li class="price-list-item"><span>Corte de Mujer</span><span class="price-tag">250 Bs.</span></li>
-                                <li class="price-list-item"><span>Corte de Varón</span><span class="price-tag">100 Bs.</span></li>
-                                <li class="price-list-item"><span>Corte de Flequillo</span><span class="price-tag">80 Bs.</span></li>
-                            </ul>
-                        </div>
-                        <div class="price-list-section">
-                            <h4 class="price-subtitle">Peinados — por largo de cabello</h4>
-                            <div class="table-responsive">
-                                <table class="price-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Servicio</th>
-                                            <th>Corto</th>
-                                            <th>Mediano<br><small>(Hasta Hombros)</small></th>
-                                            <th>Largo<br><small>(Hasta Media Espalda)</small></th>
-                                            <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr><td>Lavado</td><td>80 Bs.</td><td>80 Bs.</td><td>80 Bs.</td><td>80 Bs.</td></tr>
-                                        <tr><td>Planchado o Bucles</td><td>70 Bs.</td><td>80 Bs.</td><td>90 Bs.</td><td>100 Bs.</td></tr>
-                                        <tr><td>Semi-recogido</td><td>100 Bs.</td><td>120 Bs.</td><td>150 Bs.</td><td>160 Bs.</td></tr>
-                                        <tr><td>Recogido</td><td>150 Bs.</td><td>150 Bs.</td><td>200 Bs.</td><td>200 Bs.</td></tr>
-                                        <tr><td>Peinado de Novia</td><td>160 Bs.</td><td>180 Bs.</td><td>200 Bs.</td><td>200 Bs.</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                    @if (count($columnas) <= 1)
+                                        <ul class="price-list">
+                                            @foreach ($seccion['items'] ?? [] as $item)
+                                                <li class="price-list-item"><span>{{ $item['nombre'] }}</span><span class="price-tag">{!! $precioWeb($item['precios'][0] ?? '') !!}</span></li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <div class="table-responsive">
+                                            <table class="price-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Servicio</th>
+                                                        @foreach ($columnas as $columna)
+                                                            <th>{{ $columna['nombre'] }}@if ($columna['detalle'] ?? '')<br><small>({{ $columna['detalle'] }})</small>@endif</th>
+                                                        @endforeach
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($seccion['items'] ?? [] as $item)
+                                                        <tr>
+                                                            <td>{{ $item['nombre'] }}</td>
+                                                            @foreach ($columnas as $i => $columna)
+                                                                <td>{!! $precioWeb($item['precios'][$i] ?? '') !!}</td>
+                                                            @endforeach
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
 
-                <!-- 2. Coloración -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>🎨 Coloración</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="table-responsive">
-                            <table class="price-table">
-                                <thead>
-                                    <tr>
-                                        <th>Servicio</th>
-                                        <th>Corto</th>
-                                        <th>Mediano<br><small>(Hasta Hombros)</small></th>
-                                        <th>Largo<br><small>(Hasta Media Espalda)</small></th>
-                                        <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Retoque de Raíz</td><td>310 Bs. <small>(1cm)</small></td><td>350 Bs. <small>(3cm)</small></td><td>—</td><td>—</td></tr>
-                                    <tr><td>Matizado con masque Kérastase</td><td>180 Bs.</td><td>200 Bs.</td><td>250 Bs.</td><td>270 Bs.</td></tr>
-                                    <tr><td>Matizado Tono Sobre Tono</td><td>250 Bs.</td><td>250 Bs.</td><td>300 Bs.</td><td>300 Bs.</td></tr>
-                                    <tr><td>Tiger Eye (Sin Fondo)</td><td>450 Bs.</td><td>650 Bs.</td><td>800 Bs.</td><td>950 Bs.</td></tr>
-                                    <tr><td>Baby Lights (Sin Fondo)</td><td>450 Bs.</td><td>650 Bs.</td><td>850 Bs.</td><td>950 Bs.</td></tr>
-                                    <tr><td>Balayage Platinado</td><td>750 Bs.</td><td>950 Bs.</td><td>1.150 Bs.</td><td>1.800 Bs.</td></tr>
-                                    <tr><td>Color Global</td><td>500 Bs.</td><td>600 Bs.</td><td>700 Bs.</td><td>800 Bs.</td></tr>
-                                    <tr><td>Morena Iluminada (sin decoloración)</td><td>550 Bs.</td><td>750 Bs.</td><td>950 Bs.</td><td>1.050 Bs.</td></tr>
-                                    <tr><td>Mechas Creativas Rubias</td><td>700 Bs.</td><td>900 Bs.</td><td>1.100 Bs.</td><td>1.600 Bs.</td></tr>
-                                    <tr><td>Color de Fondo (cualquier técnica)</td><td>300 Bs.</td><td>300 Bs.</td><td>350 Bs.</td><td>350 Bs.</td></tr>
-                                    <tr><td>Metal-Detox</td><td>180 Bs.</td><td>180 Bs.</td><td>250 Bs.</td><td>250 Bs.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="price-note">* Precios previa evaluación</p>
-                    </div>
-                </div>
-
-                <!-- 3. Alisado u Ondulación -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>💫 Alisado u Ondulación</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="table-responsive">
-                            <table class="price-table">
-                                <thead>
-                                    <tr>
-                                        <th>Servicio</th>
-                                        <th>Corto</th>
-                                        <th>Mediano<br><small>(Hasta Hombros)</small></th>
-                                        <th>Largo<br><small>(Hasta Media Espalda)</small></th>
-                                        <th>Extra Largo<br><small>(Hasta Cintura)</small></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Alisado Definitivo</td><td>750 Bs.</td><td>850 Bs.</td><td>1.300 Bs.</td><td>1.600 Bs.</td></tr>
-                                    <tr><td>Ondulación o Permanente</td><td>500 Bs.</td><td>600 Bs.</td><td>700 Bs.</td><td>800 Bs.</td></tr>
-                                </tbody>
-                            </table>
+                            @if ($categoria['nota'] ?? '')
+                                <p class="price-note">{{ $categoria['nota'] }}</p>
+                            @endif
                         </div>
                     </div>
-                </div>
-
-                <!-- 4. Depilado con Cera -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>🌿 Depilado con Cera</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="table-responsive">
-                            <table class="price-table">
-                                <thead>
-                                    <tr>
-                                        <th>Servicio</th>
-                                        <th>Con Cera</th>
-                                        <th>Con Hilo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Facial</td><td>120 Bs.</td><td>80 Bs.</td></tr>
-                                    <tr><td>Pierna Completa</td><td>150 Bs.</td><td>—</td></tr>
-                                    <tr><td>Cuello</td><td>50 Bs.</td><td>—</td></tr>
-                                    <tr><td>Axilas</td><td>80 Bs.</td><td>—</td></tr>
-                                    <tr><td>Perfilado de Cejas</td><td>60 Bs.</td><td>30 Bs.</td></tr>
-                                    <tr><td>Bozo</td><td>40 Bs.</td><td>30 Bs.</td></tr>
-                                    <tr><td>Espalda</td><td>100 Bs.</td><td>—</td></tr>
-                                    <tr><td>Abdomen</td><td>80 Bs.</td><td>—</td></tr>
-                                    <tr><td>Brasilero</td><td>150 Bs.</td><td>—</td></tr>
-                                    <tr><td>Brazo</td><td>120 Bs.</td><td>—</td></tr>
-                                    <tr><td>Depilación Completa</td><td>500 Bs.</td><td>—</td></tr>
-                                    <tr><td>Biquini</td><td>100 Bs.</td><td>—</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. Maquillaje -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>💄 Maquillaje</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <ul class="price-list">
-                            <li class="price-list-item"><span>Maquillaje de Fiesta Sin Pestañas</span><span class="price-tag">150 Bs.</span></li>
-                            <li class="price-list-item"><span>Pestañas 3D / 5D / 6D</span><span class="price-tag">80 Bs.</span></li>
-                            <li class="price-list-item"><span>Cejas y Pestañas</span><span class="price-tag">120 Bs.</span></li>
-                            <li class="price-list-item"><span>Rizado de Pestañas</span><span class="price-tag">100 Bs.</span></li>
-                            <li class="price-list-item"><span>Laminado de Cejas</span><span class="price-tag">200 Bs.</span></li>
-                            <li class="price-list-item"><span>Rizado de Pestañas + Laminado de Cejas</span><span class="price-tag">Consultar</span></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- 6. Manicura & Pedicura -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>💅 Manicura & Pedicura</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <ul class="price-list">
-                            <li class="price-list-item"><span>Kit Manicura</span><span class="price-tag">60 Bs.</span></li>
-                            <li class="price-list-item"><span>Pedicura</span><span class="price-tag">60 Bs.</span></li>
-                            <li class="price-list-item"><span>Kit de Pedicura</span><span class="price-tag">80 Bs.</span></li>
-                            <li class="price-list-item"><span>Extensiones de Uñas</span><span class="price-tag">80 Bs.</span></li>
-                            <li class="price-list-item"><span>Esmaltado Normal</span><span class="price-tag">30 Bs.</span></li>
-                            <li class="price-list-item"><span>Esmaltado Normal con Diseños</span><span class="price-tag">50 Bs.</span></li>
-                            <li class="price-list-item"><span>Pintado en Gel</span><span class="price-tag">120 Bs.</span></li>
-                            <li class="price-list-item"><span>Forrado de Uñas — Técnica Dipping</span><span class="price-tag">80 Bs.</span></li>
-                            <li class="price-list-item"><span>Forrado de Acrílico con Tips</span><span class="price-tag">160 Bs.</span></li>
-                            <li class="price-list-item"><span>Uñas Esculpidas con Acrílico</span><span class="price-tag">200 Bs.</span></li>
-                            <li class="price-list-item"><span>Técnica Soft Gel</span><span class="price-tag">200 Bs.</span></li>
-                        </ul>
-                        <p class="price-note">* El precio varía de acuerdo al largo y al diseño</p>
-                    </div>
-                </div>
-
-                <!-- 7. Spa -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>🧖 Spa</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="price-list-section">
-                            <h4 class="price-subtitle">Limpiezas</h4>
-                            <ul class="price-list">
-                                <li class="price-list-item"><span>Limpieza Facial</span><span class="price-tag">150 Bs.</span></li>
-                                <li class="price-list-item"><span>Limpieza con Micro-Dermo Abrasión</span><span class="price-tag">250 Bs.</span></li>
-                            </ul>
-                        </div>
-                        <div class="price-list-section">
-                            <h4 class="price-subtitle">Masajes</h4>
-                            <ul class="price-list">
-                                <li class="price-list-item"><span>Masaje Relajante</span><span class="price-tag">150 Bs.</span></li>
-                                <li class="price-list-item"><span>Exfoliación Corporal</span><span class="price-tag">180 Bs.</span></li>
-                                <li class="price-list-item"><span>Envolvimiento Corporal</span><span class="price-tag">180 Bs.</span></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 8. Tratamientos Capilares -->
-                <div class="accordion-item">
-                    <button class="accordion-header">
-                        <span>💎 Tratamientos Capilares</span>
-                        <span class="accordion-icon">+</span>
-                    </button>
-                    <div class="accordion-content">
-                        <ul class="price-list">
-                            <li class="price-list-item"><span>Tratamiento de Lujo</span><span class="price-tag">650 Bs.</span></li>
-                            <li class="price-list-item"><span>Thermo Blindaje Capilar</span><span class="price-tag">500 Bs.</span></li>
-                            <li class="price-list-item"><span>Tratamiento Nutrición Ampolla Kérastase</span><span class="price-tag">350 Bs.</span></li>
-                            <li class="price-list-item"><span>Tratamiento 24 Kilates, Aurora Botania</span><span class="price-tag">350 Bs.</span></li>
-                            <li class="price-list-item"><span>Tratamiento Express Intenso (Shampoo + Mascarilla)</span><span class="price-tag">200 Bs.</span></li>
-                            <li class="price-list-item"><span>Tratamiento Essencial (Shampoo + Acondicionador)</span><span class="price-tag">150 Bs.</span></li>
-                        </ul>
-                    </div>
-                </div>
-
+                @endforeach
             </div><!-- /.accordion -->
 
-            <div class="catalogo-pdf-block">
-                <a href="{{ asset('pdf/CATALOGO KER JUNIO 2025.pdf') }}" target="_blank" download class="catalogo-pdf-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Descargar Catálogo Kérastase
-                </a>
-            </div>
+            @if ($serviciosWeb['catalogo_pdf'] ?? '')
+                <div class="catalogo-pdf-block">
+                    <a href="{{ asset($serviciosWeb['catalogo_pdf']) }}" target="_blank" download class="catalogo-pdf-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        {{ $serviciosWeb['catalogo_texto'] ?: 'Descargar Catálogo' }}
+                    </a>
+                </div>
+            @endif
         </div>
     </section>
 

@@ -29,11 +29,15 @@ use App\Http\Controllers\Admin\IngresosController;
 use App\Http\Controllers\Admin\GastosController;
 use App\Http\Controllers\Admin\WppSyncLogController;
 use App\Http\Controllers\Admin\SolicitudCitaController;
+use App\Http\Controllers\Admin\ContenidoWebController;
 use App\Http\Controllers\AgendarCitaController;
+use App\Models\ContenidoWeb;
 
 // Página pública
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome', [
+        'serviciosWeb' => ContenidoWeb::obtener(ContenidoWeb::SERVICIOS),
+    ]);
 })->name('home');
 
 Route::get('/nosotros', function () {
@@ -246,6 +250,13 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/niveles', [PaqueteController::class, 'storeNivel'])->name('niveles.store');
         Route::put('/niveles/{nivel}', [PaqueteController::class, 'updateNivel'])->name('niveles.update');
         Route::delete('/niveles/{nivel}', [PaqueteController::class, 'destroyNivel'])->name('niveles.destroy');
+    });
+
+    // Contenido de la página pública (solo admin)
+    Route::middleware('role:admin')->prefix('contenido-web')->name('contenido-web.')->group(function () {
+        Route::get('/servicios', [ContenidoWebController::class, 'servicios'])->name('servicios');
+        Route::put('/servicios', [ContenidoWebController::class, 'updateServicios'])->name('servicios.update');
+        Route::delete('/servicios', [ContenidoWebController::class, 'restaurarServicios'])->name('servicios.restaurar');
     });
 
     // Auditoría API WPP / WhatsApp (solo admin)

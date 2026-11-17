@@ -178,6 +178,11 @@
                                 <span class="nav-icon">🏷️</span>
                                 <span>Descuentos & Cupones</span>
                             </a>
+                            <a href="{{ route('admin.contenido-web.servicios') }}"
+                                class="nav-item {{ request()->routeIs('admin.contenido-web.*') ? 'active' : '' }}">
+                                <span class="nav-icon">🌐</span>
+                                <span>Web: Servicios y Precios</span>
+                            </a>
                         @endif
                     @endif
 
