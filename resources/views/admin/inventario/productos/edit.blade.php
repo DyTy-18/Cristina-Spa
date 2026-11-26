@@ -39,19 +39,7 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="marca">Marca</label>
-                        <input type="text" id="marca" name="marca"
-                               class="form-control" value="{{ old('marca', $producto->marca) }}">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="linea">Línea</label>
-                        <input type="text" id="linea" name="linea"
-                               class="form-control" value="{{ old('linea', $producto->linea) }}">
-                    </div>
-                </div>
+                @include('admin.inventario.productos._marca_linea', ['marcaActual' => old('marca', $producto->marca), 'lineaActual' => old('linea', $producto->linea)])
 
                 <div class="form-row">
                     <div class="form-group">

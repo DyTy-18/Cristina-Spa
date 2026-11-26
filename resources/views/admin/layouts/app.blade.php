@@ -105,9 +105,14 @@
 
                         @if (auth()->user()->hasPermissionTo('ver clientes'))
                             <a href="{{ route('admin.clientes.index') }}"
-                                class="nav-item {{ request()->routeIs('admin.clientes.*') ? 'active' : '' }}">
+                                class="nav-item {{ request()->routeIs('admin.clientes.*') && ! request()->routeIs('admin.clientes.cumpleanos*') ? 'active' : '' }}">
                                 <span class="nav-icon">👥</span>
                                 <span>Clientes</span>
+                            </a>
+                            <a href="{{ route('admin.clientes.cumpleanos') }}"
+                                class="nav-item nav-subitem {{ request()->routeIs('admin.clientes.cumpleanos*') ? 'active' : '' }}">
+                                <span class="nav-icon">🎂</span>
+                                <span>Cumpleaños</span>
                             </a>
                         @endif
 

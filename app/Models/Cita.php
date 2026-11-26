@@ -134,6 +134,11 @@ class Cita extends Model
         return $this->hasMany(SeguimientoProducto::class);
     }
 
+    public function seguimientoFotos()
+    {
+        return $this->hasMany(SeguimientoFoto::class)->latest();
+    }
+
     /**
      * Scope para citas pendientes
      */

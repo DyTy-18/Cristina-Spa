@@ -5,24 +5,19 @@
 
 @push('styles')
 <style>
-    .seg-tabs {
-        display: flex;
-        border-bottom: 1px solid rgba(0,0,0,0.08);
-    }
-    .seg-tab {
-        padding: 0.6rem 1.1rem;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.8rem;
-        font-weight: 300;
-        color: var(--text-light);
-        background: var(--light-bg);
-        border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-    .seg-tab:hover:not(.active) { color: var(--text-dark); }
-    .seg-tab.active { color: var(--primary-color); border-bottom-color: var(--accent-color); background: var(--white); font-weight: 500; }
+    .seg-fotos-form { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) auto; gap: 0.75rem;
+                      align-items: end; margin-bottom: 1.25rem; }
+    .seg-fotos-form .form-label { display: block; }
+    .seg-fotos-form .btn { white-space: nowrap; }
+    @media (max-width: 760px) { .seg-fotos-form { grid-template-columns: 1fr; } }
+
+    .seg-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .seg-file-picker { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0; min-width: 0; }
+    .seg-file-btn { flex: none; font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;
+                    color: var(--primary-color); border: 1px solid var(--primary-color); padding: 0.2rem 0.6rem; }
+    .seg-file-picker:hover .seg-file-btn { background: var(--primary-color); color: var(--white); }
+    .seg-file-nombre { font-size: 0.82rem; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seg-file-nombre.elegido { color: var(--text-dark); }
 </style>
 @endpush
 
@@ -62,145 +57,169 @@
         </div>
     </div>
 
-    {{-- Productos de los servicios (informativo) --}}
+    {{-- Productos usados en la cita: se registran a mano, uno por uno (nada se aplica solo) --}}
+    @php
+        $fmtG = fn ($g) => rtrim(rtrim(number_format((float) $g, 2, '.', ''), '0'), '.');
+    @endphp
     <div class="card" style="margin-bottom:1.5rem;">
         <div class="card-header">
-            <h3 class="card-title">Productos de los servicios</h3>
+            <h3 class="card-title">Productos usados en esta cita</h3>
         </div>
         <div class="card-body">
-            @if($productosDeServicios->isEmpty())
-                <p style="color:var(--text-light);font-size:0.88rem;font-style:italic;margin:0;">
-                    Los servicios de esta cita no tienen productos asociados.
+            @if($productosDeServicios->isNotEmpty())
+                <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:1rem;">
+                    Sugeridos por los servicios:
+                    @foreach($productosDeServicios as $p)
+                        <span style="display:inline-block;background:var(--light-bg);border:1px solid rgba(0,0,0,0.08);padding:0.15rem 0.55rem;margin:0.15rem 0.2rem 0 0;font-size:0.78rem;color:var(--text-dark);">{{ $p->nombre }}</span>
+                    @endforeach
+                </div>
+            @endif
+
+            {{-- Registrar el uso de un producto de seguimiento --}}
+            @if($catalogoProductos->isEmpty())
+                <p style="color:var(--text-light);font-size:0.85rem;font-style:italic;margin:0 0 1rem;">
+                    No hay productos marcados como "Seguimiento" en el inventario de esta sucursal.
                 </p>
             @else
-                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                    @foreach($productosDeServicios as $p)
-                        <span style="display:inline-block;background:var(--light-bg);border:1px solid rgba(0,0,0,0.08);padding:0.35rem 0.7rem;font-size:0.82rem;">
-                            {{ $p->nombre }}
-                        </span>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    </div>
-
-    {{-- Productos en seguimiento --}}
-    <div class="card" style="margin-bottom:1.5rem;">
-        <div class="card-header">
-            <h3 class="card-title">Productos en seguimiento</h3>
-            <button type="button" class="btn btn-primary btn-sm" onclick="toggleAddProductoForm()">+ Añadir producto</button>
-        </div>
-        <div class="card-body">
-            @if($cita->seguimientoProductos->isEmpty())
-                <p id="segProductosEmpty" style="color:var(--text-light);font-size:0.88rem;font-style:italic;">
-                    Aún no se agregaron productos a este seguimiento.
+                <form action="{{ route('admin.citas.seguimiento.productos.store', $cita) }}" method="POST"
+                      style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:0.5rem;">
+                    @csrf
+                    <input type="hidden" name="modo" value="existente">
+                    <div class="form-group" style="margin:0;flex:1;min-width:240px;">
+                        <label class="form-label">Producto usado</label>
+                        <select name="producto_id" id="segProductoSelect" class="form-control" required onchange="segActualizarPeso()">
+                            <option value="">— Elegir producto —</option>
+                            @foreach($catalogoProductos as $p)
+                                <option value="{{ $p->id }}" data-peso="{{ (float) $p->peso_gramos }}"
+                                        {{ old('producto_id') == $p->id ? 'selected' : '' }}>
+                                    {{ $p->nombre }}@if($p->marca) — {{ $p->marca }}@endif ({{ $fmtG($p->peso_gramos) }} g · stock {{ $p->stock_actual }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label">Gramos usados</label>
+                        <input type="number" name="gramos" class="form-control" step="0.01" min="0.01" required
+                               value="{{ old('gramos') }}" placeholder="Ej: 50" style="max-width:130px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Registrar uso</button>
+                </form>
+                <p style="font-size:0.75rem;color:var(--text-light);margin:0 0 1.25rem;">
+                    <span id="segPesoHint"></span>
+                    Los gramos se acumulan: cada vez que se completa el peso de una unidad, se descuenta 1 del inventario.
                 </p>
             @endif
 
-            <table class="data-table" id="segProductosTable" style="{{ $cita->seguimientoProductos->isEmpty() ? 'display:none;' : '' }}">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad usada</th>
-                        <th>Origen</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($cita->seguimientoProductos as $sp)
+            {{-- Lo registrado en esta cita --}}
+            @if($cita->seguimientoProductos->isEmpty())
+                <p style="color:var(--text-light);font-size:0.88rem;font-style:italic;margin:0;">
+                    Todavía no se registró ningún producto en esta cita.
+                </p>
+            @else
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td>{{ $sp->nombre }}</td>
-                            <td>
-                                @if($sp->gramos)
-                                    {{ rtrim(rtrim(number_format($sp->gramos, 2, '.', ''), '0'), '.') }} g
-                                    @if($sp->producto?->peso_gramos)
-                                        <span style="font-size:0.75rem;color:var(--text-light);">
-                                            de {{ rtrim(rtrim(number_format($sp->producto->peso_gramos, 2, '.', ''), '0'), '.') }} g
-                                        </span>
-                                    @endif
-                                @else
-                                    <span style="color:var(--text-light);">—</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($sp->producto_id || $sp->producto_catalogo_id)
-                                    <span style="font-size:0.75rem;color:var(--text-light);">Inventario</span>
-                                @else
-                                    <span style="font-size:0.75rem;color:var(--accent-color);">Exclusivo de este cliente</span>
-                                @endif
-                            </td>
-                            <td>
-                                <form action="{{ route('admin.citas.seguimiento.productos.destroy', [$cita, $sp]) }}" method="POST"
-                                      style="display:inline;" onsubmit="return confirm('¿Quitar este producto del seguimiento?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline btn-sm">Quitar</button>
-                                </form>
-                            </td>
+                            <th>Producto</th>
+                            <th>Cantidad usada</th>
+                            <th>Origen</th>
+                            <th></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($cita->seguimientoProductos as $sp)
+                            <tr>
+                                <td>{{ $sp->nombre }}</td>
+                                <td>
+                                    @if($sp->gramos)
+                                        {{ $fmtG($sp->gramos) }} g
+                                        @if($sp->producto?->peso_gramos)
+                                            <span style="font-size:0.75rem;color:var(--text-light);">de {{ $fmtG($sp->producto->peso_gramos) }} g</span>
+                                        @endif
+                                    @else
+                                        <span style="color:var(--text-light);">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($sp->producto_id || $sp->producto_catalogo_id)
+                                        <span style="font-size:0.75rem;color:var(--text-light);">Inventario</span>
+                                    @else
+                                        <span style="font-size:0.75rem;color:var(--accent-color);">Exclusivo de este cliente</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <form action="{{ route('admin.citas.seguimiento.productos.destroy', [$cita, $sp]) }}" method="POST"
+                                          style="display:inline;" onsubmit="return confirm('¿Quitar este producto? Si descontó stock, se devuelve.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline btn-sm">Quitar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
 
-            {{-- Formulario agregar producto --}}
-            <div id="addProductoForm" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid rgba(0,0,0,0.06);">
-                <div class="seg-tabs" style="margin-bottom:1rem;">
-                    <button type="button" class="seg-tab active" id="segTabExistente" onclick="segSwitchModo('existente')">Producto existente</button>
-                    <button type="button" class="seg-tab" id="segTabNuevo" onclick="segSwitchModo('nuevo')">Crear nuevo</button>
-                </div>
-
-                <form action="{{ route('admin.citas.seguimiento.productos.store', $cita) }}" method="POST">
+            {{-- Producto exclusivo del cliente (nota, no descuenta inventario) --}}
+            <div style="margin-top:1rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddProductoForm()">+ Producto exclusivo de la clienta</button>
+            </div>
+            <div id="addProductoForm" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,0.06);">
+                <form action="{{ route('admin.citas.seguimiento.productos.store', $cita) }}" method="POST"
+                      style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
                     @csrf
-                    <input type="hidden" name="modo" id="segModoInput" value="existente">
-
-                    <div id="segPanelExistente">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Producto de seguimiento</label>
-                                <select name="producto_id" id="segProductoSelect" class="form-control" onchange="segActualizarPeso()">
-                                    <option value="">— seleccionar producto —</option>
-                                    @foreach($catalogoProductos as $p)
-                                        <option value="{{ $p->id }}" data-peso="{{ (float) $p->peso_gramos }}"
-                                                {{ old('producto_id') == $p->id ? 'selected' : '' }}>
-                                            {{ $p->nombre }} ({{ rtrim(rtrim(number_format($p->peso_gramos, 2, '.', ''), '0'), '.') }} g · Stock: {{ $p->stock_actual }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @if($catalogoProductos->isEmpty())
-                                    <small style="font-size:0.78rem;color:var(--text-light);">
-                                        No hay productos marcados como "Seguimiento" en el inventario de esta sucursal.
-                                    </small>
-                                @endif
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Cantidad usada (gramos)</label>
-                                <input type="number" name="gramos" id="segGramosInput" class="form-control"
-                                       step="0.01" min="0.01" value="{{ old('gramos') }}" placeholder="Ej: 50">
-                                <small id="segPesoHint" style="font-size:0.78rem;color:var(--text-light);"></small>
-                            </div>
-                        </div>
-                        <p style="font-size:0.78rem;color:var(--text-light);margin:0;">
-                            Los gramos se acumulan: cada vez que se completa el peso de una unidad, se descuenta 1 del inventario.
-                        </p>
-                    </div>
-
-                    <div id="segPanelNuevo" class="form-group" style="display:none;">
+                    <input type="hidden" name="modo" value="nuevo">
+                    <div class="form-group" style="margin:0;flex:1;min-width:240px;">
                         <label class="form-label">Nombre del producto</label>
                         <input type="text" name="nombre" class="form-control" placeholder="Ej: Mascarilla capilar de prueba">
-                        <p style="font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;">
-                            Es una nota exclusiva de este cliente, no crea un producto en el catálogo. Para vender un producto
-                            real, primero debe existir en Inventario.
-                        </p>
                     </div>
-
-                    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-                        <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddProductoForm()">Cancelar</button>
-                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddProductoForm()">Cancelar</button>
                 </form>
+                <p style="font-size:0.75rem;color:var(--text-light);margin:0.5rem 0 0;">
+                    Queda como nota en el seguimiento de la clienta; no descuenta inventario.
+                </p>
             </div>
         </div>
     </div>
+
+    {{-- Fotos del resultado (álbum de la clienta) --}}
+    @if($cita->cliente)
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+            <h3 class="card-title">Fotos del resultado</h3>
+            <a href="{{ route('admin.clientes.album', $cita->cliente) }}" class="btn btn-outline btn-sm">Ver álbum de la clienta</a>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('admin.citas.seguimiento.fotos.store', $cita) }}" method="POST" enctype="multipart/form-data"
+                  class="seg-fotos-form">
+                @csrf
+                <div>
+                    <label class="form-label">Fotos (hasta 10)</label>
+                    <label class="form-control seg-file-picker" for="segFotosInput">
+                        <span class="seg-file-btn">Elegir fotos</span>
+                        <span id="segFotosNombre" class="seg-file-nombre">Ninguna seleccionada</span>
+                    </label>
+                    <input type="file" id="segFotosInput" name="fotos[]" accept="image/jpeg,image/png,image/webp" multiple required
+                           class="seg-file-input" onchange="segFotosElegidas(this)">
+                </div>
+                <div>
+                    <label class="form-label" for="segFotosDesc">Descripción (opcional)</label>
+                    <input type="text" id="segFotosDesc" name="descripcion" class="form-control" maxlength="255" placeholder="Ej: Balayage terminado, vista lateral">
+                </div>
+                <button type="submit" class="btn btn-primary">Subir fotos</button>
+            </form>
+
+            @if($cita->seguimientoFotos->isEmpty())
+                <p style="color:var(--text-light);font-size:0.88rem;font-style:italic;margin:0;">
+                    Aún no se subieron fotos de esta cita.
+                </p>
+            @else
+                @include('admin.clientes._fotos_grid', ['fotos' => $cita->seguimientoFotos])
+            @endif
+        </div>
+    </div>
+    @endif
 
     {{-- Notas de seguimiento --}}
     <div class="card">
@@ -244,25 +263,24 @@
         form.style.display = form.style.display === 'none' ? '' : 'none';
     }
 
-    function segSwitchModo(modo) {
-        document.getElementById('segModoInput').value = modo;
-        document.getElementById('segTabExistente').classList.toggle('active', modo === 'existente');
-        document.getElementById('segTabNuevo').classList.toggle('active', modo === 'nuevo');
-        document.getElementById('segPanelExistente').style.display = modo === 'existente' ? '' : 'none';
-        document.getElementById('segPanelNuevo').style.display     = modo === 'nuevo' ? '' : 'none';
+    function segFotosElegidas(input) {
+        const n = input.files.length;
+        const el = document.getElementById('segFotosNombre');
+        el.textContent = n === 0 ? 'Ninguna seleccionada' : (n === 1 ? input.files[0].name : `${n} fotos seleccionadas`);
+        el.classList.toggle('elegido', n > 0);
     }
 
     function segActualizarPeso() {
-        const opt  = document.getElementById('segProductoSelect').selectedOptions[0];
+        const sel = document.getElementById('segProductoSelect');
+        const opt = sel ? sel.selectedOptions[0] : null;
         const peso = opt ? parseFloat(opt.dataset.peso || 0) : 0;
-        document.getElementById('segPesoHint').textContent = peso ? `1 unidad = ${peso} g` : '';
+        const hint = document.getElementById('segPesoHint');
+        if (hint) hint.textContent = peso ? `1 unidad = ${peso} g. ` : '';
     }
+    document.addEventListener('DOMContentLoaded', segActualizarPeso);
 
-    @if($errors->any())
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleAddProductoForm();
-            segActualizarPeso();
-        });
+    @if($errors->has('nombre'))
+        document.addEventListener('DOMContentLoaded', toggleAddProductoForm);
     @endif
 </script>
 @endpush

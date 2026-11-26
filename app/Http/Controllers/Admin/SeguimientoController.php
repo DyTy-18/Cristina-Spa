@@ -22,6 +22,7 @@ class SeguimientoController extends Controller
             'citaServicios.servicio.productosInventario',
             'seguimientoNotas.user',
             'seguimientoProductos.producto',
+            'seguimientoFotos',
         ]);
 
         $productosDeServicios = $cita->citaServicios

@@ -733,6 +733,10 @@
             <a href="{{ route('admin.contratos.index', ['cliente_id' => $cliente->id]) }}" class="btn btn-sm btn-outline">
                 📋 Contratos
             </a>
+            @php $totalFotos = $cliente->fotos()->count(); @endphp
+            <a href="{{ route('admin.clientes.album', $cliente) }}" class="btn btn-sm btn-outline">
+                📷 Álbum{{ $totalFotos ? " ({$totalFotos})" : '' }}
+            </a>
             @can('editar clientes')
                 <button type="button" class="btn btn-sm btn-outline" onclick="generarEnlaceRecomendacion()"
                         id="btnGenRecomendacion" data-url="{{ route('admin.clientes.recomendacion.generar', $cliente) }}">

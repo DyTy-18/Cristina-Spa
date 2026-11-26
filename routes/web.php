@@ -118,10 +118,20 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/notas', [\App\Http\Controllers\Admin\SeguimientoController::class, 'storeNota'])->name('notas.store');
         Route::post('/productos', [\App\Http\Controllers\Admin\SeguimientoController::class, 'storeProducto'])->name('productos.store');
         Route::delete('/productos/{seguimientoProducto}', [\App\Http\Controllers\Admin\SeguimientoController::class, 'destroyProducto'])->name('productos.destroy');
+        Route::post('/fotos', [\App\Http\Controllers\Admin\SeguimientoFotoController::class, 'store'])->name('fotos.store');
     });
+
+    // Álbum de fotos de resultados por clienta (archivos privados, servidos solo a usuarios autenticados)
+    Route::get('/seguimiento-fotos/{foto}', [\App\Http\Controllers\Admin\SeguimientoFotoController::class, 'ver'])->name('seguimiento-fotos.ver');
+    Route::delete('/seguimiento-fotos/{foto}', [\App\Http\Controllers\Admin\SeguimientoFotoController::class, 'destroy'])->name('seguimiento-fotos.destroy');
+    Route::get('/clientes/{cliente}/album', [\App\Http\Controllers\Admin\SeguimientoFotoController::class, 'album'])->name('clientes.album');
 
     // Clientes
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+    Route::middleware('permission:ver clientes')->group(function () {
+        Route::get('/clientes/cumpleanos', [\App\Http\Controllers\Admin\CumpleanosController::class, 'index'])->name('clientes.cumpleanos');
+        Route::get('/clientes/cumpleanos/datos', [\App\Http\Controllers\Admin\CumpleanosController::class, 'datos'])->name('clientes.cumpleanos.datos');
+    });
     Route::get('/clientes/{cliente}/historial', [ClienteController::class, 'show'])->name('clientes.show');
     Route::get('/clientes/ocultos', [ClienteController::class, 'ocultos'])->name('clientes.ocultos');
     Route::middleware('permission:crear clientes')->group(function () {

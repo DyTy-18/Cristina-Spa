@@ -38,16 +38,24 @@
                     @csrf
                     @include('admin.partials.sucursal_selector')
 
+                    @include('admin.inventario._filtro_producto')
+
                     <div class="form-group">
                         <label class="form-label" for="producto_id">Producto (reventa) *</label>
                         <select id="producto_id" name="producto_id" class="form-control" required>
                             <option value="">— Seleccionar producto —</option>
                             @foreach ($productos as $producto)
                                 <option value="{{ $producto->id }}"
+                                        data-nombre="{{ $producto->nombre }}"
+                                        data-codigo="{{ $producto->codigo_barras }}"
+                                        data-marca="{{ $producto->marca ?? '' }}"
+                                        data-linea="{{ $producto->linea ?? '' }}"
+                                        data-tipo="{{ $producto->tipo ?? '' }}"
                                         data-stock="{{ $producto->stock_actual }}"
                                     {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
                                     {{ $producto->nombre }}
                                     @if ($producto->marca) — {{ $producto->marca }} @endif
+                                    @if ($producto->linea) / {{ $producto->linea }} @endif
                                     ({{ $producto->codigo_barras }})@if ($modoGlobal ?? false) · {{ $producto->sucursal->nombre ?? 'Sin sucursal' }}@endif
                                 </option>
                             @endforeach

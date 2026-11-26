@@ -30,7 +30,7 @@
                    placeholder="Buscar por nombre o código..."
                    value="{{ $q ?? '' }}">
 
-            <select name="marca" class="filter-date" onchange="this.form.submit()"
+            <select name="marca" class="filter-date"
                     style="min-width:140px;">
                 <option value="">Todas las marcas</option>
                 @foreach ($marcas as $m)
@@ -117,3 +117,5 @@
         @endif
     </div>
 @endsection
+
+@include('admin.inventario._filtro_live')

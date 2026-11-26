@@ -59,6 +59,18 @@ class Cliente extends Model
         return $this->belongsTo(Empleado::class, 'empleado_exclusivo_id');
     }
 
+    protected static function booted(): void
+    {
+        // El cascade de la BD borra las filas pero no los archivos: se borran foto a foto.
+        static::deleting(fn (Cliente $cliente) => $cliente->fotos()->get()->each->delete());
+    }
+
+    /** Álbum de fotos de resultados (subidas desde el seguimiento de sus citas). */
+    public function fotos()
+    {
+        return $this->hasMany(SeguimientoFoto::class)->latest();
+    }
+
     public function citas()
     {
         return $this->hasMany(Cita::class);
