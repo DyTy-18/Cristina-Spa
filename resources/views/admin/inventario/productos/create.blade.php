@@ -31,12 +31,7 @@
                                placeholder="Ej: 7501234567890" required>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="nombre">Nombre del Producto *</label>
-                        <input type="text" id="nombre" name="nombre"
-                               class="form-control" value="{{ old('nombre') }}"
-                               placeholder="Ej: Shampoo Hidratante" required>
-                    </div>
+                    @include('admin.inventario.productos._nombre', ['nombreActual' => old('nombre')])
                 </div>
 
                 @include('admin.inventario.productos._marca_linea', ['marcaActual' => old('marca'), 'lineaActual' => old('linea')])

@@ -10,9 +10,9 @@ use App\Models\Producto;
 use App\Models\Salida;
 use App\Models\ServicioMaterial;
 use App\Models\Sucursal;
+use App\Services\RestaurarBackupInventario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -38,8 +38,12 @@ class InventarioController extends Controller
             ->select([
                 'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.costo', 'p.stock_minimo', 'p.es_reventa',
                 'p.tipo', 'p.peso_gramos', 'p.sucursal_id', 'su.nombre as sucursal_nombre',
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE entradas.producto_id = p.id AND tipo_stock = '{$tipoStock}') AS total_entradas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE salidas.producto_id = p.id AND tipo_stock = '{$tipoStock}') AS total_salidas"),
+                // Entradas/salidas reales (compras, consumos, ventas); las transferencias entre
+                // técnico y reventa van aparte con su saldo neto (+ recibido, − enviado).
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE entradas.producto_id = p.id AND tipo_stock = '{$tipoStock}' AND es_transferencia = 0) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE salidas.producto_id = p.id AND tipo_stock = '{$tipoStock}' AND es_transferencia = 0) AS total_salidas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE entradas.producto_id = p.id AND tipo_stock = '{$tipoStock}' AND es_transferencia = 1)"
+                    . " - (SELECT COALESCE(SUM(unidades),0) FROM salidas WHERE salidas.producto_id = p.id AND tipo_stock = '{$tipoStock}' AND es_transferencia = 1) AS total_transferencias"),
                 DB::raw(Producto::stockSql($tipoStock, 'p') . ' AS stock_actual'),
             ])
             ->orderBy('p.nombre');
@@ -121,7 +125,8 @@ class InventarioController extends Controller
         }
 
         $validated = $request->validate([
-            'codigo_barras'       => ['required', 'string', 'max:100', Rule::unique('productos', 'codigo_barras')->where('sucursal_id', $sid)],
+            // Un mismo código de barras puede corresponder a varios productos.
+            'codigo_barras'       => 'required|string|max:100',
             'nombre'              => 'required|string|max:255',
             'marca'               => 'nullable|string|max:100',
             'linea'               => 'nullable|string|max:100',
@@ -134,7 +139,6 @@ class InventarioController extends Controller
             'unidades_iniciales'  => 'nullable|integer|min:0',
             'fecha_inicial'       => 'nullable|date',
         ], [
-            'codigo_barras.unique' => 'Ese código de barras ya está registrado en esta sucursal.',
             'tipo.required_if'     => 'Elige el tipo del producto de reventa (vitrina, seguimiento o genérico).',
         ]);
         [$esReventa, $tipo, $peso] = $this->catalogoYTipo($request, $validated);
@@ -182,10 +186,7 @@ class InventarioController extends Controller
         $this->autorizarSucursal($producto);
 
         $validated = $request->validate([
-            'codigo_barras' => [
-                'required', 'string', 'max:100',
-                Rule::unique('productos', 'codigo_barras')->where('sucursal_id', $producto->sucursal_id)->ignore($producto->id),
-            ],
+            'codigo_barras' => 'required|string|max:100',
             'nombre'        => 'required|string|max:255',
             'marca'         => 'nullable|string|max:100',
             'linea'         => 'nullable|string|max:100',
@@ -196,7 +197,6 @@ class InventarioController extends Controller
             'tipo'          => 'nullable|required_if:es_reventa,1|in:vitrina,seguimiento,generico',
             'peso_gramos'   => 'nullable|numeric|min:0.01',
         ], [
-            'codigo_barras.unique' => 'Ese código de barras ya está registrado en esta sucursal.',
             'tipo.required_if'     => 'Elige el tipo del producto de reventa (vitrina, seguimiento o genérico).',
         ]);
         [$validated['es_reventa'], $validated['tipo'], $validated['peso_gramos']] = $this->catalogoYTipo($request, $validated);
@@ -373,13 +373,18 @@ class InventarioController extends Controller
 
     // ─── Reventa (segundo inventario, alimentado por transferencias) ──────────
 
-    public function createTransferencia()
+    public function createTransferencia(Request $request)
     {
         // Cualquier producto técnico con stock en la sucursal activa se puede transferir;
         // no hace falta que ya esté marcado como "de reventa" (la transferencia lo habilita).
-        $productos  = $this->productosConStock('tecnico');
+        // Sin stock técnico no hay nada que transferir, así que no se lista.
+        $productos  = $this->productosConStock('tecnico')->filter(fn ($p) => $p->stock_actual > 0)->values();
         $sucursales = $this->sucursalesActivas();
-        return view('admin.inventario.reventa.transferir', compact('productos', 'sucursales'));
+        // Botón "Transferir" de una fila del stock: llega con el producto ya elegido.
+        $productoInicial = $request->integer('producto_id') ?: null;
+        $sucursalInicial = $productos->firstWhere('id', $productoInicial)?->sucursal_id;
+
+        return view('admin.inventario.reventa.transferir', compact('productos', 'sucursales', 'productoInicial', 'sucursalInicial'));
     }
 
     public function storeTransferencia(Request $request)
@@ -388,22 +393,38 @@ class InventarioController extends Controller
             'producto_id' => 'required|integer|exists:productos,id',
             'unidades'    => 'required|integer|min:1',
             'fecha'       => 'required|date',
+            'tipo'        => 'required|in:' . implode(',', array_keys(Producto::TIPOS)),
+            'peso_gramos' => 'nullable|required_if:tipo,' . Producto::TIPO_SEGUIMIENTO . '|numeric|min:0.01',
+        ], [
+            'tipo.required'           => 'Elige si el producto va a reventa como vitrina, seguimiento o genérico.',
+            'peso_gramos.required_if' => 'Indica el peso en gramos del producto (se usa para descontar el inventario en seguimiento).',
         ]);
 
         $producto = $this->productoDelFormulario($request);
-        $disponible = $producto->stock('tecnico');
-        if ($producto->es_reventa && $disponible <= 0) {
-            return back()->withErrors(['producto_id' => 'Ese producto ya es de reventa: carga su stock con una entrada de reventa.'])->withInput();
-        }
 
-        if ($validated['unidades'] > $disponible) {
-            return back()->withErrors(['unidades' => "Stock técnico insuficiente: disponible {$disponible}."])->withInput();
-        }
+        // El stock se comprueba con el producto bloqueado: dos envíos seguidos (doble clic)
+        // no pueden transferir más de lo que hay.
+        $disponible = DB::transaction(function () use ($validated, $producto) {
+            Producto::whereKey($producto->id)->lockForUpdate()->first();
+            $disponible = $producto->stock('tecnico');
 
-        DB::transaction(function () use ($validated, $producto) {
+            if ($disponible <= 0) {
+                throw ValidationException::withMessages([
+                    'producto_id' => $producto->es_reventa
+                        ? 'Ese producto ya no tiene stock técnico: carga su stock de reventa con una entrada de reventa.'
+                        : 'Ese producto no tiene stock técnico para transferir.',
+                ]);
+            }
+            if ($validated['unidades'] > $disponible) {
+                throw ValidationException::withMessages([
+                    'unidades' => "Stock técnico insuficiente: disponible {$disponible}.",
+                ]);
+            }
+
             Salida::create([
                 'producto_id' => $producto->id,
                 'tipo_stock'  => 'tecnico',
+                'es_transferencia' => true,
                 'unidades'    => $validated['unidades'],
                 'fecha'       => $validated['fecha'],
                 'destino'     => 'Transferencia a reventa',
@@ -412,15 +433,22 @@ class InventarioController extends Controller
             Entrada::create([
                 'producto_id' => $producto->id,
                 'tipo_stock'  => 'reventa',
+                'es_transferencia' => true,
                 'unidades'    => $validated['unidades'],
                 'fecha'       => $validated['fecha'],
             ]);
 
-            // La primera transferencia convierte el producto en vitrina (entra al catálogo de
-            // reventa). Lo que quede en stock técnico sigue visible en el catálogo técnico.
-            if (! $producto->es_reventa) {
-                $producto->update(['es_reventa' => true, 'tipo' => Producto::TIPO_VITRINA, 'peso_gramos' => null]);
-            }
+            // La transferencia deja el producto en el catálogo de reventa con el tipo elegido
+            // (en un producto que ya era de reventa, lo cambia). Lo que quede en stock técnico
+            // sigue visible en el catálogo técnico.
+            $esSeguimiento = $validated['tipo'] === Producto::TIPO_SEGUIMIENTO;
+            $producto->update([
+                'es_reventa'  => true,
+                'tipo'        => $validated['tipo'],
+                'peso_gramos' => $esSeguimiento ? $validated['peso_gramos'] : null,
+            ]);
+
+            return $disponible;
         });
 
         $restante = $disponible - $validated['unidades'];
@@ -428,6 +456,73 @@ class InventarioController extends Controller
             . ($restante > 0 ? " Quedan {$restante} uds. en stock técnico." : '');
 
         return redirect()->route('admin.inventario.index', ['tipo' => 'reventa'])
+            ->with('success', $mensaje);
+    }
+
+    /** Transferencia inversa: devuelve unidades del stock de reventa al técnico. */
+    public function createTransferenciaTecnico(Request $request)
+    {
+        $productos  = $this->productosConStock('reventa')->filter(fn ($p) => $p->stock_actual > 0)->values();
+        $sucursales = $this->sucursalesActivas();
+        $productoInicial = $request->integer('producto_id') ?: null;
+        $sucursalInicial = $productos->firstWhere('id', $productoInicial)?->sucursal_id;
+
+        return view('admin.inventario.reventa.transferir_tecnico', compact('productos', 'sucursales', 'productoInicial', 'sucursalInicial'));
+    }
+
+    public function storeTransferenciaTecnico(Request $request)
+    {
+        $validated = $request->validate([
+            'producto_id' => 'required|integer|exists:productos,id',
+            'unidades'    => 'required|integer|min:1',
+            'fecha'       => 'required|date',
+        ]);
+
+        $producto = $this->productoDelFormulario($request);
+
+        // Mismo bloqueo que la transferencia a reventa: no se devuelve más de lo que hay.
+        $disponible = DB::transaction(function () use ($validated, $producto) {
+            Producto::whereKey($producto->id)->lockForUpdate()->first();
+            $disponible = $producto->stock('reventa');
+
+            if (! $producto->es_reventa || $disponible <= 0) {
+                throw ValidationException::withMessages([
+                    'producto_id' => 'Ese producto no tiene stock de reventa para transferir.',
+                ]);
+            }
+            if ($validated['unidades'] > $disponible) {
+                throw ValidationException::withMessages([
+                    'unidades' => "Stock de reventa insuficiente: disponible {$disponible}.",
+                ]);
+            }
+
+            Salida::create([
+                'producto_id' => $producto->id,
+                'tipo_stock'  => 'reventa',
+                'es_transferencia' => true,
+                'unidades'    => $validated['unidades'],
+                'fecha'       => $validated['fecha'],
+                'destino'     => 'Transferencia a técnico',
+            ]);
+
+            Entrada::create([
+                'producto_id' => $producto->id,
+                'tipo_stock'  => 'tecnico',
+                'es_transferencia' => true,
+                'unidades'    => $validated['unidades'],
+                'fecha'       => $validated['fecha'],
+            ]);
+
+            // El producto sigue siendo de reventa (con su tipo); su stock técnico lo hace
+            // visible también en el catálogo técnico (ver Producto::catalogoSql).
+            return $disponible;
+        });
+
+        $restante = $disponible - $validated['unidades'];
+        $mensaje  = 'Transferencia a técnico registrada.'
+            . ($restante > 0 ? " Quedan {$restante} uds. en stock de reventa." : ' El stock de reventa quedó en 0.');
+
+        return redirect()->route('admin.inventario.index', ['tipo' => 'tecnico'])
             ->with('success', $mensaje);
     }
 
@@ -507,10 +602,11 @@ class InventarioController extends Controller
         $query = DB::table('productos as p')
             ->select([
                 'p.id', 'p.codigo_barras', 'p.nombre', 'p.marca', 'p.linea', 'p.stock_minimo', 'p.tipo',
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE entradas.producto_id = p.id AND tipo_stock = 'tecnico'{$entFiltro}) AS total_entradas"),
-                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE salidas.producto_id = p.id AND tipo_stock = 'tecnico'{$salFiltro}) AS total_salidas"),
+                // Las transferencias a/desde reventa no son compras ni consumos: no cuentan.
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM entradas WHERE entradas.producto_id = p.id AND tipo_stock = 'tecnico' AND es_transferencia = 0{$entFiltro}) AS total_entradas"),
+                DB::raw("(SELECT COALESCE(SUM(unidades),0) FROM salidas  WHERE salidas.producto_id = p.id AND tipo_stock = 'tecnico' AND es_transferencia = 0{$salFiltro}) AS total_salidas"),
                 DB::raw(Producto::stockSql('tecnico', 'p') . ' AS stock_actual'),
-                DB::raw("(SELECT MAX(fecha) FROM salidas WHERE salidas.producto_id = p.id AND tipo_stock = 'tecnico') AS ultima_salida"),
+                DB::raw("(SELECT MAX(fecha) FROM salidas WHERE salidas.producto_id = p.id AND tipo_stock = 'tecnico' AND es_transferencia = 0) AS ultima_salida"),
             ])
             ->when($sid, fn ($q) => $q->where('p.sucursal_id', $sid))
             ->whereRaw(Producto::catalogoSql('tecnico', 'p'))
@@ -562,6 +658,7 @@ class InventarioController extends Controller
                 $histQuery = DB::table('salidas as s')
                     ->selectRaw("s.producto_id, SUM(s.unidades) as hist_total, COUNT(DISTINCT substr(s.fecha, 1, 4)) as hist_años")
                     ->where('s.tipo_stock', 'tecnico')
+                    ->where('s.es_transferencia', false)
                     ->whereRaw("({$condiciones})")
                     ->when($sid, fn ($q) => $q->where('s.sucursal_id', $sid))
                     ->groupBy('s.producto_id');
@@ -711,10 +808,13 @@ class InventarioController extends Controller
                 }
 
                 // Un producto existente solo actualiza los datos que vienen en el Excel;
-                // costo, precio y tipo cargados a mano no se pisan.
-                $producto = Producto::firstOrNew(['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo]);
+                // costo, precio y tipo cargados a mano no se pisan. Un mismo código con
+                // otro nombre es otro producto.
+                $nombre   = trim((string) $this->cellValue($regSheet, $colNombre, $r));
+                $producto = Producto::conCodigo($sucursalId, $codigo, $nombre, soloMismoNombre: true)
+                    ?? new Producto(['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo]);
                 $datos    = array_filter([
-                    'nombre' => trim((string) $this->cellValue($regSheet, $colNombre, $r)),
+                    'nombre' => $nombre,
                     'marca'  => trim((string) $this->cellValue($regSheet, $colMarca, $r)),
                     'linea'  => trim((string) $this->cellValue($regSheet, $colLinea, $r)),
                     'uso'    => trim((string) $this->cellValue($regSheet, $colUso, $r)),
@@ -753,15 +853,15 @@ class InventarioController extends Controller
 
                 $fecha = $this->parseDateOrNull($this->cellValue($entSheet, $colFecha, $r));
 
-                $producto = Producto::firstOrCreate(
-                    ['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo],
-                    [
-                        'nombre' => trim((string) $this->cellValue($entSheet, $colNombre, $r)) ?: $codigo,
-                        'marca'  => trim((string) $this->cellValue($entSheet, $colMarca, $r)) ?: null,
-                        'linea'  => trim((string) $this->cellValue($entSheet, $colLinea, $r)) ?: null,
-                        'costo'  => 0,
-                    ]
-                );
+                $nombre   = trim((string) $this->cellValue($entSheet, $colNombre, $r));
+                $producto = Producto::conCodigo($sucursalId, $codigo, $nombre) ?? Producto::create([
+                    'sucursal_id'   => $sucursalId,
+                    'codigo_barras' => $codigo,
+                    'nombre'        => $nombre ?: $codigo,
+                    'marca'         => trim((string) $this->cellValue($entSheet, $colMarca, $r)) ?: null,
+                    'linea'         => trim((string) $this->cellValue($entSheet, $colLinea, $r)) ?: null,
+                    'costo'         => 0,
+                ]);
                 if ($producto->wasRecentlyCreated) {
                     $stats['productos_nuevos']++;
                 }
@@ -799,15 +899,15 @@ class InventarioController extends Controller
                 $fecha   = $this->parseDateOrNull($this->cellValue($salSheet, $colFecha, $r));
                 $destino = trim((string) $this->cellValue($salSheet, $colDestino, $r)) ?: null;
 
-                $producto = Producto::firstOrCreate(
-                    ['sucursal_id' => $sucursalId, 'codigo_barras' => $codigo],
-                    [
-                        'nombre' => trim((string) $this->cellValue($salSheet, $colNombre, $r)) ?: $codigo,
-                        'marca'  => trim((string) $this->cellValue($salSheet, $colMarca, $r)) ?: null,
-                        'linea'  => trim((string) $this->cellValue($salSheet, $colLinea, $r)) ?: null,
-                        'costo'  => 0,
-                    ]
-                );
+                $nombre   = trim((string) $this->cellValue($salSheet, $colNombre, $r));
+                $producto = Producto::conCodigo($sucursalId, $codigo, $nombre) ?? Producto::create([
+                    'sucursal_id'   => $sucursalId,
+                    'codigo_barras' => $codigo,
+                    'nombre'        => $nombre ?: $codigo,
+                    'marca'         => trim((string) $this->cellValue($salSheet, $colMarca, $r)) ?: null,
+                    'linea'         => trim((string) $this->cellValue($salSheet, $colLinea, $r)) ?: null,
+                    'costo'         => 0,
+                ]);
                 if ($producto->wasRecentlyCreated) {
                     $stats['productos_nuevos']++;
                 }
@@ -1039,29 +1139,19 @@ class InventarioController extends Controller
         // Con sucursal activa solo se limpia el inventario de esa sucursal.
         $productoIds = Producto::deSucursal($sid)->pluck('id');
 
-        $productos = DB::table('productos')->whereIn('id', $productoIds)->get();
-        $entradas  = DB::table('entradas')->whereIn('producto_id', $productoIds)->get();
-        $salidas   = DB::table('salidas')->whereIn('producto_id', $productoIds)->get();
-
-        InventarioBackup::create([
-            'user_id'         => auth()->id(),
-            'productos_count' => $productos->count(),
-            'entradas_count'  => $entradas->count(),
-            'salidas_count'   => $salidas->count(),
-            'datos'           => [
-                'productos' => $productos,
-                'entradas'  => $entradas,
-                'salidas'   => $salidas,
-            ],
-        ]);
+        $this->backupProductos($productoIds);
 
         DB::transaction(function () use ($sid, $productoIds) {
             if ($sid) {
                 // Los materiales de servicio son de todas las sucursales: si apuntan a un
                 // producto de esta sucursal, se pasan al mismo código en otra sucursal.
                 foreach (ServicioMaterial::with('producto')->whereIn('producto_id', $productoIds)->get() as $material) {
+                    // Mismo código en otra sucursal; con códigos repetidos se prefiere el de igual nombre.
                     $otro = Producto::where('codigo_barras', $material->producto->codigo_barras)
-                        ->whereNotIn('id', $productoIds)->value('id');
+                        ->whereNotIn('id', $productoIds)
+                        ->orderByRaw('nombre = ? DESC', [$material->producto->nombre])
+                        ->orderBy('id')
+                        ->value('id');
                     $yaUsado = $otro && ServicioMaterial::where('servicio_id', $material->servicio_id)->where('producto_id', $otro)->exists();
                     if ($otro && ! $yaUsado) {
                         $material->update(['producto_id' => $otro]);
@@ -1069,14 +1159,7 @@ class InventarioController extends Controller
                 }
             }
 
-            DB::table('consumos_material')
-                ->whereIn('servicio_material_id', DB::table('servicio_materiales')->whereIn('producto_id', $productoIds)->select('id'))
-                ->delete();
-            DB::table('alertas_stock')->whereIn('producto_id', $productoIds)->delete();
-            DB::table('salidas')->whereIn('producto_id', $productoIds)->delete();
-            DB::table('entradas')->whereIn('producto_id', $productoIds)->delete();
-            DB::table('servicio_materiales')->whereIn('producto_id', $productoIds)->delete();
-            DB::table('productos')->whereIn('id', $productoIds)->delete();
+            $this->borrarProductos($productoIds);
         });
 
         $mensaje = $sid
@@ -1084,6 +1167,77 @@ class InventarioController extends Controller
             : 'Todos los datos de inventario han sido eliminados. Se guardó un backup con lo eliminado.';
 
         return redirect()->route('admin.inventario.index')->with('success', $mensaje);
+    }
+
+    /** Elimina un producto con sus movimientos. Pide la contraseña de administrador. */
+    public function destroyProducto(Request $request, Producto $producto)
+    {
+        $this->autorizarSucursal($producto);
+
+        $request->validate(['password' => 'required|string'], [
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        if ($request->password !== config('app.edit_completada_password')) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.'])
+                ->with('confirmar_eliminar_producto_id', $producto->id)
+                ->with('confirmar_eliminar_producto_nombre', $producto->nombre);
+        }
+
+        $ids = collect([$producto->id]);
+        $this->backupProductos($ids);
+        DB::transaction(fn () => $this->borrarProductos($ids));
+
+        return back()->with('success', "Producto \"{$producto->nombre}\" eliminado. Se guardó un backup con lo eliminado.");
+    }
+
+    /**
+     * Guarda en un backup todo lo que se pierde al borrar los productos: los productos,
+     * sus entradas y salidas, alertas, uso como material de servicios (con sus consumos)
+     * y los vínculos que quedan vacíos (ventas en citas, seguimientos, recomendados).
+     * RestaurarBackupInventario lo vuelve a crear.
+     */
+    private function backupProductos(\Illuminate\Support\Collection $productoIds): void
+    {
+        $productos  = DB::table('productos')->whereIn('id', $productoIds)->get();
+        $entradas   = DB::table('entradas')->whereIn('producto_id', $productoIds)->get();
+        $salidas    = DB::table('salidas')->whereIn('producto_id', $productoIds)->get();
+        $materiales = DB::table('servicio_materiales')->whereIn('producto_id', $productoIds)->get();
+
+        // Filas que no se borran pero pierden el producto (FK ON DELETE SET NULL).
+        $vinculos = [];
+        foreach (RestaurarBackupInventario::TABLAS_VINCULO as $tabla) {
+            $vinculos[$tabla] = DB::table($tabla)->whereIn('producto_id', $productoIds)->get(['id', 'producto_id']);
+        }
+
+        InventarioBackup::create([
+            'user_id'         => auth()->id(),
+            'productos_count' => $productos->count(),
+            'entradas_count'  => $entradas->count(),
+            'salidas_count'   => $salidas->count(),
+            'datos'           => [
+                'productos'           => $productos,
+                'entradas'            => $entradas,
+                'salidas'             => $salidas,
+                'alertas_stock'       => DB::table('alertas_stock')->whereIn('producto_id', $productoIds)->get(),
+                'servicio_materiales' => $materiales,
+                'consumos_material'   => DB::table('consumos_material')->whereIn('servicio_material_id', $materiales->pluck('id'))->get(),
+                'vinculos'            => $vinculos,
+            ],
+        ]);
+    }
+
+    /** Borra productos con sus movimientos, alertas y usos como material. Llamar dentro de una transacción. */
+    private function borrarProductos(\Illuminate\Support\Collection $productoIds): void
+    {
+        DB::table('consumos_material')
+            ->whereIn('servicio_material_id', DB::table('servicio_materiales')->whereIn('producto_id', $productoIds)->select('id'))
+            ->delete();
+        DB::table('alertas_stock')->whereIn('producto_id', $productoIds)->delete();
+        DB::table('salidas')->whereIn('producto_id', $productoIds)->delete();
+        DB::table('entradas')->whereIn('producto_id', $productoIds)->delete();
+        DB::table('servicio_materiales')->whereIn('producto_id', $productoIds)->delete();
+        DB::table('productos')->whereIn('id', $productoIds)->delete();
     }
 
     public function backups()
@@ -1096,5 +1250,26 @@ class InventarioController extends Controller
     public function verBackup(InventarioBackup $backup)
     {
         return view('admin.inventario.backups.show', compact('backup'));
+    }
+
+    /** Vuelve a crear lo guardado en un backup. Pide la contraseña de administrador. */
+    public function restaurarBackup(Request $request, InventarioBackup $backup, RestaurarBackupInventario $servicio)
+    {
+        $request->validate(['password' => 'required|string'], [
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        if ($request->password !== config('app.edit_completada_password')) {
+            return back()->withErrors(['password' => 'Contraseña incorrecta.'])->with('confirmar_restaurar', true);
+        }
+
+        $stats = $servicio->restaurar($backup, session('sucursal_activa_id'));
+        $backup->update(['restaurado_at' => now(), 'restaurado_por' => auth()->id()]);
+
+        $mensaje = "Backup restaurado: {$stats['productos']} productos, {$stats['entradas']} entradas y {$stats['salidas']} salidas."
+            . ($stats['relacionados'] ? " Además {$stats['relacionados']} datos relacionados (materiales, alertas, vínculos con citas)." : '')
+            . ($stats['omitidos'] ? " Se omitieron {$stats['omitidos']} registros que ya existían o no tenían producto." : '');
+
+        return redirect()->route('admin.inventario.backups.show', $backup)->with('success', $mensaje);
     }
 }

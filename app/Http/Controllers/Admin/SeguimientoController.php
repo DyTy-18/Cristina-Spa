@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cita;
 use App\Models\Producto;
 use App\Models\SeguimientoProducto;
+use App\Models\Sucursal;
 use App\Services\SeguimientoConsumoService;
 use Illuminate\Http\Request;
 
@@ -33,9 +34,23 @@ class SeguimientoController extends Controller
             ->values();
 
         // Solo productos marcados como "Seguimiento" en inventario, con stock de la sucursal de la cita.
-        $catalogoProductos = Producto::seguimientoConStock($cita->sucursal_id ?? session('sucursal_activa_id'));
+        $sucursalId        = $cita->sucursal_id ?? session('sucursal_activa_id');
+        $catalogoProductos = Producto::seguimientoConStock($sucursalId);
 
-        return view('admin.citas.seguimiento', compact('cita', 'productosDeServicios', 'catalogoProductos'));
+        // Si la sucursal de la cita no tiene ninguno, se indica en qué sucursales sí hay
+        // (cada sucursal tiene su propio inventario; suele ser una cita cargada en otra sucursal).
+        $sucursalCita = $sucursalId ? Sucursal::find($sucursalId) : null;
+        $seguimientoEnOtras = $catalogoProductos->isEmpty() && $sucursalId
+            ? Producto::where('es_reventa', true)->where('tipo', Producto::TIPO_SEGUIMIENTO)
+                ->where('sucursal_id', '!=', $sucursalId)
+                ->join('sucursales', 'sucursales.id', '=', 'productos.sucursal_id')
+                ->selectRaw('sucursales.nombre, COUNT(*) AS total')
+                ->groupBy('sucursales.nombre')->pluck('total', 'nombre')
+            : collect();
+
+        return view('admin.citas.seguimiento', compact(
+            'cita', 'productosDeServicios', 'catalogoProductos', 'sucursalCita', 'seguimientoEnOtras'
+        ));
     }
 
     public function storeNota(Request $request, Cita $cita)

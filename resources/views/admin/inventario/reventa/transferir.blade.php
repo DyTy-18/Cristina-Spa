@@ -30,19 +30,19 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📦</div>
                     <p class="empty-state-text">
-                        No hay productos marcados como "producto de reventa" todavía.
+                        No hay productos con stock técnico en esta sucursal para transferir.
                     </p>
-                    <a href="{{ route('admin.inventario.productos') }}" class="btn btn-primary">Ir al Catálogo</a>
+                    <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary">Registrar entrada técnica</a>
                 </div>
             @else
-                <form action="{{ route('admin.inventario.reventa.transferir.store') }}" method="POST">
+                <form action="{{ route('admin.inventario.reventa.transferir.store') }}" method="POST" id="form_transferir">
                     @csrf
                     @include('admin.partials.sucursal_selector')
 
                     @include('admin.inventario._filtro_producto')
 
                     <div class="form-group">
-                        <label class="form-label" for="producto_id">Producto (reventa) *</label>
+                        <label class="form-label" for="producto_id">Producto (con stock técnico) *</label>
                         <select id="producto_id" name="producto_id" class="form-control" required>
                             <option value="">— Seleccionar producto —</option>
                             @foreach ($productos as $producto)
@@ -52,8 +52,10 @@
                                         data-marca="{{ $producto->marca ?? '' }}"
                                         data-linea="{{ $producto->linea ?? '' }}"
                                         data-tipo="{{ $producto->tipo ?? '' }}"
+                                        data-reventa="{{ $producto->es_reventa ? 1 : 0 }}"
+                                        data-peso="{{ $producto->peso_gramos ?? '' }}"
                                         data-stock="{{ $producto->stock_actual }}"
-                                    {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
+                                    {{ old('producto_id', $productoInicial) == $producto->id ? 'selected' : '' }}>
                                     {{ $producto->nombre }}
                                     @if ($producto->marca) — {{ $producto->marca }} @endif
                                     @if ($producto->linea) / {{ $producto->linea }} @endif
@@ -63,6 +65,12 @@
                         </select>
                         <span id="stock_actual_info" style="display:none; margin-top:0.4rem; font-size:0.85rem;"></span>
                     </div>
+
+                    @include('admin.inventario.productos._tipo_selector', [
+                        'etiqueta'   => 'Transferir como',
+                        'tipoActual' => old('tipo', \App\Models\Producto::TIPO_VITRINA),
+                        'pesoActual' => old('peso_gramos'),
+                    ])
 
                     <div class="form-row">
                         <div class="form-group">
@@ -84,7 +92,7 @@
                     </div>
 
                     <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-                        <button type="submit" class="btn btn-primary">Transferir a Reventa</button>
+                        <button type="submit" class="btn btn-primary" id="btn_transferir">Transferir a Reventa</button>
                         <a href="{{ route('admin.inventario.index', ['tipo' => 'reventa']) }}" class="btn btn-outline">Cancelar</a>
                     </div>
                 </form>
@@ -120,13 +128,60 @@ function validarUnidades() {
     const unidades = parseInt(document.getElementById('unidades').value, 10) || 0;
     const warning  = document.getElementById('stock_warning');
 
-    warning.style.display = (stock !== null && unidades > stock) ? 'block' : 'none';
+    const excede = stock !== null && unidades > stock;
+    warning.style.display = excede ? 'block' : 'none';
+    document.getElementById('btn_transferir').disabled = excede;
+}
+
+const TIPOS = @json(\App\Models\Producto::TIPOS);
+
+// Al elegir un producto que ya es de reventa se propone su tipo y peso actuales.
+function cargarTipoDelProducto(proponer = true) {
+    const select = document.getElementById('producto_id');
+    const opt    = select.options[select.selectedIndex];
+    const info   = document.getElementById('tipo_info');
+
+    if (opt && opt.value && opt.dataset.reventa === '1' && opt.dataset.tipo) {
+        if (proponer) {
+            const radio = document.querySelector('input[type="radio"][name="tipo"][value="' + opt.dataset.tipo + '"]');
+            if (radio) radio.checked = true;
+            if (opt.dataset.peso) document.getElementById('peso_gramos').value = opt.dataset.peso;
+        }
+        info.dataset.actual = opt.dataset.tipo;
+    } else {
+        delete info.dataset.actual;
+    }
+    actualizarPesoTipo();
+}
+
+function actualizarTipo() {
+    const tipo   = tipoSeleccionado();
+    const info   = document.getElementById('tipo_info');
+    const actual = info.dataset.actual;
+
+    // Un producto tiene un solo tipo: cambiarlo afecta también a su stock de reventa actual.
+    if (actual && tipo && actual !== tipo) {
+        info.textContent = 'Este producto ya es de reventa como ' + (TIPOS[actual] || actual)
+            + '; al transferir pasará a ' + TIPOS[tipo] + '.';
+        info.style.display = 'block';
+    } else {
+        info.style.display = 'none';
+    }
 }
 
 document.getElementById('producto_id').addEventListener('change', mostrarStock);
+document.getElementById('producto_id').addEventListener('change', () => cargarTipoDelProducto());
+// Las tarjetas avisan cada cambio de tipo (ver _tipo_selector).
+document.addEventListener('tipo-producto-cambiado', actualizarTipo);
 document.getElementById('unidades').addEventListener('input', validarUnidades);
+// Evita el doble envío (dos transferencias por un doble clic).
+document.getElementById('form_transferir').addEventListener('submit', function () {
+    document.getElementById('btn_transferir').disabled = true;
+});
 
 mostrarStock();
+// Tras un error de validación se respeta lo que el usuario había elegido.
+cargarTipoDelProducto({{ old('tipo') ? 'false' : 'true' }});
 </script>
 @endpush
 @endsection

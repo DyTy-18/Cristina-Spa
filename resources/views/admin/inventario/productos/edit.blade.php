@@ -31,12 +31,7 @@
                                required>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="nombre">Nombre del Producto *</label>
-                        <input type="text" id="nombre" name="nombre"
-                               class="form-control" value="{{ old('nombre', $producto->nombre) }}"
-                               required>
-                    </div>
+                    @include('admin.inventario.productos._nombre', ['nombreActual' => old('nombre', $producto->nombre)])
                 </div>
 
                 @include('admin.inventario.productos._marca_linea', ['marcaActual' => old('marca', $producto->marca), 'lineaActual' => old('linea', $producto->linea)])

@@ -13,14 +13,22 @@ class InventarioBackup extends Model
         'entradas_count',
         'salidas_count',
         'datos',
+        'restaurado_at',
+        'restaurado_por',
     ];
 
     protected $casts = [
-        'datos' => 'array',
+        'datos'         => 'array',
+        'restaurado_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function restauradoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'restaurado_por');
     }
 }

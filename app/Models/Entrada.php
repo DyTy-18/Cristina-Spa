@@ -14,6 +14,7 @@ class Entrada extends Model
         'sucursal_id',
         'producto_id',
         'tipo_stock',
+        'es_transferencia',
         'unidades',
         'fecha',
     ];
@@ -21,5 +22,6 @@ class Entrada extends Model
     protected $casts = [
         'fecha'    => 'date',
         'unidades' => 'integer',
+        'es_transferencia' => 'boolean',
     ];
 }

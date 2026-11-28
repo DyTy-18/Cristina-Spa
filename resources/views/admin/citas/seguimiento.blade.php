@@ -47,6 +47,7 @@
                 {{ $cita->cliente?->nombre_completo ?? 'Sin cliente' }}
                 <span style="font-size:0.8rem;font-weight:300;color:var(--text-light);">
                     · {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y') }}
+                    @if($sucursalCita) · {{ $sucursalCita->nombre }} @endif
                 </span>
             </h3>
         </div>
@@ -77,9 +78,22 @@
 
             {{-- Registrar el uso de un producto de seguimiento --}}
             @if($catalogoProductos->isEmpty())
-                <p style="color:var(--text-light);font-size:0.85rem;font-style:italic;margin:0 0 1rem;">
-                    No hay productos marcados como "Seguimiento" en el inventario de esta sucursal.
-                </p>
+                @if($seguimientoEnOtras->isNotEmpty())
+                    <div style="background:#fff8e1;border:1px solid #f59e0b;padding:0.75rem 1rem;font-size:0.85rem;margin:0 0 1rem;">
+                        Esta cita está registrada en <strong>{{ $sucursalCita?->nombre ?? 'otra sucursal' }}</strong>,
+                        que no tiene productos de Seguimiento en su inventario.
+                        Sí hay en:
+                        {{ $seguimientoEnOtras->map(fn ($n, $nombre) => "{$nombre} ({$n})")->implode(', ') }}.
+                        <br>
+                        Cada sucursal descuenta de su propio inventario: registra el producto en el inventario de
+                        {{ $sucursalCita?->nombre ?? 'esta sucursal' }}, o revisa si la cita se cargó en la sucursal correcta.
+                    </div>
+                @else
+                    <p style="color:var(--text-light);font-size:0.85rem;font-style:italic;margin:0 0 1rem;">
+                        No hay productos marcados como "Seguimiento" en el inventario
+                        de {{ $sucursalCita?->nombre ?? 'esta sucursal' }}.
+                    </p>
+                @endif
             @else
                 <form action="{{ route('admin.citas.seguimiento.productos.store', $cita) }}" method="POST"
                       style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:0.5rem;">

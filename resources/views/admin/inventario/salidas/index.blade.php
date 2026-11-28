@@ -98,7 +98,13 @@
                             <td style="text-align:right;">
                                 <span class="badge badge-danger">&minus;{{ $salida->unidades }}</span>
                             </td>
-                            <td>{{ $salida->destino ?? '—' }}</td>
+                            <td>
+                                @if ($salida->es_transferencia)
+                                    <span class="badge badge-info">{{ $salida->destino }}</span>
+                                @else
+                                    {{ $salida->destino ?? '—' }}
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

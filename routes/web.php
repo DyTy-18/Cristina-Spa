@@ -345,6 +345,7 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/productos', [InventarioController::class, 'storeProducto'])->name('productos.store');
         Route::get('/productos/{producto}/editar', [InventarioController::class, 'editProducto'])->name('productos.edit');
         Route::put('/productos/{producto}', [InventarioController::class, 'updateProducto'])->name('productos.update');
+        Route::delete('/productos/{producto}', [InventarioController::class, 'destroyProducto'])->name('productos.destroy');
 
         Route::get('/entradas', [InventarioController::class, 'entradas'])->name('entradas');
         Route::get('/entradas/crear', [InventarioController::class, 'createEntrada'])->name('entradas.create');
@@ -358,6 +359,8 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::post('/reventa/entrada', [InventarioController::class, 'storeEntradaReventa'])->name('reventa.entrada.store');
         Route::get('/reventa/transferir', [InventarioController::class, 'createTransferencia'])->name('reventa.transferir.create');
         Route::post('/reventa/transferir', [InventarioController::class, 'storeTransferencia'])->name('reventa.transferir.store');
+        Route::get('/reventa/transferir-tecnico', [InventarioController::class, 'createTransferenciaTecnico'])->name('reventa.transferir_tecnico.create');
+        Route::post('/reventa/transferir-tecnico', [InventarioController::class, 'storeTransferenciaTecnico'])->name('reventa.transferir_tecnico.store');
         Route::get('/reventa/salida', [InventarioController::class, 'createSalidaReventa'])->name('reventa.salida.create');
         Route::post('/reventa/salida', [InventarioController::class, 'storeSalidaReventa'])->name('reventa.salida.store');
 
@@ -369,6 +372,7 @@ Route::middleware(['auth', 'sucursal'])->prefix('admin')->name('admin.')->group(
         Route::delete('/limpiar', [InventarioController::class, 'limpiar'])->name('limpiar');
         Route::get('/backups', [InventarioController::class, 'backups'])->name('backups');
         Route::get('/backups/{backup}', [InventarioController::class, 'verBackup'])->name('backups.show');
+        Route::post('/backups/{backup}/restaurar', [InventarioController::class, 'restaurarBackup'])->name('backups.restaurar');
     });
 });
 

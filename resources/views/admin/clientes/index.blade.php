@@ -3,28 +3,6 @@
 @section('title', 'Clientes')
 @section('page-title', 'Clientes')
 
-@push('styles')
-<style>
-    /* Modal confirmación eliminar */
-    .del-overlay {
-        display: none; position: fixed; inset: 0; z-index: 9000;
-        background: rgba(0,0,0,0.45); align-items: center; justify-content: center;
-    }
-    .del-overlay.open { display: flex; }
-    .del-modal {
-        background: var(--white); padding: 2rem 2.25rem; max-width: 420px; width: 90%;
-        border-top: 4px solid var(--error-color);
-    }
-    .del-modal h4 {
-        font-family: 'Cormorant Garamond', serif; font-size: 1.3rem;
-        color: var(--primary-color); margin-bottom: 0.6rem; letter-spacing: 1px;
-    }
-    .del-modal p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem; line-height: 1.6; }
-    .del-modal strong { color: var(--primary-color); }
-    .del-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-</style>
-@endpush
-
 @section('content')
     <div class="table-container">
         <div class="table-header">

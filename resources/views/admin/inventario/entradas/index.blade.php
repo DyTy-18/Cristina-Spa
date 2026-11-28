@@ -80,6 +80,7 @@
                         <th>Marca</th>
                         <th>Línea</th>
                         <th style="text-align:right;">Unidades</th>
+                        <th>Origen</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,6 +93,15 @@
                             <td>{{ $entrada->producto->linea ?? '—' }}</td>
                             <td style="text-align:right;">
                                 <span class="badge badge-success">+{{ $entrada->unidades }}</span>
+                            </td>
+                            <td>
+                                @if ($entrada->es_transferencia)
+                                    <span class="badge badge-info">
+                                        Transferencia desde {{ $entrada->tipo_stock === 'reventa' ? 'técnico' : 'reventa' }}
+                                    </span>
+                                @else
+                                    —
+                                @endif
                             </td>
                         </tr>
                     @endforeach

@@ -132,9 +132,30 @@ class Producto extends Model
             return $this;
         }
 
-        return static::where('sucursal_id', $sucursalId)
-            ->where('codigo_barras', $this->codigo_barras)
-            ->first();
+        return static::conCodigo($sucursalId, $this->codigo_barras, $this->nombre);
+    }
+
+    /**
+     * Producto de una sucursal por código de barras. Un mismo código puede tener
+     * varios productos: se prefiere el del mismo nombre y, si no hay, el más antiguo.
+     * Con $soloMismoNombre (y un nombre dado) no se cae al más antiguo: un nombre
+     * distinto se considera otro producto.
+     */
+    public static function conCodigo(int $sucursalId, string $codigo, ?string $nombre = null, bool $soloMismoNombre = false): ?self
+    {
+        $candidatos = static::where('sucursal_id', $sucursalId)
+            ->where('codigo_barras', $codigo)
+            ->orderBy('id')
+            ->get();
+
+        $nombre = mb_strtolower(trim((string) $nombre));
+        if ($nombre === '') {
+            return $candidatos->first();
+        }
+
+        $mismoNombre = $candidatos->first(fn (self $p) => mb_strtolower(trim($p->nombre)) === $nombre);
+
+        return $mismoNombre ?? ($soloMismoNombre ? null : $candidatos->first());
     }
 
     public function servicioMateriales(): HasMany

@@ -32,17 +32,73 @@
     }
     .modal-box p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.25rem; }
     .modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 0.5rem; }
+
+    /* Barra superior: pestañas a la izquierda, acciones a la derecha */
+    .inv-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+    .inv-tabs { display: flex; gap: 0.5rem; }
+    .inv-acciones { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+    /* Enlaces secundarios: consultas y herramientas, con menos peso visual que los botones */
+    .inv-subnav {
+        display: flex; align-items: center; gap: 0.35rem 1.5rem; flex-wrap: wrap;
+        padding: 0.65rem 0; margin-bottom: 1.5rem;
+        border-top: 1px solid rgba(0,0,0,0.06); border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .inv-subnav a, .inv-subnav button {
+        font-family: inherit; font-size: 0.72rem; font-weight: 400; letter-spacing: 1px; text-transform: uppercase;
+        color: var(--text-light); text-decoration: none; background: none; border: none; padding: 0.2rem 0; cursor: pointer;
+    }
+    .inv-subnav a:hover { color: var(--accent-color); }
+    .inv-subnav .inv-subnav-peligro { margin-left: auto; color: #c0392b; opacity: 0.75; }
+    .inv-subnav .inv-subnav-peligro:hover { opacity: 1; }
+
+    .inv-minimo { display: block; font-size: 0.7rem; color: #aaa; margin-top: 0.2rem; }
+    .inv-cero { color: #ccc; }
 </style>
 @endpush
 
 @section('content')
-@php $tipoStock = $tipoStock ?? 'tecnico'; @endphp
-<div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-    <a href="{{ route('admin.inventario.index') }}"
-       class="btn btn-sm {{ $tipoStock === 'tecnico' ? 'btn-primary' : 'btn-outline' }}">Inventario Técnico</a>
-    <a href="{{ route('admin.inventario.index', ['tipo' => 'reventa']) }}"
-       class="btn btn-sm {{ $tipoStock === 'reventa' ? 'btn-primary' : 'btn-outline' }}">Inventario Reventa</a>
+@php
+    $tipoStock = $tipoStock ?? 'tecnico';
+    $esTecnico = $tipoStock === 'tecnico';
+@endphp
+
+<div class="inv-toolbar">
+    <div class="inv-tabs">
+        <a href="{{ route('admin.inventario.index') }}"
+           class="btn btn-sm {{ $esTecnico ? 'btn-primary' : 'btn-outline' }}">Inventario Técnico</a>
+        <a href="{{ route('admin.inventario.index', ['tipo' => 'reventa']) }}"
+           class="btn btn-sm {{ $esTecnico ? 'btn-outline' : 'btn-primary' }}">Inventario Reventa</a>
+    </div>
+
+    {{-- Acciones frecuentes: botones. Lo demás va en la barra de enlaces de abajo. --}}
+    <div class="inv-acciones">
+        @if ($esTecnico)
+            <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary btn-sm">+ Registrar Entrada</a>
+            <a href="{{ route('admin.inventario.salidas.create') }}" class="btn btn-accent btn-sm">+ Registrar Salida</a>
+            <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-outline btn-sm">⇄ Transferir a Reventa</a>
+        @else
+            <a href="{{ route('admin.inventario.reventa.entrada.create') }}" class="btn btn-primary btn-sm">+ Registrar Entrada</a>
+            <a href="{{ route('admin.inventario.reventa.salida.create') }}" class="btn btn-accent btn-sm">+ Registrar Venta</a>
+            <a href="{{ route('admin.inventario.reventa.transferir_tecnico.create') }}" class="btn btn-outline btn-sm">⇄ Transferir a Técnico</a>
+        @endif
+        <a href="{{ route('admin.inventario.productos.create') }}" class="btn btn-outline btn-sm">+ Nuevo Producto</a>
+    </div>
 </div>
+
+<nav class="inv-subnav">
+    <a href="{{ route('admin.inventario.entradas', ['tipo' => $tipoStock]) }}">Historial Entradas</a>
+    <a href="{{ route('admin.inventario.salidas', ['tipo' => $tipoStock]) }}">Historial {{ $esTecnico ? 'Salidas' : 'Ventas' }}</a>
+    <a href="{{ route('admin.inventario.productos', ['tipo' => $tipoStock]) }}">Catálogo</a>
+    <a href="{{ route('admin.inventario.analisis') }}">Análisis</a>
+    <a href="{{ route('admin.inventario.importar') }}">Importar Excel</a>
+    <a href="{{ route('admin.inventario.backups') }}">Backups</a>
+    <button type="button" class="inv-subnav-peligro"
+            onclick="document.getElementById('modalLimpiarInventario').classList.add('active')">
+        Limpiar inventario
+    </button>
+</nav>
+
 @if($alertas->isNotEmpty())
     <div style="margin-bottom:1.5rem;">
         @foreach($alertas as $alerta)
@@ -70,30 +126,6 @@
         @endforeach
     </div>
 @endif
-    <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
-        @if ($tipoStock === 'tecnico')
-            <a href="{{ route('admin.inventario.entradas.create') }}" class="btn btn-primary">+ Registrar Entrada</a>
-            <a href="{{ route('admin.inventario.salidas.create') }}" class="btn btn-accent">+ Registrar Salida</a>
-            <a href="{{ route('admin.inventario.productos.create') }}" class="btn btn-outline">+ Nuevo Producto</a>
-            <a href="{{ route('admin.inventario.entradas') }}" class="btn btn-outline btn-sm">Historial Entradas</a>
-            <a href="{{ route('admin.inventario.salidas') }}" class="btn btn-outline btn-sm">Historial Salidas</a>
-        @else
-            <a href="{{ route('admin.inventario.reventa.entrada.create') }}" class="btn btn-primary">+ Registrar Entrada</a>
-            <a href="{{ route('admin.inventario.reventa.transferir.create') }}" class="btn btn-outline">+ Transferir a Reventa</a>
-            <a href="{{ route('admin.inventario.reventa.salida.create') }}" class="btn btn-accent">+ Registrar Venta</a>
-            <a href="{{ route('admin.inventario.entradas', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Historial Entradas</a>
-            <a href="{{ route('admin.inventario.salidas', ['tipo' => 'reventa']) }}" class="btn btn-outline btn-sm">Historial Ventas</a>
-        @endif
-        <a href="{{ route('admin.inventario.productos') }}" class="btn btn-outline btn-sm">Catálogo</a>
-        <a href="{{ route('admin.inventario.importar') }}" class="btn btn-outline btn-sm">Importar Excel</a>
-        <a href="{{ route('admin.inventario.analisis') }}" class="btn btn-outline btn-sm">📊 Análisis</a>
-        <a href="{{ route('admin.inventario.backups') }}" class="btn btn-outline btn-sm">🗂 Ver Backups</a>
-
-        <button type="button" class="btn btn-sm" style="margin-left:auto;background:#dc2626;color:#fff;border:none;"
-                onclick="document.getElementById('modalLimpiarInventario').classList.add('active')">
-            🗑 Limpiar inventario
-        </button>
-    </div>
 
     <div class="modal-overlay" id="modalLimpiarInventario">
         <div class="modal-box">
@@ -121,11 +153,7 @@
 
     <div class="table-container">
         <div class="table-header">
-            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-                <h3 class="table-title">Stock Actual {{ $tipoStock === 'reventa' ? '(Reventa)' : '(Técnico)' }}</h3>
-                @include('admin.partials.sucursal_badge')
-            </div>
-            <span style="font-size:0.8rem; color:#888;">Entradas &minus; Salidas por producto</span>
+            <h3 class="table-title">Stock Actual</h3>
         </div>
 
         <form method="GET" action="{{ route('admin.inventario.index') }}" class="table-filter">
@@ -168,20 +196,21 @@
                         <th>Nombre</th>
                         <th>Marca</th>
                         <th>Línea</th>
-                        @if ($tipoStock === 'tecnico')
-                            <th>Costo</th>
+                        @if ($esTecnico)
+                            <th style="text-align:right;">Costo</th>
                         @endif
                         <th style="text-align:right;">Entradas</th>
                         <th style="text-align:right;">Salidas</th>
+                        <th style="text-align:right;" title="Saldo de transferencias entre técnico y reventa: + recibido, − enviado">Transf.</th>
                         <th style="text-align:right;">Stock</th>
-                        @if ($tipoStock === 'tecnico')
-                            <th style="text-align:right;">Mínimo</th>
-                        @endif
-                        <th></th>
+                        <th style="width:1%;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($stock as $item)
+                        @php
+                            $bajoMinimo = $esTecnico && $item->stock_actual < $item->stock_minimo;
+                        @endphp
                         <tr>
                             <td><code style="font-size:0.8rem;">{{ $item->codigo_barras }}</code></td>
                             @if ($modoGlobal ?? false)
@@ -189,34 +218,42 @@
                             @endif
                             <td>
                                 {{ $item->nombre }}
-                                @if ($item->es_reventa)
+                                {{-- El tipo (vitrina, seguimiento...) solo tiene sentido en el inventario de reventa. --}}
+                                @if (! $esTecnico && $item->es_reventa)
                                     @include('admin.inventario.productos._badge_tipo', ['p' => $item])
                                 @endif
                             </td>
                             <td>{{ $item->marca ?? '—' }}</td>
                             <td>{{ $item->linea ?? '—' }}</td>
-                            @if ($tipoStock === 'tecnico')
-                                <td>Bs. {{ number_format($item->costo, 2) }}</td>
+                            @if ($esTecnico)
+                                <td style="text-align:right; white-space:nowrap;">Bs. {{ number_format($item->costo, 2) }}</td>
                             @endif
-                            <td style="text-align:right;">{{ $item->total_entradas }}</td>
-                            <td style="text-align:right;">{{ $item->total_salidas }}</td>
+                            <td style="text-align:right;" class="{{ $item->total_entradas ? '' : 'inv-cero' }}">{{ $item->total_entradas }}</td>
+                            <td style="text-align:right;" class="{{ $item->total_salidas ? '' : 'inv-cero' }}">{{ $item->total_salidas }}</td>
                             <td style="text-align:right;">
-                                @if ($tipoStock === 'tecnico' && $item->stock_actual < $item->stock_minimo)
-                                    <span class="badge badge-danger">{{ $item->stock_actual }}</span>
+                                @if ($item->total_transferencias > 0)
+                                    <span style="color:#15803d;">+{{ $item->total_transferencias }}</span>
+                                @elseif ($item->total_transferencias < 0)
+                                    <span style="color:#b45309;">−{{ abs($item->total_transferencias) }}</span>
                                 @else
-                                    <span class="badge badge-success">{{ $item->stock_actual }}</span>
+                                    <span class="inv-cero">—</span>
                                 @endif
                             </td>
-                            @if ($tipoStock === 'tecnico')
-                                <td style="text-align:right;">{{ $item->stock_minimo }}</td>
-                            @endif
-                            <td style="display:flex; gap:0.4rem;">
-                                <a href="{{ route('admin.inventario.productos.edit', $item->id) }}"
-                                   class="btn btn-outline btn-sm">Editar</a>
-                                @if ($tipoStock === 'tecnico' && $item->stock_actual > 0)
-                                    <a href="{{ route('admin.inventario.reventa.transferir.create') }}"
-                                       class="btn btn-accent btn-sm">Transferir</a>
+                            <td style="text-align:right;">
+                                <span class="badge {{ $bajoMinimo ? 'badge-danger' : 'badge-success' }}">{{ $item->stock_actual }}</span>
+                                @if ($esTecnico)
+                                    <span class="inv-minimo">mín. {{ $item->stock_minimo }}</span>
                                 @endif
+                            </td>
+                            <td>
+                                @include('admin.inventario.productos._acciones_fila', [
+                                    'id'               => $item->id,
+                                    'nombre'           => $item->nombre,
+                                    'transferirUrl'    => $item->stock_actual > 0
+                                        ? route($esTecnico ? 'admin.inventario.reventa.transferir.create' : 'admin.inventario.reventa.transferir_tecnico.create', ['producto_id' => $item->id])
+                                        : null,
+                                    'transferirTitulo' => $esTecnico ? 'Transferir a reventa' : 'Transferir a técnico',
+                                ])
                             </td>
                         </tr>
                     @endforeach
@@ -238,6 +275,8 @@
             </div>
         @endif
     </div>
+
+    @include('admin.inventario.productos._modal_eliminar')
 @endsection
 
 @include('admin.inventario._filtro_live')

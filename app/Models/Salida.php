@@ -14,6 +14,7 @@ class Salida extends Model
         'sucursal_id',
         'producto_id',
         'tipo_stock',
+        'es_transferencia',
         'unidades',
         'fecha',
         'destino',
@@ -23,5 +24,6 @@ class Salida extends Model
     protected $casts = [
         'fecha'    => 'date',
         'unidades' => 'integer',
+        'es_transferencia' => 'boolean',
     ];
 }

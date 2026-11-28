@@ -113,10 +113,12 @@ class MigracionSucursalController extends Controller
             ->filter()->unique();
 
         foreach (Producto::whereIn('id', $productoIds)->get() as $producto) {
-            $enDestino = Producto::firstOrCreate(
-                ['sucursal_id' => $destino->id, 'codigo_barras' => $producto->codigo_barras],
-                Arr::except($producto->getAttributes(), ['id', 'sucursal_id', 'codigo_barras', 'created_at', 'updated_at'])
-            );
+            // Un mismo código puede tener varios productos: se busca el de igual nombre.
+            $enDestino = Producto::conCodigo($destino->id, $producto->codigo_barras, $producto->nombre, soloMismoNombre: true)
+                ?? Producto::create(
+                    ['sucursal_id' => $destino->id]
+                    + Arr::except($producto->getAttributes(), ['id', 'sucursal_id', 'created_at', 'updated_at'])
+                );
 
             $cambios = ['producto_id' => $enDestino->id, 'sucursal_id' => $destino->id];
             $resultado['entradas'] += $movimientos(Entrada::class)->where('producto_id', $producto->id)->update($cambios);

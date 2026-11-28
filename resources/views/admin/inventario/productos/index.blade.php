@@ -70,7 +70,7 @@
                         <th>Línea</th>
                         <th style="text-align:right;">Costo</th>
                         <th style="text-align:right;">Stock Mínimo</th>
-                        <th></th>
+                        <th style="width:1%;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,7 +82,8 @@
                             @endif
                             <td>
                                 {{ $producto->nombre }}
-                                @if ($producto->es_reventa)
+                                {{-- El tipo solo se muestra en el catálogo de reventa. --}}
+                                @if ($tipoStock === 'reventa' && $producto->es_reventa)
                                     @include('admin.inventario.productos._badge_tipo', ['p' => $producto])
                                 @endif
                             </td>
@@ -91,8 +92,10 @@
                             <td style="text-align:right;">Bs. {{ number_format($producto->costo, 2) }}</td>
                             <td style="text-align:right;">{{ $producto->stock_minimo }}</td>
                             <td>
-                                <a href="{{ route('admin.inventario.productos.edit', $producto) }}"
-                                   class="btn btn-outline btn-sm">Editar</a>
+                                @include('admin.inventario.productos._acciones_fila', [
+                                    'id'     => $producto->id,
+                                    'nombre' => $producto->nombre,
+                                ])
                             </td>
                         </tr>
                     @endforeach
@@ -116,6 +119,9 @@
             </div>
         @endif
     </div>
+
+    @include('admin.inventario.productos._modal_eliminar')
 @endsection
+
 
 @include('admin.inventario._filtro_live')

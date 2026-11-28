@@ -20,7 +20,7 @@
         <select name="sucursal_id" class="form-control @error('sucursal_id') is-invalid @enderror" required>
             <option value="">— Seleccionar sucursal —</option>
             @foreach($sucursales as $s)
-                <option value="{{ $s->id }}" {{ old('sucursal_id') == $s->id ? 'selected' : '' }}>
+                <option value="{{ $s->id }}" {{ old('sucursal_id', $sucursalInicial ?? null) == $s->id ? 'selected' : '' }}>
                     {{ $s->es_principal ? '★ ' : '' }}{{ $s->nombre }}
                 </option>
             @endforeach

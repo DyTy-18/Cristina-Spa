@@ -636,3 +636,43 @@ h1, h2, h3, h4 {
         align-items: flex-start;
     }
 }
+
+/* ===== Acciones por fila (iconos con tooltip) =====
+   <div class="fila-acciones"><a class="btn-accion" title="Editar"><svg/></a> ...</div>
+   .peligro para eliminar. */
+.fila-acciones { display: flex; gap: 0.35rem; justify-content: flex-end; }
+.btn-accion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: var(--white);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+}
+.btn-accion svg { width: 15px; height: 15px; }
+.btn-accion:hover { border-color: var(--accent-color); color: var(--accent-color); }
+.btn-accion.peligro:hover { border-color: var(--error-color); color: var(--error-color); }
+
+/* ===== Modal de confirmación con contraseña (eliminar / restaurar) ===== */
+.del-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9000;
+    background: rgba(0,0,0,0.45); align-items: center; justify-content: center;
+}
+.del-overlay.open { display: flex; }
+.del-modal {
+    background: var(--white); padding: 2rem 2.25rem; max-width: 420px; width: 90%;
+    border-top: 4px solid var(--error-color);
+}
+.del-modal h4 {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.3rem;
+    color: var(--primary-color); margin-bottom: 0.6rem; letter-spacing: 1px;
+}
+.del-modal p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem; line-height: 1.6; }
+.del-modal strong { color: var(--primary-color); }
+.del-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
